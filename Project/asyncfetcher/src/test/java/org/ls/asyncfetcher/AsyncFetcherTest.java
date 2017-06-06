@@ -99,6 +99,67 @@ public class AsyncFetcherTest {
 	}
 	
 	@Test
+	public void testMultipleAsyncTasksMultipleTimes() {
+		String[] val = new String[4];
+		AsyncFetcher.INSTANCE.submitTask(delayedRunnable(() -> {
+			val[0] = "Value1";
+		}), "task1");
+		AsyncFetcher.INSTANCE.submitTask(delayedRunnable(() -> {
+			val[1] = "Value2";
+		}, 1000), "task2");
+		AsyncFetcher.INSTANCE.submitTask(delayedRunnable(() -> {
+			val[2] = "Value3";
+		}, 700), "task3");
+		AsyncFetcher.INSTANCE.submitTask(delayedRunnable(() -> {
+			val[3] = "Value4";
+		}, 1000), "task4");
+
+		AsyncFetcher.INSTANCE.waitForTask("task1");
+		AsyncFetcher.INSTANCE.waitForTask("task2");
+		AsyncFetcher.INSTANCE.waitForTask("task3");
+		AsyncFetcher.INSTANCE.waitForTask("task4");
+
+		assertEquals(val[0], "Value1");
+		assertEquals(val[1], "Value2");
+		assertEquals(val[2], "Value3");
+		assertEquals(val[3], "Value4");
+		
+		AsyncFetcher.INSTANCE.waitForTask("task1");
+		AsyncFetcher.INSTANCE.waitForTask("task2");
+		AsyncFetcher.INSTANCE.waitForTask("task3");
+		AsyncFetcher.INSTANCE.waitForTask("task4");
+
+		assertEquals(val[0], "Value1");
+		assertEquals(val[1], "Value2");
+		assertEquals(val[2], "Value3");
+		assertEquals(val[3], "Value4");
+		
+		AsyncFetcher.INSTANCE.submitTask(delayedRunnable(() -> {
+			val[0] = "Value11";
+		}), "task1");
+		AsyncFetcher.INSTANCE.submitTask(delayedRunnable(() -> {
+			val[1] = "Value22";
+		}, 1000), "task2");
+		AsyncFetcher.INSTANCE.submitTask(delayedRunnable(() -> {
+			val[2] = "Value33";
+		}, 700), "task3");
+		AsyncFetcher.INSTANCE.submitTask(delayedRunnable(() -> {
+			val[3] = "Value44";
+		}, 1000), "task4");
+		
+		AsyncFetcher.INSTANCE.waitForTask("task1");
+		AsyncFetcher.INSTANCE.waitForTask("task2");
+		AsyncFetcher.INSTANCE.waitForTask("task3");
+		AsyncFetcher.INSTANCE.waitForTask("task4");
+		
+		assertEquals(val[0], "Value11");
+		assertEquals(val[1], "Value22");
+		assertEquals(val[2], "Value33");
+		assertEquals(val[3], "Value44");
+
+	}
+	
+	@Test
 	public void testMultipleAsyncSupplierSubmittedForMultipleAccess() {
 		AsyncFetcher.INSTANCE.submitSupplierForMultipleAccess(delayedSupplier(() -> "Value1"), "query1");
 		AsyncFetcher.INSTANCE.submitSupplierForMultipleAccess(delayedSupplier(() -> "Value2", 1000), "query2");

@@ -107,7 +107,7 @@ public enum AsyncFetcher {
 				runnable.run();
 				return null;
 			}));
-			storeSupplier(key, safeSupplier, true);
+			storeSupplier(key, safeSupplier, false);
 			return true;
 		}
 		return false;
