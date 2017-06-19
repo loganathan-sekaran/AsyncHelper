@@ -1,13 +1,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.ls</groupId>
-  <artifactId>asyncfetcher</artifactId>
+  <artifactId>asynchelper</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <name>Async Fetcher</name>
+  <name>Async Helper</name>
   <description>Invoke Tasks or Fetch Data asynchronously using tags</description>
    <build>
     <sourceDirectory>src/main/java,src/main/test</sourceDirectory>
-    <finalName>asyncfetcher-1.0.0-SNAPSHOT</finalName>
+    <finalName>asynchelper-1.0.0-SNAPSHOT</finalName>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>

@@ -1,4 +1,4 @@
-package org.ls.asyncfetcher;
+package org.ls.asynchelper;
 
 import java.util.Arrays;
 import java.util.List;

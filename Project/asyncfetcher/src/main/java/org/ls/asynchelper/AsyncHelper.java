@@ -1,4 +1,4 @@
-package org.ls.asyncfetcher;
+package org.ls.asynchelper;
 
 import java.util.Map;
 import java.util.Optional;
@@ -9,7 +9,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.function.Supplier;
 
-public enum AsyncFetcher {
+public enum AsyncHelper {
 	INSTANCE;
 
 	private ForkJoinPool forkJoinPool = ForkJoinPool.commonPool();
@@ -162,6 +162,40 @@ public enum AsyncFetcher {
 						originalKeys.remove(objectsKey);
 					}
 				}
+			}
+		}
+	}
+	
+	public void waitForFlag(String... flag) throws InterruptedException {
+		ObjectsKey key = ObjectsKey.of((Object[])flag);
+		ObjectsKey originalKey = originalKeys.get(key);
+		if(originalKey == null) {
+			originalKey = key;
+			originalKeys.put(key, originalKey);
+		}
+		synchronized (originalKey) {
+			originalKey.wait();
+		}
+	}
+	
+	public void notifyFlag(String... flag) {
+		ObjectsKey key = ObjectsKey.of((Object[])flag);
+		ObjectsKey originalKey = originalKeys.get(key);
+		if(originalKey != null) {
+			originalKeys.remove(key);
+			synchronized (originalKey) {
+				originalKey.notify();
+			}
+		}
+	}
+	
+	public void notifyAllFlag(String... flag) {
+		ObjectsKey key = ObjectsKey.of((Object[])flag);
+		ObjectsKey originalKey = originalKeys.get(key);
+		if(originalKey != null) {
+			originalKeys.remove(key);
+			synchronized (originalKey) {
+				originalKey.notifyAll();
 			}
 		}
 	}

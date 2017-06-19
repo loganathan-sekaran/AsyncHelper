@@ -1,11 +1,11 @@
-package org.ls.asyncfetcher;
+package org.ls.asynchelper;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
-@SuiteClasses({ AsyncFetcherTest.class, ObjectsKeyTest.class })
+@SuiteClasses({ AsyncHelperTest.class, ObjectsKeyTest.class })
 public class AllTests {
 
 }
