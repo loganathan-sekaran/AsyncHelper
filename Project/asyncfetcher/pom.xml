@@ -2,12 +2,11 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.ls</groupId>
   <artifactId>asynchelper</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.1</version>
   <name>Async Helper</name>
   <description>Invoke Tasks or Fetch Data asynchronously using tags</description>
    <build>
     <sourceDirectory>src/main/java,src/main/test</sourceDirectory>
-    <finalName>asynchelper-1.0.0-SNAPSHOT</finalName>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -17,7 +16,7 @@
           <target>1.8</target>
         </configuration>
       </plugin>
-    </plugins>
+    </plugins>    
   </build>
   <dependencies>
     <dependency>
