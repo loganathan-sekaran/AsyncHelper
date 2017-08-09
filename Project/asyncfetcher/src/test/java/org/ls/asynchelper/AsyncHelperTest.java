@@ -1,13 +1,19 @@
 package org.ls.asynchelper;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -363,6 +369,222 @@ public class AsyncHelperTest {
 	}
 	
 	@Test
+	public void testSubmitTask() throws InterruptedException {
+		boolean[] retVal = new boolean[1];
+		AsyncHelper.INSTANCE.submitTask(delayedRunnable(() -> {
+			retVal[0] = true;
+		}, 100));
+		
+		Thread.sleep(500);
+		assertTrue(retVal[0]);
+	}
+	
+	@Test
+	public void testSubmitTasks() throws InterruptedException {
+		boolean[] retVal = new boolean[5];
+		AsyncHelper.INSTANCE.submitTasks(delayedRunnable(() -> {
+			retVal[0] = true;
+		}, 100),
+		delayedRunnable(() -> {
+			retVal[1] = true;
+		}, 100),
+		delayedRunnable(() -> {
+			retVal[2] = true;
+		}, 100),
+		delayedRunnable(() -> {
+			retVal[3] = true;
+		}, 100),
+		delayedRunnable(() -> {
+			retVal[4] = true;
+		}, 100));
+		
+		Thread.sleep(1000);
+		assertArrayEquals(retVal, new boolean[]{true, true, true, true, true});
+	}
+	
+	@Test
+	public void testScheduleTasks()  throws InterruptedException {
+		boolean[] retVal = new boolean[5];
+		AsyncHelper.INSTANCE.scheduleTasks(10, 100, TimeUnit.MILLISECONDS, true,
+		() -> {
+			retVal[0] = true;
+		},
+		() -> {
+			retVal[1] = true;
+		},
+		() -> {
+			retVal[2] = true;
+		},
+		() -> {
+			retVal[3] = true;
+		},
+		() -> {
+			retVal[4] = true;
+		});
+		
+		Thread.sleep(1000);
+		assertArrayEquals(retVal, new boolean[]{true, true, true, true, true});
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testScheduleSuppliers()  throws InterruptedException {
+		Supplier<Boolean>[] scheduleSuppliers = AsyncHelper.INSTANCE.scheduleMultipleSuppliers(10, 100, TimeUnit.MILLISECONDS, true,
+		() -> {
+			return true;
+		},
+		() -> {
+			return true;
+		},
+		() -> {
+			return true;
+		},
+		() -> {
+			return true;
+		},
+		() -> {
+			return true;
+		});
+		
+		Stream.of(scheduleSuppliers).map(Supplier::get).forEach(Assert::assertTrue);
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testScheduleSuppliersAndWait()  throws InterruptedException {
+		Stream<Boolean> retVals = AsyncHelper.INSTANCE.scheduleMultipleSuppliersAndWait(10, 200, TimeUnit.MILLISECONDS, true,
+		() -> {
+			return true;
+		},
+		() -> {
+			return true;
+		},
+		() -> {
+			return true;
+		},
+		() -> {
+			return true;
+		},
+		() -> {
+			return true;
+		});
+		
+		retVals.forEach(Assert::assertTrue);
+	}
+	
+	
+	@Test
+	public void testScheduleTasksWait()  throws InterruptedException {
+		boolean[] retVal = new boolean[5];
+		AsyncHelper.INSTANCE.scheduleTasksAndWait(10, 100, TimeUnit.MILLISECONDS, true,
+		() -> {
+			retVal[0] = true;
+		},
+		() -> {
+			retVal[1] = true;
+		},
+		() -> {
+			retVal[2] = true;
+		},
+		() -> {
+			retVal[3] = true;
+		},
+		() -> {
+			retVal[4] = true;
+		});
+		
+		assertArrayEquals(retVal, new boolean[]{true, true, true, true, true});
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testMultipleSuppliers() throws InterruptedException {
+		Supplier<Boolean>[] submitMultipleSuppliers = AsyncHelper.INSTANCE.submitMultipleSuppliers(delayedSupplier(() -> {
+			return true;
+		}, 100),
+		delayedSupplier(() -> {
+			return true;
+		}, 100),
+		delayedSupplier(() -> {
+			return true;
+		}, 100),
+		delayedSupplier(() -> {
+			return true;
+		}, 100),
+		delayedSupplier(() -> {
+			return true;
+		}, 100)
+		);
+		
+		Stream.of(submitMultipleSuppliers).map(Supplier::get).forEach(val -> assertTrue(val));
+		
+	}
+	
+	@Test
+	public void testMultipleSuppliersForSingleAccess() throws InterruptedException {
+		@SuppressWarnings("unchecked")
+		boolean submitMultipleSuppliers = AsyncHelper.INSTANCE.scheduleMultipleSuppliersForSingleAccess(10, 100, TimeUnit.MILLISECONDS, true,
+				new Supplier[] {
+					() -> {
+						return true;
+					},
+					() -> {
+						return true;
+					},
+					() -> {
+						return true;
+					},
+					() -> {
+						return true;
+					},
+					() -> {
+						return true;
+					}
+				}, 
+				"Scheduled", "Multiple","Suppliers","key"
+		);
+		
+		assertTrue(submitMultipleSuppliers);
+		
+		List<Boolean> waitAndGetMultiple = AsyncHelper.INSTANCE.waitAndGetMultiple(Boolean.class, "Scheduled", "Multiple","Suppliers","key").collect(Collectors.toList());
+		assertEquals(waitAndGetMultiple.size(), 5);
+		waitAndGetMultiple.forEach(Assert::assertTrue);
+		
+	}
+	
+	@Test
+	public void testScheduleMultipleSuppliersForSingleAccess() throws InterruptedException {
+		@SuppressWarnings("unchecked")
+		boolean submitMultipleSuppliers = AsyncHelper.INSTANCE.submitMultipleSuppliersForSingleAccess(
+				new Supplier[] {
+					delayedSupplier(() -> {
+						return true;
+					}, 100),
+					delayedSupplier(() -> {
+						return true;
+					}, 100),
+					delayedSupplier(() -> {
+						return true;
+					}, 100),
+					delayedSupplier(() -> {
+						return true;
+					}, 100),
+					delayedSupplier(() -> {
+						return true;
+					}, 100)
+					}, 
+				"Multiple","Suppliers","key"
+		);
+		
+		assertTrue(submitMultipleSuppliers);
+		
+		List<Boolean> waitAndGetMultiple = AsyncHelper.INSTANCE.waitAndGetMultiple(Boolean.class, "Multiple","Suppliers","key").collect(Collectors.toList());
+		assertEquals(waitAndGetMultiple.size(), 5);
+		waitAndGetMultiple.forEach(Assert::assertTrue);
+		
+	}
+	
+	@Test
 	public void testWaitAndNotifyAllForFlag() throws InterruptedException {
 		boolean[] retVal = new boolean[2];
 		AsyncHelper.INSTANCE.submitTask(delayedRunnable(() -> {
@@ -387,6 +609,7 @@ public class AsyncHelperTest {
 		AsyncHelper.INSTANCE.waitForTask("Task2");
 		assertTrue(retVal[1]);
 	}
+	
 	
 	private void print(String msg) {
 		System.out.println(msg);
