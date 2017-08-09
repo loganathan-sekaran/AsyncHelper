@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public enum AsyncHelper {
 	INSTANCE;
@@ -66,6 +67,10 @@ public enum AsyncHelper {
 
 	public void submitTask(Runnable runnable) {
 		forkJoinPool.execute(runnable);
+	}
+	
+	public void submitTasks(Runnable... runnables) {
+		Stream.of(runnables).forEach(forkJoinPool::execute);
 	}
 
 	public <T> boolean submitSupplierForMultipleAccess(Supplier<T> supplier, Object... keys) {
