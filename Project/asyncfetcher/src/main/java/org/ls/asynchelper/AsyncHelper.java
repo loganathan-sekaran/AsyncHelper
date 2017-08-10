@@ -112,14 +112,16 @@ public enum AsyncHelper {
 			Runnable... runnables) {
 		final ScheduledFuture<?>[] scheduleFuture = new ScheduledFuture<?>[1];
 		Runnable seq = new Runnable() {
-			private int sno = 0;
+			private AtomicInteger sno = new AtomicInteger(0);
 			@Override
 			public void run() {
-				if(sno < runnables.length) {
-					runnables[sno++].run();
-				} else {
-					if(scheduleFuture[0] != null) {
-						scheduleFuture[0].cancel(true);
+				if(sno.get() < runnables.length) {
+					runnables[sno.getAndIncrement()].run();
+					
+					if(sno.get() == runnables.length) {
+						if(scheduleFuture[0] != null) {
+							scheduleFuture[0].cancel(true);
+						}
 					}
 				}
 			}

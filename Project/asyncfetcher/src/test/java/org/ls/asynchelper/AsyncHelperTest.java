@@ -456,26 +456,20 @@ public class AsyncHelperTest {
 	public void testScheduleSuppliersAndWait()  throws InterruptedException {
 		Stream<Boolean> retVals = AsyncHelper.INSTANCE.scheduleMultipleSuppliersAndWait(0, 3, TimeUnit.SECONDS, true,
 		() -> {
-			printTime();
 			return true;
 		},
 		() -> {
-			printTime();
 			return true;
 		},
 		() -> {
-			printTime();
 			return true;
 		},
 		() -> {
-			printTime();
 			return true;
 		},
 		() -> {
-			printTime();
 			return true;
 		});
-		printTime();
 		retVals.forEach(Assert::assertTrue);
 	}
 	
@@ -487,23 +481,29 @@ public class AsyncHelperTest {
 	@Test
 	public void testScheduleTasksWait()  throws InterruptedException {
 		boolean[] retVal = new boolean[5];
-		AsyncHelper.INSTANCE.scheduleTasksAndWait(10, 100, TimeUnit.MILLISECONDS, true,
+		AsyncHelper.INSTANCE.scheduleTasksAndWait(0, 3, TimeUnit.SECONDS, true,
 		() -> {
+			printTime();
 			retVal[0] = true;
 		},
 		() -> {
+			printTime();
 			retVal[1] = true;
 		},
 		() -> {
+			printTime();
 			retVal[2] = true;
 		},
 		() -> {
+			printTime();
 			retVal[3] = true;
 		},
 		() -> {
+			printTime();
 			retVal[4] = true;
 		});
 		
+		printTime();
 		assertArrayEquals(retVal, new boolean[]{true, true, true, true, true});
 	}
 	
