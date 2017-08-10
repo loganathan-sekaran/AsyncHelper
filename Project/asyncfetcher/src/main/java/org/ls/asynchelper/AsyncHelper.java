@@ -12,6 +12,7 @@ import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -134,19 +135,19 @@ public enum AsyncHelper {
 	}
 	
 	public <T>  Supplier<T>[] scheduleMultipleSuppliers(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
-			@SuppressWarnings("unchecked") Supplier<T>... runnables) {
-		return doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, false, runnables);
+			@SuppressWarnings("unchecked") Supplier<T>... suppliers) {
+		return doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, false, suppliers);
 	}
 	
 	public <T>  Stream<T> scheduleMultipleSuppliersAndWait(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
-			@SuppressWarnings("unchecked") Supplier<T>... runnables) {
-		 Supplier<T>[] scheduleSupplier = doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, true, runnables);
+			@SuppressWarnings("unchecked") Supplier<T>... suppliers) {
+		 Supplier<T>[] scheduleSupplier = doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, true, suppliers);
 		 return Stream.of(scheduleSupplier).map(Supplier::get);
 	}
 	
 	public <T>  boolean scheduleMultipleSuppliersForSingleAccess(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
-			Supplier<T>[] runnables, Object... keys) {
-		Supplier<T>[] resultSuppliers = doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, false, runnables);
+			Supplier<T>[] suppliers, Object... keys) {
+		Supplier<T>[] resultSuppliers = doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, false, suppliers);
 		boolean result = true;
 		for (int i = 0; i < resultSuppliers.length; i++) {
 			Supplier<T> supplier = resultSuppliers[i];
@@ -157,23 +158,26 @@ public enum AsyncHelper {
 	}
 	
 	private <T> Supplier<T>[] doScheduleSupplier(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
-			boolean waitForAllTasks, @SuppressWarnings("unchecked") Supplier<T>... runnables) {
+			boolean waitForAllTasks, @SuppressWarnings("unchecked") Supplier<T>... suppliers) {
 		final ScheduledFuture<?>[] scheduleFuture = new ScheduledFuture<?>[1];
 		@SuppressWarnings("unchecked")
-		Supplier<T>[] resultSuppliers = new Supplier[runnables.length]; 
+		Supplier<T>[] resultSuppliers = new Supplier[suppliers.length]; 
 		Runnable seq = new Runnable() {
-			private int sno = 0;
+			private AtomicInteger sno = new AtomicInteger(0);
 			@Override
 			public void run() {
-				if(sno < runnables.length) {
-					final int current = sno++;
+				if(sno.get() < suppliers.length) {
+					final int current = sno.getAndIncrement();
 					synchronized (resultSuppliers) {
-						resultSuppliers[current] = () -> runnables[current].get();
+						T res = suppliers[current].get();
+						resultSuppliers[current] = () -> res;
 						resultSuppliers.notifyAll();
 					}
-				} else {
-					if(scheduleFuture[0] != null) {
-						scheduleFuture[0].cancel(true);
+					
+					if(sno.get() == suppliers.length) {
+						if(scheduleFuture[0] != null) {
+							scheduleFuture[0].cancel(true);
+						}
 					}
 				}
 			}
@@ -193,7 +197,8 @@ public enum AsyncHelper {
 			}
 		}
 		
-		Supplier<T>[] blockingResultSupplier = new Supplier[runnables.length]; 
+		@SuppressWarnings("unchecked")
+		Supplier<T>[] blockingResultSupplier = new Supplier[suppliers.length]; 
 		for (int i = 0; i < blockingResultSupplier.length; i++) {
 			final int index = i;
 			blockingResultSupplier[i] = new Supplier<T>() {

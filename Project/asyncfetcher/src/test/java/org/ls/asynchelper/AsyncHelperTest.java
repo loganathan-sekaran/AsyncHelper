@@ -5,6 +5,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -452,24 +454,33 @@ public class AsyncHelperTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testScheduleSuppliersAndWait()  throws InterruptedException {
-		Stream<Boolean> retVals = AsyncHelper.INSTANCE.scheduleMultipleSuppliersAndWait(10, 200, TimeUnit.MILLISECONDS, true,
+		Stream<Boolean> retVals = AsyncHelper.INSTANCE.scheduleMultipleSuppliersAndWait(0, 3, TimeUnit.SECONDS, true,
 		() -> {
+			printTime();
 			return true;
 		},
 		() -> {
+			printTime();
 			return true;
 		},
 		() -> {
+			printTime();
 			return true;
 		},
 		() -> {
+			printTime();
 			return true;
 		},
 		() -> {
+			printTime();
 			return true;
 		});
-		
+		printTime();
 		retVals.forEach(Assert::assertTrue);
+	}
+	
+	private void printTime() {
+		System.out.println(new SimpleDateFormat("hh:mm:ss.SSS").format(new Date()));
 	}
 	
 	
