@@ -1,5 +1,6 @@
 package org.ls.asynchelper;
 
+import java.lang.reflect.Array;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -641,5 +642,228 @@ public enum AsyncHelper {
 			}
 		}
 	}
-	
+
+	/**
+	 * Schedule supplier.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param initialDelay
+	 *            the initial delay
+	 * @param delay
+	 *            the delay
+	 * @param unit
+	 *            the unit
+	 * @param waitForPreviousTask
+	 *            the wait for previous task
+	 * @param supplier
+	 *            the supplier
+	 * @param times
+	 *            the times
+	 * @return the supplier[]
+	 */
+	public <T> Supplier<T>[] scheduleSupplier(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+			Supplier<T> supplier, int times) {
+		return doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, false, arrayOfTimes(supplier, times));
+	}
+
+	/**
+	 * Schedule supplier and wait.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param initialDelay
+	 *            the initial delay
+	 * @param delay
+	 *            the delay
+	 * @param unit
+	 *            the unit
+	 * @param waitForPreviousTask
+	 *            the wait for previous task
+	 * @param supplier
+	 *            the supplier
+	 * @param times
+	 *            the times
+	 * @return the stream
+	 */
+	public <T> Stream<T> scheduleSupplierAndWait(int initialDelay, int delay, TimeUnit unit,
+			boolean waitForPreviousTask, Supplier<T> supplier, int times) {
+		Supplier<T>[] scheduleSupplier = doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, true,
+				arrayOfTimes(supplier, times));
+		return Stream.of(scheduleSupplier).map(Supplier::get);
+	}
+
+	/**
+	 * Array of times.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param t
+	 *            the t
+	 * @param times
+	 *            the times
+	 * @return the t[]
+	 */
+	@SuppressWarnings("unchecked")
+	private <T> T[] arrayOfTimes(T t, int times) {
+		return Stream.generate(() -> t).limit(times).toArray(size -> (T[]) Array.newInstance(t.getClass(), size));
+	}
+
+	/**
+	 * Schedule supplier for single access.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param initialDelay
+	 *            the initial delay
+	 * @param delay
+	 *            the delay
+	 * @param unit
+	 *            the unit
+	 * @param waitForPreviousTask
+	 *            the wait for previous task
+	 * @param supplier
+	 *            the supplier
+	 * @param times
+	 *            the times
+	 * @param keys
+	 *            the keys
+	 * @return true, if successful
+	 */
+	public <T> boolean scheduleSupplierForSingleAccess(int initialDelay, int delay, TimeUnit unit,
+			boolean waitForPreviousTask, Supplier<T> supplier, int times, Object... keys) {
+		Supplier<T>[] resultSuppliers = doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, false,
+				arrayOfTimes(supplier, times));
+		boolean result = true;
+		for (int i = 0; i < resultSuppliers.length; i++) {
+			Supplier<T> supplier1 = resultSuppliers[i];
+			Object[] indexedKey = getIndexedKey(i, keys);
+			result &= storeSupplier(ObjectsKey.of(indexedKey), supplier1, false);
+		}
+		return result;
+	}
+
+	/**
+	 * Schedule task.
+	 *
+	 * @param initialDelay
+	 *            the initial delay
+	 * @param delay
+	 *            the delay
+	 * @param unit
+	 *            the unit
+	 * @param waitForPreviousTask
+	 *            the wait for previous task
+	 * @param runnable
+	 *            the runnable
+	 * @param times
+	 *            the times
+	 */
+	public void scheduleTask(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask, Runnable runnable,
+			int times) {
+		doScheduleTasks(initialDelay, delay, unit, waitForPreviousTask, arrayOfTimes(runnable, times));
+	}
+
+	/**
+	 * Schedule task and wait.
+	 *
+	 * @param initialDelay
+	 *            the initial delay
+	 * @param delay
+	 *            the delay
+	 * @param unit
+	 *            the unit
+	 * @param waitForPreviousTask
+	 *            the wait for previous task
+	 * @param runnable
+	 *            the runnable
+	 * @param times
+	 *            the times
+	 */
+	public void scheduleTaskAndWait(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+			Runnable runnable, int times) {
+		try {
+			doScheduleTasks(initialDelay, delay, unit, waitForPreviousTask, arrayOfTimes(runnable, times)).get();
+		} catch (InterruptedException | ExecutionException | CancellationException e) {
+			logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
+		}
+	}
+
+	/**
+	 * Schedule supplier.
+	 *
+	 * @param <T> the generic type
+	 * @param initialDelay the initial delay
+	 * @param unit the unit
+	 * @param supplier the supplier
+	 * @return the supplier[]
+	 */
+	public <T> Supplier<T>[] scheduleSupplier(int initialDelay, TimeUnit unit, Supplier<T> supplier) {
+		return doScheduleSupplier(initialDelay, 1, unit, false, false, arrayOfTimes(supplier, 1));
+	}
+
+	/**
+	 * Schedule supplier and wait.
+	 *
+	 * @param <T> the generic type
+	 * @param initialDelay the initial delay
+	 * @param unit the unit
+	 * @param supplier the supplier
+	 * @return the stream
+	 */
+	public <T> Stream<T> scheduleSupplierAndWait(int initialDelay, TimeUnit unit, Supplier<T> supplier) {
+		Supplier<T>[] scheduleSupplier = doScheduleSupplier(initialDelay, 1, unit, false, true,
+				arrayOfTimes(supplier, 1));
+		return Stream.of(scheduleSupplier).map(Supplier::get);
+	}
+
+	/**
+	 * Schedule supplier for single access.
+	 *
+	 * @param <T> the generic type
+	 * @param initialDelay the initial delay
+	 * @param unit the unit
+	 * @param supplier the supplier
+	 * @param keys the keys
+	 * @return true, if successful
+	 */
+	public <T> boolean scheduleSupplierForSingleAccess(int initialDelay, TimeUnit unit, Supplier<T> supplier,
+			Object... keys) {
+		Supplier<T>[] resultSuppliers = doScheduleSupplier(initialDelay, 1, unit, false, false,
+				arrayOfTimes(supplier, 1));
+		boolean result = true;
+		for (int i = 0; i < resultSuppliers.length; i++) {
+			Supplier<T> supplier1 = resultSuppliers[i];
+			Object[] indexedKey = getIndexedKey(i, keys);
+			result &= storeSupplier(ObjectsKey.of(indexedKey), supplier1, false);
+		}
+		return result;
+	}
+
+	/**
+	 * Schedule task.
+	 *
+	 * @param initialDelay the initial delay
+	 * @param unit the unit
+	 * @param runnable the runnable
+	 */
+	public void scheduleTask(int initialDelay, TimeUnit unit, Runnable runnable) {
+		doScheduleTasks(initialDelay, 1, unit, false, arrayOfTimes(runnable, 1));
+	}
+
+	/**
+	 * Schedule task and wait.
+	 *
+	 * @param initialDelay the initial delay
+	 * @param unit the unit
+	 * @param runnable the runnable
+	 */
+	public void scheduleTaskAndWait(int initialDelay, TimeUnit unit, Runnable runnable) {
+		try {
+			doScheduleTasks(initialDelay, 1, unit, false, arrayOfTimes(runnable, 1)).get();
+		} catch (InterruptedException | ExecutionException | CancellationException e) {
+			logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
+		}
+	}
+
 }
