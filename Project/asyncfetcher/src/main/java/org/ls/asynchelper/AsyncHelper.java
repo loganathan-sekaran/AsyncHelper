@@ -19,7 +19,12 @@ import java.util.stream.Stream;
 
 import org.ls.javautils.stream.StreamUtil;
 
+/**
+ * The AsyncHelper.
+ */
 public enum AsyncHelper {
+	
+	/** The instance. */
 	INSTANCE;
 
 	/**
@@ -27,27 +32,62 @@ public enum AsyncHelper {
 	 */
 	static final Logger logger = Logger.getLogger(AsyncHelper.class.getName());
 	
+	/** The fork join pool. */
 	private ForkJoinPool forkJoinPool = ForkJoinPool.commonPool();
+	
+	/** The scheduled executor service. */
 	private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(ForkJoinPool.getCommonPoolParallelism());
+	
+	/** The future suppliers. */
 	private Map<ObjectsKey, Supplier<? extends Object>> futureSuppliers = new ConcurrentHashMap<>();
+	
+	/** The original keys. */
 	private Map<ObjectsKey, ObjectsKey> originalKeys = new ConcurrentHashMap<>();
+	
+	/** The multiple accessed keys. */
 	private Map<ObjectsKey, ObjectsKey> multipleAccessedKeys = new ConcurrentHashMap<>();
+	
+	/** The multiple accessed values. */
 	private Map<ObjectsKey, Object> multipleAccessedValues = new ConcurrentHashMap<>();
 
+	/**
+	 * Gets the fork join pool.
+	 *
+	 * @return the fork join pool
+	 */
 	public ForkJoinPool getForkJoinPool() {
 		return forkJoinPool;
 	}
 
+	/**
+	 * Sets the fork join pool.
+	 *
+	 * @param forkJoinPool the new fork join pool
+	 */
 	public void setForkJoinPool(ForkJoinPool forkJoinPool) {
 		assert (forkJoinPool != null);
 		this.forkJoinPool = forkJoinPool;
 	}
 
+	/**
+	 * Async get.
+	 *
+	 * @param <T> the generic type
+	 * @param supplier the supplier
+	 * @return the optional
+	 */
 	public <T> Optional<T> asyncGet(Supplier<T> supplier) {
 		ForkJoinTask<T> task = forkJoinPool.submit(() -> supplier.get());
 		return safeGet(task);
 	}
 
+	/**
+	 * Safe get.
+	 *
+	 * @param <T> the generic type
+	 * @param task the task
+	 * @return the optional
+	 */
 	private <T> Optional<T> safeGet(ForkJoinTask<T> task) {
 		try {
 			return Optional.ofNullable(task.get());
@@ -56,6 +96,13 @@ public enum AsyncHelper {
 		}
 	}
 
+	/**
+	 * Safe supplier.
+	 *
+	 * @param <T> the generic type
+	 * @param task the task
+	 * @return the supplier
+	 */
 	private <T> Supplier<T> safeSupplier(ForkJoinTask<T> task) {
 		return () -> {
 			try {
@@ -66,10 +113,24 @@ public enum AsyncHelper {
 		};
 	}
 
+	/**
+	 * Submit supplier.
+	 *
+	 * @param <T> the generic type
+	 * @param supplier the supplier
+	 * @return the supplier
+	 */
 	public <T> Supplier<T> submitSupplier(Supplier<T> supplier) {
 		return safeSupplier(forkJoinPool.submit(() -> supplier.get()));
 	}
 	
+	/**
+	 * Submit multiple suppliers.
+	 *
+	 * @param <T> the generic type
+	 * @param suppliers the suppliers
+	 * @return the supplier[]
+	 */
 	@SuppressWarnings("unchecked")
 	public <T> Supplier<T>[] submitMultipleSuppliers(Supplier<T>... suppliers) {
 		return Stream.of(suppliers)
@@ -77,28 +138,70 @@ public enum AsyncHelper {
 				.toArray(size -> new Supplier[size]);
 	}
 
+	/**
+	 * Submit callable.
+	 *
+	 * @param <T> the generic type
+	 * @param callable the callable
+	 * @return the supplier
+	 */
 	public <T> Supplier<T> submitCallable(Callable<T> callable) {
 		return safeSupplier(forkJoinPool.submit(callable));
 	}
 
+	/**
+	 * Submit and get.
+	 *
+	 * @param <T> the generic type
+	 * @param callable the callable
+	 * @return the optional
+	 */
 	public synchronized <T> Optional<T> submitAndGet(Callable<T> callable) {
 		ForkJoinTask<T> task = forkJoinPool.submit(callable);
 		return safeGet(task);
 	}
 
+	/**
+	 * Submit task.
+	 *
+	 * @param runnable the runnable
+	 */
 	public void submitTask(Runnable runnable) {
 		forkJoinPool.execute(runnable);
 	}
 	
+	/**
+	 * Submit tasks.
+	 *
+	 * @param runnables the runnables
+	 */
 	public void submitTasks(Runnable... runnables) {
 		Stream.of(runnables).forEach(forkJoinPool::execute);
 	}
 	
+	/**
+	 * Schedule tasks.
+	 *
+	 * @param initialDelay the initial delay
+	 * @param delay the delay
+	 * @param unit the unit
+	 * @param waitForPreviousTask the wait for previous task
+	 * @param runnables the runnables
+	 */
 	public void scheduleTasks(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Runnable... runnables) {
 		doScheduleTasks(initialDelay, delay, unit, waitForPreviousTask, runnables);
 	}
 	
+	/**
+	 * Schedule tasks and wait.
+	 *
+	 * @param initialDelay the initial delay
+	 * @param delay the delay
+	 * @param unit the unit
+	 * @param waitForPreviousTask the wait for previous task
+	 * @param runnables the runnables
+	 */
 	public void scheduleTasksAndWait(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Runnable... runnables) {
 		try {
@@ -108,6 +211,16 @@ public enum AsyncHelper {
 		}
 	}
 	
+	/**
+	 * Do schedule tasks.
+	 *
+	 * @param initialDelay the initial delay
+	 * @param delay the delay
+	 * @param unit the unit
+	 * @param waitForPreviousTask the wait for previous task
+	 * @param runnables the runnables
+	 * @return the scheduled future
+	 */
 	private ScheduledFuture<?> doScheduleTasks(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Runnable... runnables) {
 		final ScheduledFuture<?>[] scheduleFuture = new ScheduledFuture<?>[1];
@@ -136,17 +249,51 @@ public enum AsyncHelper {
 		return scheduleFuture[0];
 	}
 	
+	/**
+	 * Schedule multiple suppliers.
+	 *
+	 * @param <T> the generic type
+	 * @param initialDelay the initial delay
+	 * @param delay the delay
+	 * @param unit the unit
+	 * @param waitForPreviousTask the wait for previous task
+	 * @param suppliers the suppliers
+	 * @return the supplier[]
+	 */
 	public <T>  Supplier<T>[] scheduleMultipleSuppliers(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			@SuppressWarnings("unchecked") Supplier<T>... suppliers) {
 		return doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, false, suppliers);
 	}
 	
+	/**
+	 * Schedule multiple suppliers and wait.
+	 *
+	 * @param <T> the generic type
+	 * @param initialDelay the initial delay
+	 * @param delay the delay
+	 * @param unit the unit
+	 * @param waitForPreviousTask the wait for previous task
+	 * @param suppliers the suppliers
+	 * @return the stream
+	 */
 	public <T>  Stream<T> scheduleMultipleSuppliersAndWait(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			@SuppressWarnings("unchecked") Supplier<T>... suppliers) {
 		 Supplier<T>[] scheduleSupplier = doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, true, suppliers);
 		 return Stream.of(scheduleSupplier).map(Supplier::get);
 	}
 	
+	/**
+	 * Schedule multiple suppliers for single access.
+	 *
+	 * @param <T> the generic type
+	 * @param initialDelay the initial delay
+	 * @param delay the delay
+	 * @param unit the unit
+	 * @param waitForPreviousTask the wait for previous task
+	 * @param suppliers the suppliers
+	 * @param keys the keys
+	 * @return true, if successful
+	 */
 	public <T>  boolean scheduleMultipleSuppliersForSingleAccess(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Supplier<T>[] suppliers, Object... keys) {
 		Supplier<T>[] resultSuppliers = doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, false, suppliers);
@@ -159,6 +306,18 @@ public enum AsyncHelper {
 		return result;
 	}
 	
+	/**
+	 * Do schedule supplier.
+	 *
+	 * @param <T> the generic type
+	 * @param initialDelay the initial delay
+	 * @param delay the delay
+	 * @param unit the unit
+	 * @param waitForPreviousTask the wait for previous task
+	 * @param waitForAllTasks the wait for all tasks
+	 * @param suppliers the suppliers
+	 * @return the supplier[]
+	 */
 	private <T> Supplier<T>[] doScheduleSupplier(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			boolean waitForAllTasks, @SuppressWarnings("unchecked") Supplier<T>... suppliers) {
 		final ScheduledFuture<?>[] scheduleFuture = new ScheduledFuture<?>[1];
@@ -225,14 +384,38 @@ public enum AsyncHelper {
 		return blockingResultSupplier;
 	}
 
+	/**
+	 * Submit supplier for multiple access.
+	 *
+	 * @param <T> the generic type
+	 * @param supplier the supplier
+	 * @param keys the keys
+	 * @return true, if successful
+	 */
 	public <T> boolean submitSupplierForMultipleAccess(Supplier<T> supplier, Object... keys) {
 		return doSubmitSupplier(supplier, true, keys);
 	}
 	
+	/**
+	 * Submit supplier for single access.
+	 *
+	 * @param <T> the generic type
+	 * @param supplier the supplier
+	 * @param keys the keys
+	 * @return true, if successful
+	 */
 	public <T> boolean submitSupplierForSingleAccess(Supplier<T> supplier, Object... keys) {
 		return doSubmitSupplier(supplier, false, keys);
 	}
 	
+	/**
+	 * Submit multiple suppliers for single access.
+	 *
+	 * @param <T> the generic type
+	 * @param suppliers the suppliers
+	 * @param keys the keys
+	 * @return true, if successful
+	 */
 	public <T> boolean submitMultipleSuppliersForSingleAccess(Supplier<T>[] suppliers, Object... keys) {
 		boolean result = true;
 		for (int i = 0; i < suppliers.length; i++) {
@@ -243,6 +426,15 @@ public enum AsyncHelper {
 		return result;
 	}
 
+	/**
+	 * Do submit supplier.
+	 *
+	 * @param <T> the generic type
+	 * @param supplier the supplier
+	 * @param multipleAccess the multiple access
+	 * @param keys the keys
+	 * @return true, if successful
+	 */
 	private <T> boolean doSubmitSupplier(Supplier<T> supplier, boolean multipleAccess, Object... keys) {
 		ObjectsKey key = ObjectsKey.of(keys);
 		if (!futureSuppliers.containsKey(key)) {
@@ -252,6 +444,15 @@ public enum AsyncHelper {
 		return false;
 	}
 
+	/**
+	 * Store supplier.
+	 *
+	 * @param <T> the generic type
+	 * @param key the key
+	 * @param resultSupplier the result supplier
+	 * @param multipleAccess the multiple access
+	 * @return true, if successful
+	 */
 	private <T> boolean storeSupplier(ObjectsKey key, Supplier<T> resultSupplier, boolean multipleAccess) {
 		if (!futureSuppliers.containsKey(key)) {
 			futureSuppliers.put(key, resultSupplier);
@@ -270,6 +471,13 @@ public enum AsyncHelper {
 		return false;
 	}
 
+	/**
+	 * Submit task.
+	 *
+	 * @param runnable the runnable
+	 * @param keys the keys
+	 * @return true, if successful
+	 */
 	public boolean submitTask(Runnable runnable, Object... keys) {
 		ObjectsKey key = ObjectsKey.of(keys);
 		if (!futureSuppliers.containsKey(key)) {
@@ -282,6 +490,14 @@ public enum AsyncHelper {
 		return false;
 	}
 
+	/**
+	 * Wait and get.
+	 *
+	 * @param <T> the generic type
+	 * @param clazz the clazz
+	 * @param keys the keys
+	 * @return the optional
+	 */
 	public <T> Optional<T> waitAndGet(Class<T> clazz, Object... keys) {
 		ObjectsKey objectsKey = ObjectsKey.of(keys);
 		if (originalKeys.containsKey(objectsKey)) {
@@ -306,6 +522,14 @@ public enum AsyncHelper {
 		return Optional.empty();
 	}
 	
+	/**
+	 * Wait and get multiple.
+	 *
+	 * @param <T> the generic type
+	 * @param clazz the clazz
+	 * @param keys the keys
+	 * @return the stream
+	 */
 	public <T> Stream<T> waitAndGetMultiple(Class<T> clazz, Object... keys) {
 		Stream.Builder<Optional<T>> builder = Stream.builder();
 		for (int i = 0; originalKeys.containsKey(ObjectsKey.of(getIndexedKey(i, keys))); i++) {
@@ -315,10 +539,25 @@ public enum AsyncHelper {
 		return StreamUtil.flatten(builder.build());
 	}
 
+	/**
+	 * Gets the indexed key.
+	 *
+	 * @param i the i
+	 * @param keys the keys
+	 * @return the indexed key
+	 */
 	private Object[] getIndexedKey(int i, Object... keys) {
 		return Stream.concat(Stream.of(keys), Stream.of(i)).toArray();
 	}
 
+	/**
+	 * Gets the casted value.
+	 *
+	 * @param <T> the generic type
+	 * @param clazz the clazz
+	 * @param supplier the supplier
+	 * @return the casted value
+	 */
 	public <T> Optional<T> getCastedValue(Class<T> clazz, Supplier<? extends Object> supplier) {
 		Object object = supplier.get();
 		if (clazz.isInstance(object)) {
@@ -327,6 +566,11 @@ public enum AsyncHelper {
 		return Optional.empty();
 	}
 
+	/**
+	 * Wait for task.
+	 *
+	 * @param keys the keys
+	 */
 	public void waitForTask(Object... keys) {
 		ObjectsKey objectsKey = ObjectsKey.of(keys);
 		if (originalKeys.containsKey(objectsKey)) {
@@ -348,6 +592,12 @@ public enum AsyncHelper {
 		}
 	}
 	
+	/**
+	 * Wait for flag.
+	 *
+	 * @param flag the flag
+	 * @throws InterruptedException the interrupted exception
+	 */
 	public void waitForFlag(String... flag) throws InterruptedException {
 		ObjectsKey key = ObjectsKey.of((Object[])flag);
 		ObjectsKey originalKey = originalKeys.get(key);
@@ -360,6 +610,11 @@ public enum AsyncHelper {
 		}
 	}
 	
+	/**
+	 * Notify flag.
+	 *
+	 * @param flag the flag
+	 */
 	public void notifyFlag(String... flag) {
 		ObjectsKey key = ObjectsKey.of((Object[])flag);
 		ObjectsKey originalKey = originalKeys.get(key);
@@ -371,6 +626,11 @@ public enum AsyncHelper {
 		}
 	}
 	
+	/**
+	 * Notify all flag.
+	 *
+	 * @param flag the flag
+	 */
 	public void notifyAllFlag(String... flag) {
 		ObjectsKey key = ObjectsKey.of((Object[])flag);
 		ObjectsKey originalKey = originalKeys.get(key);

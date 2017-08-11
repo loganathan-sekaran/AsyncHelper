@@ -3,15 +3,30 @@ package org.ls.asynchelper;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * The Class ObjectsKey.
+ */
 class ObjectsKey {
 
+	/** The keys. */
 	private List<Object> keys;
 	
+	/**
+	 * Instantiates a new objects key.
+	 *
+	 * @param keys the keys
+	 */
 	private ObjectsKey(Object[] keys) {
 		this.keys = Arrays.asList(keys);
 
 	}
 
+	/**
+	 * Of.
+	 *
+	 * @param keys the keys
+	 * @return the objects key
+	 */
 	public static ObjectsKey of(Object... keys) {
 		assert(keys != null);
 		assert(keys.length > 0);
@@ -21,6 +36,9 @@ class ObjectsKey {
 		return new ObjectsKey(keys);
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -31,6 +49,9 @@ class ObjectsKey {
 		return result;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -44,6 +65,9 @@ class ObjectsKey {
 
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
 		return "ObjectsKey [keys=" + keys + "]";
