@@ -664,7 +664,7 @@ public enum AsyncHelper {
 	 */
 	public <T> Supplier<T>[] scheduleSupplier(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Supplier<T> supplier, int times) {
-		return doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, false, arrayOfTimes(supplier, times));
+		return scheduleMultipleSuppliers(initialDelay, delay, unit, waitForPreviousTask,  arrayOfTimes(supplier, times));
 	}
 
 	/**
@@ -688,9 +688,7 @@ public enum AsyncHelper {
 	 */
 	public <T> Stream<T> scheduleSupplierAndWait(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, Supplier<T> supplier, int times) {
-		Supplier<T>[] scheduleSupplier = doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, true,
-				arrayOfTimes(supplier, times));
-		return Stream.of(scheduleSupplier).map(Supplier::get);
+		return scheduleMultipleSuppliersAndWait(initialDelay, delay, unit, waitForPreviousTask, arrayOfTimes(supplier, times));
 	}
 
 	/**
@@ -732,15 +730,7 @@ public enum AsyncHelper {
 	 */
 	public <T> boolean scheduleSupplierForSingleAccess(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, Supplier<T> supplier, int times, Object... keys) {
-		Supplier<T>[] resultSuppliers = doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, false,
-				arrayOfTimes(supplier, times));
-		boolean result = true;
-		for (int i = 0; i < resultSuppliers.length; i++) {
-			Supplier<T> supplier1 = resultSuppliers[i];
-			Object[] indexedKey = getIndexedKey(i, keys);
-			result &= storeSupplier(ObjectsKey.of(indexedKey), supplier1, false);
-		}
-		return result;
+		return scheduleMultipleSuppliersForSingleAccess(initialDelay, delay, unit, waitForPreviousTask, arrayOfTimes(supplier, times), keys);
 	}
 
 	/**
@@ -761,7 +751,7 @@ public enum AsyncHelper {
 	 */
 	public void scheduleTask(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask, Runnable runnable,
 			int times) {
-		doScheduleTasks(initialDelay, delay, unit, waitForPreviousTask, arrayOfTimes(runnable, times));
+		scheduleTasks(initialDelay, delay, unit, waitForPreviousTask,  arrayOfTimes(runnable, times));
 	}
 
 	/**
@@ -782,11 +772,7 @@ public enum AsyncHelper {
 	 */
 	public void scheduleTaskAndWait(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Runnable runnable, int times) {
-		try {
-			doScheduleTasks(initialDelay, delay, unit, waitForPreviousTask, arrayOfTimes(runnable, times)).get();
-		} catch (InterruptedException | ExecutionException | CancellationException e) {
-			logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
-		}
+		scheduleTasksAndWait(initialDelay, delay, unit, waitForPreviousTask, arrayOfTimes(runnable, times));
 	}
 
 	/**
@@ -798,8 +784,8 @@ public enum AsyncHelper {
 	 * @param supplier the supplier
 	 * @return the supplier[]
 	 */
-	public <T> Supplier<T>[] scheduleSupplier(int initialDelay, TimeUnit unit, Supplier<T> supplier) {
-		return doScheduleSupplier(initialDelay, 1, unit, false, false, arrayOfTimes(supplier, 1));
+	public <T> Supplier<T> scheduleSupplier(int initialDelay, TimeUnit unit, Supplier<T> supplier) {
+		return scheduleSupplier(initialDelay, 1, unit, false, supplier, 1)[0];
 	}
 
 	/**
@@ -811,10 +797,8 @@ public enum AsyncHelper {
 	 * @param supplier the supplier
 	 * @return the stream
 	 */
-	public <T> Stream<T> scheduleSupplierAndWait(int initialDelay, TimeUnit unit, Supplier<T> supplier) {
-		Supplier<T>[] scheduleSupplier = doScheduleSupplier(initialDelay, 1, unit, false, true,
-				arrayOfTimes(supplier, 1));
-		return Stream.of(scheduleSupplier).map(Supplier::get);
+	public <T> Optional<T> scheduleSupplierAndWait(int initialDelay, TimeUnit unit, Supplier<T> supplier) {
+		return scheduleSupplierAndWait(initialDelay, 1, unit, false, supplier, 1).findAny();
 	}
 
 	/**
@@ -829,15 +813,7 @@ public enum AsyncHelper {
 	 */
 	public <T> boolean scheduleSupplierForSingleAccess(int initialDelay, TimeUnit unit, Supplier<T> supplier,
 			Object... keys) {
-		Supplier<T>[] resultSuppliers = doScheduleSupplier(initialDelay, 1, unit, false, false,
-				arrayOfTimes(supplier, 1));
-		boolean result = true;
-		for (int i = 0; i < resultSuppliers.length; i++) {
-			Supplier<T> supplier1 = resultSuppliers[i];
-			Object[] indexedKey = getIndexedKey(i, keys);
-			result &= storeSupplier(ObjectsKey.of(indexedKey), supplier1, false);
-		}
-		return result;
+		return scheduleSupplierForSingleAccess(initialDelay, 1, unit, false, supplier, 1, keys);
 	}
 
 	/**
@@ -848,7 +824,7 @@ public enum AsyncHelper {
 	 * @param runnable the runnable
 	 */
 	public void scheduleTask(int initialDelay, TimeUnit unit, Runnable runnable) {
-		doScheduleTasks(initialDelay, 1, unit, false, arrayOfTimes(runnable, 1));
+		scheduleTask(initialDelay, 1, unit, false, runnable, 1);
 	}
 
 	/**
@@ -859,11 +835,7 @@ public enum AsyncHelper {
 	 * @param runnable the runnable
 	 */
 	public void scheduleTaskAndWait(int initialDelay, TimeUnit unit, Runnable runnable) {
-		try {
-			doScheduleTasks(initialDelay, 1, unit, false, arrayOfTimes(runnable, 1)).get();
-		} catch (InterruptedException | ExecutionException | CancellationException e) {
-			logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
-		}
+		scheduleTaskAndWait(initialDelay, 1, unit, false, runnable, 1);
 	}
 
 }

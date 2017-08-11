@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -705,21 +706,21 @@ public class AsyncHelperTest {
 
 	@Test
 	public void testScheduleSupplierSingleTime()  throws InterruptedException {
-		Supplier<Boolean>[] scheduleSuppliers = AsyncHelper.INSTANCE.scheduleSupplier(10, TimeUnit.MILLISECONDS,
+		Supplier<Boolean> scheduleSupplier = AsyncHelper.INSTANCE.scheduleSupplier(10, TimeUnit.MILLISECONDS,
 		() -> {
 			return true;
 		});
 		
-		Stream.of(scheduleSuppliers).map(Supplier::get).forEach(Assert::assertTrue);
+		assertTrue(scheduleSupplier.get());
 	}
 
 	@Test
 	public void testScheduleSupplierAndWaitSingleTime()  throws InterruptedException {
-		Stream<Boolean> retVals = AsyncHelper.INSTANCE.scheduleSupplierAndWait(0, TimeUnit.SECONDS,
+		Optional<Boolean> retVal = AsyncHelper.INSTANCE.scheduleSupplierAndWait(0, TimeUnit.SECONDS,
 		() -> {
 			return true;
 		});
-		retVals.forEach(Assert::assertTrue);
+		assertTrue(retVal.get());
 	}
 
 	@Test
