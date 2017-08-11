@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.ls</groupId>
   <artifactId>asynchelper</artifactId>
-  <version>0.0.1</version>
+  <version>1.0.0</version>
   <name>Async Helper</name>
   <description>Invoke Tasks or Fetch Data asynchronously using tags</description>
    <build>
