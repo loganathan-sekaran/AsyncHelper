@@ -235,6 +235,59 @@ public enum AsyncHelper {
 			scheduleFuture[0] = scheduledExecutorService.scheduleAtFixedRate(seq, initialDelay, delay, unit);
 		}
 		
+		SchedulingTask<Runnable, Void> schedulingRunnables = new SchedulingTask<Runnable, Void>() {
+			private AtomicInteger index = new AtomicInteger(0);
+			@Override
+			public boolean canRun() {
+				return index.get() < runnables.length;
+			}
+
+			@Override
+			public boolean canCancel() {
+				return index.get() == runnables.length;
+			}
+
+			@Override
+			public Void invokeNextTask() {
+				runnables[index.getAndIncrement()].run();
+				return null;
+			}
+
+			@Override
+			public  void consumeResult(Void v) {
+			}
+			
+		};
+		return doScheduleTasks(initialDelay, 
+				delay, 
+				unit, 
+				waitForPreviousTask, 
+				schedulingRunnables);
+	}
+	
+	static private <T,R> ScheduledFuture<?> doScheduleTasks(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+			SchedulingTask<T,R> schedulingTask) {
+		final ScheduledFuture<?>[] scheduleFuture = new ScheduledFuture<?>[1];
+		Runnable seq = new Runnable() {
+			@Override
+			public void run() {
+				if(schedulingTask.canRun()) {
+					schedulingTask.invokeNextTask();
+					if(schedulingTask.canCancel()) {
+						if(scheduleFuture[0] != null) {
+							scheduleFuture[0].cancel(true);
+						}
+					}
+				}
+			}
+		};
+		
+		if (waitForPreviousTask) {
+			scheduleFuture[0] = scheduledExecutorService.scheduleWithFixedDelay(seq, initialDelay, delay, unit);
+		} else {
+			scheduleFuture[0] = scheduledExecutorService.scheduleAtFixedRate(seq, initialDelay, delay, unit);
+		}
+		
 		return scheduleFuture[0];
 	}
 	
@@ -826,4 +879,58 @@ public enum AsyncHelper {
 		scheduleTaskAndWait(initialDelay, 1, unit, false, runnable, 1);
 	}
 
+	/**
+	 * Schedule supplier for single access.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param initialDelay
+	 *            the initial delay
+	 * @param delay
+	 *            the delay
+	 * @param unit
+	 *            the unit
+	 * @param waitForPreviousTask
+	 *            the wait for previous task
+	 * @param supplier
+	 *            the supplier
+	 * @param times
+	 *            the times
+	 * @param keys
+	 *            the keys
+	 * @return true, if successful
+	 */
+	static public <T> boolean scheduleSupplierUntilFlagForSingleAccess(int initialDelay, int delay, TimeUnit unit,
+			boolean waitForPreviousTask, Supplier<T> supplier, int times, Object... keys) {
+		return scheduleMultipleSuppliersForSingleAccess(initialDelay, delay, unit, waitForPreviousTask, arrayOfTimes(supplier, times), keys);
+	}
+
+	/**
+	 * Schedule task.
+	 *
+	 * @param initialDelay
+	 *            the initial delay
+	 * @param delay
+	 *            the delay
+	 * @param unit
+	 *            the unit
+	 * @param waitForPreviousTask
+	 *            the wait for previous task
+	 * @param runnable
+	 *            the runnable
+	 * @param times
+	 *            the times
+	 */
+	static public void scheduleTaskUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask, Runnable runnable,
+			int times) {
+		scheduleTasks(initialDelay, delay, unit, waitForPreviousTask,  arrayOfTimes(runnable, times));
+	}
+	
+	interface SchedulingTask<T,R> {
+		boolean canRun();
+		boolean canCancel();
+		R invokeNextTask();
+		void consumeResult(R r);
+	}
+	
 }
