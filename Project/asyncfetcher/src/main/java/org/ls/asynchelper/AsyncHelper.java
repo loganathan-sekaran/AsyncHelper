@@ -13,6 +13,7 @@ import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
@@ -183,6 +184,36 @@ public enum AsyncHelper {
 	}
 	
 	/**
+	 * Schedule tasks until flag.
+	 *
+	 * @param initialDelay the initial delay
+	 * @param delay the delay
+	 * @param unit the unit
+	 * @param waitForPreviousTask the wait for previous task
+	 * @param flag the flag
+	 * @param runnables the runnables
+	 */
+	static public void scheduleTasksUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+			String flag, Runnable... runnables) {
+		doScheduleTasksUntilFlag(initialDelay, delay, unit, waitForPreviousTask, runnables, flag);
+	}
+	
+	/**
+	 * Schedule task until flag.
+	 *
+	 * @param initialDelay the initial delay
+	 * @param delay the delay
+	 * @param unit the unit
+	 * @param waitForPreviousTask the wait for previous task
+	 * @param flag the flag
+	 * @param runnable the runnable
+	 */
+	static public void scheduleTaskUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+			String flag, Runnable runnable) {
+		scheduleTasksUntilFlag(initialDelay, delay, unit, waitForPreviousTask, flag, runnable);
+	}
+	
+	/**
 	 * Schedule tasks and wait.
 	 *
 	 * @param initialDelay the initial delay
@@ -212,29 +243,6 @@ public enum AsyncHelper {
 	 */
 	static private ScheduledFuture<?> doScheduleTasks(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Runnable... runnables) {
-		final ScheduledFuture<?>[] scheduleFuture = new ScheduledFuture<?>[1];
-		Runnable seq = new Runnable() {
-			private AtomicInteger sno = new AtomicInteger(0);
-			@Override
-			public void run() {
-				if(sno.get() < runnables.length) {
-					runnables[sno.getAndIncrement()].run();
-					
-					if(sno.get() == runnables.length) {
-						if(scheduleFuture[0] != null) {
-							scheduleFuture[0].cancel(true);
-						}
-					}
-				}
-			}
-		};
-		
-		if (waitForPreviousTask) {
-			scheduleFuture[0] = scheduledExecutorService.scheduleWithFixedDelay(seq, initialDelay, delay, unit);
-		} else {
-			scheduleFuture[0] = scheduledExecutorService.scheduleAtFixedRate(seq, initialDelay, delay, unit);
-		}
-		
 		SchedulingTask<Runnable, Void> schedulingRunnables = new SchedulingTask<Runnable, Void>() {
 			private AtomicInteger index = new AtomicInteger(0);
 			@Override
@@ -258,31 +266,104 @@ public enum AsyncHelper {
 			}
 			
 		};
-		return doScheduleTasks(initialDelay, 
+		return doScheduleFunction(initialDelay, 
 				delay, 
 				unit, 
 				waitForPreviousTask, 
 				schedulingRunnables);
 	}
 	
-	static private <T,R> ScheduledFuture<?> doScheduleTasks(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
-			SchedulingTask<T,R> schedulingTask) {
+	/**
+	 * Do schedule tasks.
+	 *
+	 * @param initialDelay the initial delay
+	 * @param delay the delay
+	 * @param unit the unit
+	 * @param waitForPreviousTask the wait for previous task
+	 * @param runnables the runnables
+	 * @param flag the flag
+	 * @return the scheduled future
+	 */
+	static private ScheduledFuture<?> doScheduleTasksUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+			Runnable[] runnables, String flag) {
+		AtomicBoolean canCancel = new AtomicBoolean(false);
+		SchedulingTask<Runnable, Void> schedulingRunnables = new SchedulingTask<Runnable, Void>() {
+			private AtomicInteger index = new AtomicInteger(0);
+			@Override
+			public boolean canRun() {
+				return !canCancel.get();
+			}
+
+			@Override
+			public boolean canCancel() {
+				return canCancel.get();
+			}
+
+			@Override
+			public Void invokeNextTask() {
+				if(index.get() == runnables.length) {
+					//Cycle again
+					index.set(0);
+				}
+				runnables[index.getAndIncrement()].run();
+				return null;
+			}
+
+			@Override
+			public  void consumeResult(Void v) {
+			}
+			
+		};
+		
+		AsyncHelper.submitTask(() -> {
+			try {
+				AsyncHelper.waitForFlag(flag);
+			} catch (InterruptedException e) {
+				logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
+			}
+			canCancel.set(true);
+		});
+		
+		return doScheduleFunction(initialDelay, 
+				delay, 
+				unit, 
+				waitForPreviousTask, 
+				schedulingRunnables);
+	}
+	
+	/**
+	 * Do schedule function.
+	 *
+	 * @param <T> the generic type
+	 * @param <R> the generic type
+	 * @param initialDelay the initial delay
+	 * @param delay the delay
+	 * @param unit the unit
+	 * @param waitForPreviousFunction the wait for previous function
+	 * @param schedulingFunction the scheduling function
+	 * @return the scheduled future
+	 */
+	static private <T,R> ScheduledFuture<?> doScheduleFunction(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousFunction,
+			SchedulingTask<T,R> schedulingFunction) {
 		final ScheduledFuture<?>[] scheduleFuture = new ScheduledFuture<?>[1];
 		Runnable seq = new Runnable() {
 			@Override
 			public void run() {
-				if(schedulingTask.canRun()) {
-					schedulingTask.invokeNextTask();
-					if(schedulingTask.canCancel()) {
-						if(scheduleFuture[0] != null) {
-							scheduleFuture[0].cancel(true);
+				synchronized (schedulingFunction) {
+					if (schedulingFunction.canRun()) {
+						R res = schedulingFunction.invokeNextTask();
+						schedulingFunction.consumeResult(res);
+						if (schedulingFunction.canCancel()) {
+							if (scheduleFuture[0] != null) {
+								scheduleFuture[0].cancel(true);
+							}
 						}
 					}
 				}
 			}
 		};
 		
-		if (waitForPreviousTask) {
+		if (waitForPreviousFunction) {
 			scheduleFuture[0] = scheduledExecutorService.scheduleWithFixedDelay(seq, initialDelay, delay, unit);
 		} else {
 			scheduleFuture[0] = scheduledExecutorService.scheduleAtFixedRate(seq, initialDelay, delay, unit);
@@ -362,43 +443,39 @@ public enum AsyncHelper {
 	 */
 	static private <T> Supplier<T>[] doScheduleSupplier(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			boolean waitForAllTasks, @SuppressWarnings("unchecked") Supplier<T>... suppliers) {
-		final ScheduledFuture<?>[] scheduleFuture = new ScheduledFuture<?>[1];
 		@SuppressWarnings("unchecked")
 		Supplier<T>[] resultSuppliers = new Supplier[suppliers.length]; 
-		Runnable seq = new Runnable() {
-			private AtomicInteger sno = new AtomicInteger(0);
+		SchedulingTask<Supplier<T>, T> schedulingSuppliers = new SchedulingTask<Supplier<T>, T>() {
+			private AtomicInteger index = new AtomicInteger(0);
 			@Override
-			public void run() {
-				if(sno.get() < suppliers.length) {
-					final int current = sno.getAndIncrement();
-					synchronized (resultSuppliers) {
-						T res = suppliers[current].get();
-						resultSuppliers[current] = () -> res;
-						resultSuppliers.notifyAll();
-					}
-					
-					if(sno.get() == suppliers.length) {
-						if(scheduleFuture[0] != null) {
-							scheduleFuture[0].cancel(true);
-						}
-					}
+			public boolean canRun() {
+				return index.get() < suppliers.length;
+			}
+
+			@Override
+			public boolean canCancel() {
+				return index.get() == suppliers.length;
+			}
+
+			@Override
+			public T invokeNextTask() {
+				return suppliers[index.getAndIncrement()].get();
+			}
+
+			@Override
+			public  void consumeResult(T t) {
+				synchronized (resultSuppliers) {
+					resultSuppliers[index.get() - 1] = () -> t;
+					resultSuppliers.notifyAll();
 				}
 			}
+			
 		};
-		
-		if (waitForPreviousTask) {
-			scheduleFuture[0] = scheduledExecutorService.scheduleWithFixedDelay(seq, initialDelay, delay, unit);
-		} else {
-			scheduleFuture[0] = scheduledExecutorService.scheduleAtFixedRate(seq, initialDelay, delay, unit);
-		}
-		
-		if(waitForAllTasks) {
-			try {
-			scheduleFuture[0].get();
-			} catch (InterruptedException | ExecutionException | CancellationException e) {
-				logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
-			}
-		}
+		doScheduleFunction(initialDelay, 
+				delay, 
+				unit, 
+				waitForPreviousTask, 
+				schedulingSuppliers);
 		
 		@SuppressWarnings("unchecked")
 		Supplier<T>[] blockingResultSupplier = new Supplier[suppliers.length]; 
@@ -926,10 +1003,40 @@ public enum AsyncHelper {
 		scheduleTasks(initialDelay, delay, unit, waitForPreviousTask,  arrayOfTimes(runnable, times));
 	}
 	
+	/**
+	 * The Interface SchedulingTask.
+	 *
+	 * @param <T> the generic type
+	 * @param <R> the generic type
+	 */
 	interface SchedulingTask<T,R> {
+		
+		/**
+		 * Can run.
+		 *
+		 * @return true, if successful
+		 */
 		boolean canRun();
+		
+		/**
+		 * Can cancel.
+		 *
+		 * @return true, if successful
+		 */
 		boolean canCancel();
+		
+		/**
+		 * Invoke next task.
+		 *
+		 * @return the r
+		 */
 		R invokeNextTask();
+		
+		/**
+		 * Consume result.
+		 *
+		 * @param r the r
+		 */
 		void consumeResult(R r);
 	}
 	

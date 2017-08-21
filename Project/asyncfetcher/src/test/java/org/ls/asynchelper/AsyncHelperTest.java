@@ -430,6 +430,60 @@ public class AsyncHelperTest {
 		assertArrayEquals(retVal, new boolean[]{true, true, true, true, true});
 	}
 	
+	@Test
+	public void testScheduleTasksUntilFlag()  throws InterruptedException {
+		int[] retVal = new int[5];
+		AsyncHelper.scheduleTasksUntilFlag(10, 100, TimeUnit.MILLISECONDS, true, "ScheduledMultipleTasksTest",
+		() -> {
+			print("Task 0");
+			printTime();
+			retVal[0]+= 1;
+		},
+		() -> {
+			print("Task 1");
+			printTime();
+			retVal[1]+= 1;
+		},
+		() -> {
+			print("Task 2");
+			printTime();
+			retVal[2]+= 1;
+		},
+		() -> {
+			print("Task 3");
+			printTime();
+			retVal[3]+= 1;
+		},
+		() -> {
+			print("Task 4");
+			printTime();
+			retVal[4]+= 1;
+		});
+		
+		Thread.sleep(1200);
+		AsyncHelper.notifyFlag("ScheduledMultipleTasksTest");
+		assertTrue(retVal[0] > 1);
+		assertTrue(retVal[1] > 1);
+		assertTrue(retVal[2] > 1);
+		assertTrue(retVal[3] > 1);
+		assertTrue(retVal[4] > 1);
+	}
+	
+	@Test
+	public void testScheduleTaskUntilFlag()  throws InterruptedException {
+		int[] retVal = new int[5];
+		AsyncHelper.scheduleTaskUntilFlag(10, 100, TimeUnit.MILLISECONDS, true, "ScheduledSingleTasksTest",
+		() -> {
+			print("Count " + retVal[0]);
+			printTime();
+			retVal[0]+= 1;
+		});
+		
+		Thread.sleep(1200);
+		AsyncHelper.notifyFlag("ScheduledSingleTasksTest");
+		assertTrue(retVal[0] > 5);
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testScheduleSuppliers()  throws InterruptedException {
@@ -483,7 +537,7 @@ public class AsyncHelperTest {
 	@Test
 	public void testScheduleTasksWait()  throws InterruptedException {
 		boolean[] retVal = new boolean[5];
-		AsyncHelper.scheduleTasksAndWait(0, 3, TimeUnit.SECONDS, true,
+		AsyncHelper.scheduleTasksAndWait(0, 100, TimeUnit.MILLISECONDS, true,
 		() -> {
 			printTime();
 			retVal[0] = true;
@@ -645,6 +699,7 @@ public class AsyncHelperTest {
 	public void testScheduleSupplier()  throws InterruptedException {
 		Supplier<Boolean>[] scheduleSuppliers = AsyncHelper.scheduleSupplier(10, 100, TimeUnit.MILLISECONDS, true,
 		() -> {
+			printTime();
 			return true;
 		}, 3);
 		
@@ -653,8 +708,9 @@ public class AsyncHelperTest {
 
 	@Test
 	public void testScheduleSupplierAndWait()  throws InterruptedException {
-		Stream<Boolean> retVals = AsyncHelper.scheduleSupplierAndWait(0, 3, TimeUnit.SECONDS, true,
+		Stream<Boolean> retVals = AsyncHelper.scheduleSupplierAndWait(0, 100, TimeUnit.MILLISECONDS, true,
 		() -> {
+			printTime();
 			return true;
 		}, 3);
 		retVals.forEach(Assert::assertTrue);
