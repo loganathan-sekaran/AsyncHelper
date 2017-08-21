@@ -1,9 +1,7 @@
 package org.ls.asynchelper;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -21,8 +19,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
-
-import org.ls.javautils.stream.StreamUtil;
 
 /**
  * The AsyncHelper.
@@ -246,7 +242,7 @@ public enum AsyncHelper {
 	 */
 	static private ScheduledFuture<?> doScheduleTasks(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Runnable... runnables) {
-		SchedulingTask<Runnable, Void> schedulingRunnables = new SchedulingTask<Runnable, Void>() {
+		SchedulingFunction<Runnable, Void> schedulingRunnables = new SchedulingFunction<Runnable, Void>() {
 			private AtomicInteger index = new AtomicInteger(0);
 			@Override
 			public boolean canRun() {
@@ -290,7 +286,7 @@ public enum AsyncHelper {
 	static private ScheduledFuture<?> doScheduleTasksUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Runnable[] runnables, String flag) {
 		AtomicBoolean canCancel = new AtomicBoolean(false);
-		SchedulingTask<Runnable, Void> schedulingRunnables = new SchedulingTask<Runnable, Void>() {
+		SchedulingFunction<Runnable, Void> schedulingRunnables = new SchedulingFunction<Runnable, Void>() {
 			private AtomicInteger index = new AtomicInteger(0);
 			@Override
 			public boolean canRun() {
@@ -347,7 +343,7 @@ public enum AsyncHelper {
 	 * @return the scheduled future
 	 */
 	static private <T,R> ScheduledFuture<?> doScheduleFunction(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousFunction,
-			SchedulingTask<T,R> schedulingFunction) {
+			SchedulingFunction<T,R> schedulingFunction) {
 		final ScheduledFuture<?>[] scheduleFuture = new ScheduledFuture<?>[1];
 		Runnable seq = new Runnable() {
 			@Override
@@ -481,7 +477,7 @@ public enum AsyncHelper {
 			boolean waitForAllTasks, @SuppressWarnings("unchecked") Supplier<T>... suppliers) {
 		@SuppressWarnings("unchecked")
 		Supplier<T>[] resultSuppliers = new Supplier[suppliers.length]; 
-		SchedulingTask<Supplier<T>, T> schedulingSuppliers = new SchedulingTask<Supplier<T>, T>() {
+		SchedulingFunction<Supplier<T>, T> schedulingSuppliers = new SchedulingFunction<Supplier<T>, T>() {
 			private AtomicInteger index = new AtomicInteger(0);
 			@Override
 			public boolean canRun() {
@@ -556,7 +552,7 @@ public enum AsyncHelper {
 			boolean waitForAllTasks, Supplier<T>[] suppliers, String flag) {
 		AtomicBoolean canCancel = new AtomicBoolean(false);
 		LinkedList<Supplier<T>> resultSuppliers = new LinkedList<Supplier<T>>(); 
-		SchedulingTask<Supplier<T>, T> schedulingSuppliers = new SchedulingTask<Supplier<T>, T>() {
+		SchedulingFunction<Supplier<T>, T> schedulingSuppliers = new SchedulingFunction<Supplier<T>, T>() {
 			private AtomicInteger index = new AtomicInteger(0);
 			@Override
 			public boolean canRun() {
@@ -749,7 +745,7 @@ public enum AsyncHelper {
 			Object[] indexedKey = getIndexedKey(i, keys);
 			builder.accept(waitAndGet(clazz, indexedKey));
 		}
-		return StreamUtil.flatten(builder.build());
+		return builder.build().filter(Optional::isPresent).map(Optional::get);
 	}
 
 	/**
@@ -847,17 +843,17 @@ public enum AsyncHelper {
 	 * @param flag the flag
 	 * @return the list
 	 */
-	static public <T> List<T> notifyAndGetForFlag(Class<T> clazz, String... flag) {
+	static public <T> Stream<T> notifyAndGetForFlag(Class<T> clazz, String... flag) {
 		notifyFlag(flag);
-		List<T> result = new ArrayList<>();
+		Stream.Builder<T> builder = Stream.builder();
 		int count = 0;
 		Object[] indexedKey = getIndexedKey(count, (Object[])flag);
 		while(originalKeys.containsKey(ObjectsKey.of(indexedKey))) {
-			waitAndGet(clazz, indexedKey).ifPresent(result::add);
+			waitAndGet(clazz, indexedKey).ifPresent(builder::accept);
 			count++;
 			 indexedKey = getIndexedKey(count,  (Object[])flag);
 		}
-		return result;
+		return builder.build();
 	}
 	
 	/**
@@ -1077,7 +1073,7 @@ public enum AsyncHelper {
 	 * @param <T> the generic type
 	 * @param <R> the generic type
 	 */
-	interface SchedulingTask<T,R> {
+	interface SchedulingFunction<T,R> {
 		
 		/**
 		 * Can run.

@@ -529,7 +529,7 @@ public class AsyncHelperTest {
 		
 		Thread.sleep(1000);
 		
-		List<Integer> result = AsyncHelper.notifyAndGetForFlag(Integer.class, "TestSuppliersUntilFlag");
+		List<Integer> result = AsyncHelper.notifyAndGetForFlag(Integer.class, "TestSuppliersUntilFlag").collect(Collectors.toList());
 		int val = 0;
 		for (int i = 0; i < result.size(); i++) {
 			assertTrue(val == result.get(i));
@@ -554,7 +554,7 @@ public class AsyncHelperTest {
 		
 		Thread.sleep(1000);
 		
-		List<Integer> result = AsyncHelper.notifyAndGetForFlag(Integer.class, "TestSingleSuppliersUntilFlag");
+		List<Integer> result = AsyncHelper.notifyAndGetForFlag(Integer.class, "TestSingleSuppliersUntilFlag").collect(Collectors.toList());
 		for (int i = 0; i < result.size(); i++) {
 			assertTrue(i == result.get(i));
 		}
@@ -859,7 +859,7 @@ public class AsyncHelperTest {
 		
 		assertTrue(submitSuppliers);
 		
-		List<Boolean> waitAndGetMultiple = AsyncHelper.waitAndGetMultiple(Boolean.class, "Scheduled", "Single","Suppliers","key").collect(Collectors.toList());
+		List<Boolean> waitAndGetMultiple = AsyncHelper.waitAndGetMultiple(Boolean.class, "Scheduled", "Single","Supplier","key").collect(Collectors.toList());
 		assertEquals(waitAndGetMultiple.size(), 1);
 		waitAndGetMultiple.forEach(Assert::assertTrue);
 		
