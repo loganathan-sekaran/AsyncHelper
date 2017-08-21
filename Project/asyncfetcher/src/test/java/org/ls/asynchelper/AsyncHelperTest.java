@@ -507,6 +507,61 @@ public class AsyncHelperTest {
 		Stream.of(scheduleSuppliers).map(Supplier::get).forEach(Assert::assertTrue);
 	}
 	
+	@Test
+	public void testScheduleSuppliersUntilFlag()  throws InterruptedException {
+		AsyncHelper.scheduleMultipleSuppliersUntilFlag(10, 100, TimeUnit.MILLISECONDS, true,
+				"TestMultipleSuppliersUntilFlag",
+		() -> {
+			return 0;
+		},
+		() -> {
+			return 1;
+		},
+		() -> {
+			return 2;
+		},
+		() -> {
+			return 3;
+		},
+		() -> {
+			return 4;
+		});
+		
+		Thread.sleep(1000);
+		
+		List<Integer> result = AsyncHelper.notifyAndGetForFlag(Integer.class, "TestMultipleSuppliersUntilFlag");
+		int val = 0;
+		for (int i = 0; i < result.size(); i++) {
+			assertTrue(val == result.get(i));
+			if(val < 5 - 1) {
+				val++;
+			} else {
+				val = 0;
+			}
+		}
+		print("" + result);
+		
+	}
+	
+	@Test
+	public void testScheduleSingleSupplierUntilFlag()  throws InterruptedException {
+		int[] retVal = new int[1];
+		AsyncHelper.scheduleSupplierUntilFlag(10, 100, TimeUnit.MILLISECONDS, true,
+				"TestSingleSuppliersUntilFlag",
+		() -> {
+			return retVal[0]++;
+		});
+		
+		Thread.sleep(1000);
+		
+		List<Integer> result = AsyncHelper.notifyAndGetForFlag(Integer.class, "TestSingleSuppliersUntilFlag");
+		for (int i = 0; i < result.size(); i++) {
+			assertTrue(i == result.get(i));
+		}
+		print("" + result);
+		
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testScheduleSuppliersAndWait()  throws InterruptedException {

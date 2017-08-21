@@ -1,6 +1,9 @@
 package org.ls.asynchelper;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -274,7 +277,7 @@ public enum AsyncHelper {
 	}
 	
 	/**
-	 * Do schedule tasks.
+	 * Do schedule tasks until flag.
 	 *
 	 * @param initialDelay the initial delay
 	 * @param delay the delay
@@ -386,6 +389,39 @@ public enum AsyncHelper {
 	static public <T>  Supplier<T>[] scheduleMultipleSuppliers(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			@SuppressWarnings("unchecked") Supplier<T>... suppliers) {
 		return doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, false, suppliers);
+	}
+	
+	/**
+	 * Schedule multiple suppliers until flag.
+	 *
+	 * @param <T> the generic type
+	 * @param initialDelay the initial delay
+	 * @param delay the delay
+	 * @param unit the unit
+	 * @param waitForPreviousTask the wait for previous task
+	 * @param flag the flag
+	 * @param suppliers the suppliers
+	 */
+	@SafeVarargs
+	static public <T> void scheduleMultipleSuppliersUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+			String flag, Supplier<T>... suppliers) {
+		doScheduleSupplierUntilFlag(initialDelay, delay, unit, waitForPreviousTask, false, suppliers, flag);
+	}
+	
+	/**
+	 * Schedule supplier until flag.
+	 *
+	 * @param <T> the generic type
+	 * @param initialDelay the initial delay
+	 * @param delay the delay
+	 * @param unit the unit
+	 * @param waitForPreviousTask the wait for previous task
+	 * @param flag the flag
+	 * @param supplier the supplier
+	 */
+	static public <T> void scheduleSupplierUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+			String flag, Supplier<T> supplier) {
+		scheduleMultipleSuppliersUntilFlag(initialDelay, delay, unit, waitForPreviousTask, flag, supplier);
 	}
 	
 	/**
@@ -501,6 +537,64 @@ public enum AsyncHelper {
 		}
 		
 		return blockingResultSupplier;
+	}
+	
+	/**
+	 * Do schedule supplier until flag.
+	 *
+	 * @param <T> the generic type
+	 * @param initialDelay the initial delay
+	 * @param delay the delay
+	 * @param unit the unit
+	 * @param waitForPreviousTask the wait for previous task
+	 * @param waitForAllTasks the wait for all tasks
+	 * @param suppliers the suppliers
+	 * @param flag the flag
+	 * @return the scheduled future
+	 */
+	static private <T> ScheduledFuture<?> doScheduleSupplierUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+			boolean waitForAllTasks, Supplier<T>[] suppliers, String flag) {
+		AtomicBoolean canCancel = new AtomicBoolean(false);
+		LinkedList<Supplier<T>> resultSuppliers = new LinkedList<Supplier<T>>(); 
+		SchedulingTask<Supplier<T>, T> schedulingSuppliers = new SchedulingTask<Supplier<T>, T>() {
+			private AtomicInteger index = new AtomicInteger(0);
+			@Override
+			public boolean canRun() {
+				return !canCancel.get();
+			}
+
+			@Override
+			public boolean canCancel() {
+				return canCancel.get();
+			}
+
+			@Override
+			public T invokeNextTask() {
+				if(index.get() == suppliers.length) {
+					//Cycle again
+					index.set(0);
+				}
+				return suppliers[index.getAndIncrement()].get();
+			}
+
+			@Override
+			public  void consumeResult(T t) {
+				synchronized (resultSuppliers) {
+					Supplier<T> resSupplier = () -> t;
+					resultSuppliers.add(resSupplier);
+					Object[] indexedKey = getIndexedKey(resultSuppliers.size() - 1, flag);
+					storeSupplier(ObjectsKey.of(indexedKey), resSupplier, false);
+				}
+			}
+			
+		};
+		
+		return doScheduleFunction(initialDelay, 
+				delay, 
+				unit, 
+				waitForPreviousTask, 
+				schedulingSuppliers);
+		
 	}
 
 	/**
@@ -743,6 +837,27 @@ public enum AsyncHelper {
 				originalKey.notify();
 			}
 		}
+	}
+	
+	/**
+	 * Notify and get for flag.
+	 *
+	 * @param <T> the generic type
+	 * @param clazz the clazz
+	 * @param flag the flag
+	 * @return the list
+	 */
+	static public <T> List<T> notifyAndGetForFlag(Class<T> clazz, String... flag) {
+		notifyFlag(flag);
+		List<T> result = new ArrayList<>();
+		int count = 0;
+		Object[] indexedKey = getIndexedKey(count, (Object[])flag);
+		while(originalKeys.containsKey(ObjectsKey.of(indexedKey))) {
+			waitAndGet(clazz, indexedKey).ifPresent(result::add);
+			count++;
+			 indexedKey = getIndexedKey(count,  (Object[])flag);
+		}
+		return result;
 	}
 	
 	/**
