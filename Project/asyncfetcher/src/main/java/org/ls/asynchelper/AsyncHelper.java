@@ -1097,26 +1097,6 @@ public enum AsyncHelper {
 		return scheduleMultipleSuppliersForSingleAccess(initialDelay, delay, unit, waitForPreviousTask, arrayOfTimes(supplier, times), keys);
 	}
 
-	/**
-	 * Schedule task.
-	 *
-	 * @param initialDelay
-	 *            the initial delay
-	 * @param delay
-	 *            the delay
-	 * @param unit
-	 *            the unit
-	 * @param waitForPreviousTask
-	 *            the wait for previous task
-	 * @param runnable
-	 *            the runnable
-	 * @param times
-	 *            the times
-	 */
-	static public void scheduleTaskUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask, Runnable runnable,
-			int times) {
-		scheduleTasks(initialDelay, delay, unit, waitForPreviousTask,  arrayOfTimes(runnable, times));
-	}
 	
 	/**
 	 * The Interface SchedulingTask.
