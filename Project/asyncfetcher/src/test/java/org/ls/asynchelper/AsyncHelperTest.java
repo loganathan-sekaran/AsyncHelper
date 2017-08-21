@@ -849,17 +849,17 @@ public class AsyncHelperTest {
 	}
 
 	@Test
-	public void testScheduleMultipleSupplierForSingleAccessSingleTime() throws InterruptedException {
+	public void testScheduleSupplierForSingleAccessSingleTime() throws InterruptedException {
 		boolean submitSuppliers = AsyncHelper.scheduleSupplierForSingleAccess(10, TimeUnit.MILLISECONDS,
 					() -> {
 						return true;
 					}, 
-				"Scheduled", "Multiple","Suppliers","key"
+				"Scheduled", "Single","Supplier","key"
 		);
 		
 		assertTrue(submitSuppliers);
 		
-		List<Boolean> waitAndGetMultiple = AsyncHelper.waitAndGetMultiple(Boolean.class, "Scheduled", "Multiple","Suppliers","key").collect(Collectors.toList());
+		List<Boolean> waitAndGetMultiple = AsyncHelper.waitAndGetMultiple(Boolean.class, "Scheduled", "Single","Suppliers","key").collect(Collectors.toList());
 		assertEquals(waitAndGetMultiple.size(), 1);
 		waitAndGetMultiple.forEach(Assert::assertTrue);
 		
