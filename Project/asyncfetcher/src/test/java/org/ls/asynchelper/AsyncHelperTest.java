@@ -487,7 +487,7 @@ public class AsyncHelperTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testScheduleSuppliers()  throws InterruptedException {
-		Supplier<Boolean>[] scheduleSuppliers = AsyncHelper.scheduleMultipleSuppliers(10, 100, TimeUnit.MILLISECONDS, true,
+		Supplier<Boolean>[] scheduleSuppliers = AsyncHelper.scheduleSuppliers(10, 100, TimeUnit.MILLISECONDS, true,
 		() -> {
 			return true;
 		},
@@ -509,8 +509,8 @@ public class AsyncHelperTest {
 	
 	@Test
 	public void testScheduleSuppliersUntilFlag()  throws InterruptedException {
-		AsyncHelper.scheduleMultipleSuppliersUntilFlag(10, 100, TimeUnit.MILLISECONDS, true,
-				"TestMultipleSuppliersUntilFlag",
+		AsyncHelper.scheduleSuppliersUntilFlag(10, 100, TimeUnit.MILLISECONDS, true,
+				"TestSuppliersUntilFlag",
 		() -> {
 			return 0;
 		},
@@ -529,7 +529,7 @@ public class AsyncHelperTest {
 		
 		Thread.sleep(1000);
 		
-		List<Integer> result = AsyncHelper.notifyAndGetForFlag(Integer.class, "TestMultipleSuppliersUntilFlag");
+		List<Integer> result = AsyncHelper.notifyAndGetForFlag(Integer.class, "TestSuppliersUntilFlag");
 		int val = 0;
 		for (int i = 0; i < result.size(); i++) {
 			assertTrue(val == result.get(i));
@@ -565,7 +565,7 @@ public class AsyncHelperTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testScheduleSuppliersAndWait()  throws InterruptedException {
-		Stream<Boolean> retVals = AsyncHelper.scheduleMultipleSuppliersAndWait(0, 3, TimeUnit.SECONDS, true,
+		Stream<Boolean> retVals = AsyncHelper.scheduleSuppliersAndWait(0, 3, TimeUnit.SECONDS, true,
 		() -> {
 			return true;
 		},
@@ -620,8 +620,8 @@ public class AsyncHelperTest {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testMultipleSuppliers() throws InterruptedException {
-		Supplier<Boolean>[] submitMultipleSuppliers = AsyncHelper.submitMultipleSuppliers(delayedSupplier(() -> {
+	public void testSuppliers() throws InterruptedException {
+		Supplier<Boolean>[] submitSuppliers = AsyncHelper.submitSuppliers(delayedSupplier(() -> {
 			return true;
 		}, 100),
 		delayedSupplier(() -> {
@@ -638,14 +638,14 @@ public class AsyncHelperTest {
 		}, 100)
 		);
 		
-		Stream.of(submitMultipleSuppliers).map(Supplier::get).forEach(val -> assertTrue(val));
+		Stream.of(submitSuppliers).map(Supplier::get).forEach(val -> assertTrue(val));
 		
 	}
 	
 	@Test
-	public void testScheduleMultipleSuppliersForSingleAccess() throws InterruptedException {
+	public void testScheduleSuppliersForSingleAccess() throws InterruptedException {
 		@SuppressWarnings("unchecked")
-		boolean submitMultipleSuppliers = AsyncHelper.scheduleMultipleSuppliersForSingleAccess(10, 100, TimeUnit.MILLISECONDS, true,
+		boolean submitSuppliers = AsyncHelper.scheduleSuppliersForSingleAccess(10, 100, TimeUnit.MILLISECONDS, true,
 				new Supplier[] {
 					() -> {
 						return true;
@@ -666,7 +666,7 @@ public class AsyncHelperTest {
 				"Scheduled", "Multiple","Suppliers","key"
 		);
 		
-		assertTrue(submitMultipleSuppliers);
+		assertTrue(submitSuppliers);
 		
 		List<Boolean> waitAndGetMultiple = AsyncHelper.waitAndGetMultiple(Boolean.class, "Scheduled", "Multiple","Suppliers","key").collect(Collectors.toList());
 		assertEquals(waitAndGetMultiple.size(), 5);
@@ -675,9 +675,9 @@ public class AsyncHelperTest {
 	}
 	
 	@Test
-	public void testSubmitMultipleSuppliersForSingleAccess() throws InterruptedException {
+	public void testSubmitSuppliersForSingleAccess() throws InterruptedException {
 		@SuppressWarnings("unchecked")
-		boolean submitMultipleSuppliers = AsyncHelper.submitMultipleSuppliersForSingleAccess(
+		boolean submitSuppliers = AsyncHelper.submitSuppliersForSingleAccess(
 				new Supplier[] {
 					delayedSupplier(() -> {
 						return true;
@@ -698,7 +698,7 @@ public class AsyncHelperTest {
 				"Multiple","Suppliers","key"
 		);
 		
-		assertTrue(submitMultipleSuppliers);
+		assertTrue(submitSuppliers);
 		
 		List<Boolean> waitAndGetMultiple = AsyncHelper.waitAndGetMultiple(Boolean.class, "Multiple","Suppliers","key").collect(Collectors.toList());
 		assertEquals(waitAndGetMultiple.size(), 5);
@@ -787,14 +787,14 @@ public class AsyncHelperTest {
 
 	@Test
 	public void testScheduleMultipleSupplierForSingleAccess() throws InterruptedException {
-		boolean submitMultipleSuppliers = AsyncHelper.scheduleSupplierForSingleAccess(10, 100, TimeUnit.MILLISECONDS, true,
+		boolean submitSuppliers = AsyncHelper.scheduleSupplierForSingleAccess(10, 100, TimeUnit.MILLISECONDS, true,
 					() -> {
 						return true;
 					}, 3, 
 				"Scheduled", "Multiple","Suppliers","key"
 		);
 		
-		assertTrue(submitMultipleSuppliers);
+		assertTrue(submitSuppliers);
 		
 		List<Boolean> waitAndGetMultiple = AsyncHelper.waitAndGetMultiple(Boolean.class, "Scheduled", "Multiple","Suppliers","key").collect(Collectors.toList());
 		assertEquals(waitAndGetMultiple.size(), 3);
@@ -850,14 +850,14 @@ public class AsyncHelperTest {
 
 	@Test
 	public void testScheduleMultipleSupplierForSingleAccessSingleTime() throws InterruptedException {
-		boolean submitMultipleSuppliers = AsyncHelper.scheduleSupplierForSingleAccess(10, TimeUnit.MILLISECONDS,
+		boolean submitSuppliers = AsyncHelper.scheduleSupplierForSingleAccess(10, TimeUnit.MILLISECONDS,
 					() -> {
 						return true;
 					}, 
 				"Scheduled", "Multiple","Suppliers","key"
 		);
 		
-		assertTrue(submitMultipleSuppliers);
+		assertTrue(submitSuppliers);
 		
 		List<Boolean> waitAndGetMultiple = AsyncHelper.waitAndGetMultiple(Boolean.class, "Scheduled", "Multiple","Suppliers","key").collect(Collectors.toList());
 		assertEquals(waitAndGetMultiple.size(), 1);

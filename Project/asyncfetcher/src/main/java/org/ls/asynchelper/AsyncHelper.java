@@ -125,7 +125,7 @@ public enum AsyncHelper {
 	 * @return the supplier[]
 	 */
 	@SuppressWarnings("unchecked")
-	static public <T> Supplier<T>[] submitMultipleSuppliers(Supplier<T>... suppliers) {
+	static public <T> Supplier<T>[] submitSuppliers(Supplier<T>... suppliers) {
 		return Stream.of(suppliers)
 				.map(supplier -> submitSupplier(supplier))
 				.toArray(size -> new Supplier[size]);
@@ -386,7 +386,7 @@ public enum AsyncHelper {
 	 * @param suppliers the suppliers
 	 * @return the supplier[]
 	 */
-	static public <T>  Supplier<T>[] scheduleMultipleSuppliers(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+	static public <T>  Supplier<T>[] scheduleSuppliers(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			@SuppressWarnings("unchecked") Supplier<T>... suppliers) {
 		return doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, false, suppliers);
 	}
@@ -403,7 +403,7 @@ public enum AsyncHelper {
 	 * @param suppliers the suppliers
 	 */
 	@SafeVarargs
-	static public <T> void scheduleMultipleSuppliersUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+	static public <T> void scheduleSuppliersUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			String flag, Supplier<T>... suppliers) {
 		doScheduleSupplierUntilFlag(initialDelay, delay, unit, waitForPreviousTask, false, suppliers, flag);
 	}
@@ -421,7 +421,7 @@ public enum AsyncHelper {
 	 */
 	static public <T> void scheduleSupplierUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			String flag, Supplier<T> supplier) {
-		scheduleMultipleSuppliersUntilFlag(initialDelay, delay, unit, waitForPreviousTask, flag, supplier);
+		scheduleSuppliersUntilFlag(initialDelay, delay, unit, waitForPreviousTask, flag, supplier);
 	}
 	
 	/**
@@ -435,7 +435,7 @@ public enum AsyncHelper {
 	 * @param suppliers the suppliers
 	 * @return the stream
 	 */
-	static public <T>  Stream<T> scheduleMultipleSuppliersAndWait(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+	static public <T>  Stream<T> scheduleSuppliersAndWait(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			@SuppressWarnings("unchecked") Supplier<T>... suppliers) {
 		 Supplier<T>[] scheduleSupplier = doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, true, suppliers);
 		 return Stream.of(scheduleSupplier).map(Supplier::get);
@@ -453,7 +453,7 @@ public enum AsyncHelper {
 	 * @param keys the keys
 	 * @return true, if successful
 	 */
-	static public <T>  boolean scheduleMultipleSuppliersForSingleAccess(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+	static public <T>  boolean scheduleSuppliersForSingleAccess(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Supplier<T>[] suppliers, Object... keys) {
 		Supplier<T>[] resultSuppliers = doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, false, suppliers);
 		boolean result = true;
@@ -629,7 +629,7 @@ public enum AsyncHelper {
 	 * @param keys the keys
 	 * @return true, if successful
 	 */
-	static public <T> boolean submitMultipleSuppliersForSingleAccess(Supplier<T>[] suppliers, Object... keys) {
+	static public <T> boolean submitSuppliersForSingleAccess(Supplier<T>[] suppliers, Object... keys) {
 		boolean result = true;
 		for (int i = 0; i < suppliers.length; i++) {
 			Supplier<T> supplier = suppliers[i];
@@ -897,7 +897,7 @@ public enum AsyncHelper {
 	 */
 	static public <T> Supplier<T>[] scheduleSupplier(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Supplier<T> supplier, int times) {
-		return scheduleMultipleSuppliers(initialDelay, delay, unit, waitForPreviousTask,  arrayOfTimes(supplier, times));
+		return scheduleSuppliers(initialDelay, delay, unit, waitForPreviousTask,  arrayOfTimes(supplier, times));
 	}
 
 	/**
@@ -921,7 +921,7 @@ public enum AsyncHelper {
 	 */
 	static public <T> Stream<T> scheduleSupplierAndWait(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, Supplier<T> supplier, int times) {
-		return scheduleMultipleSuppliersAndWait(initialDelay, delay, unit, waitForPreviousTask, arrayOfTimes(supplier, times));
+		return scheduleSuppliersAndWait(initialDelay, delay, unit, waitForPreviousTask, arrayOfTimes(supplier, times));
 	}
 
 	/**
@@ -963,7 +963,7 @@ public enum AsyncHelper {
 	 */
 	static public <T> boolean scheduleSupplierForSingleAccess(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, Supplier<T> supplier, int times, Object... keys) {
-		return scheduleMultipleSuppliersForSingleAccess(initialDelay, delay, unit, waitForPreviousTask, arrayOfTimes(supplier, times), keys);
+		return scheduleSuppliersForSingleAccess(initialDelay, delay, unit, waitForPreviousTask, arrayOfTimes(supplier, times), keys);
 	}
 
 	/**
@@ -1071,33 +1071,6 @@ public enum AsyncHelper {
 		scheduleTaskAndWait(initialDelay, 1, unit, false, runnable, 1);
 	}
 
-	/**
-	 * Schedule supplier for single access.
-	 *
-	 * @param <T>
-	 *            the generic type
-	 * @param initialDelay
-	 *            the initial delay
-	 * @param delay
-	 *            the delay
-	 * @param unit
-	 *            the unit
-	 * @param waitForPreviousTask
-	 *            the wait for previous task
-	 * @param supplier
-	 *            the supplier
-	 * @param times
-	 *            the times
-	 * @param keys
-	 *            the keys
-	 * @return true, if successful
-	 */
-	static public <T> boolean scheduleSupplierUntilFlagForSingleAccess(int initialDelay, int delay, TimeUnit unit,
-			boolean waitForPreviousTask, Supplier<T> supplier, int times, Object... keys) {
-		return scheduleMultipleSuppliersForSingleAccess(initialDelay, delay, unit, waitForPreviousTask, arrayOfTimes(supplier, times), keys);
-	}
-
-	
 	/**
 	 * The Interface SchedulingTask.
 	 *
