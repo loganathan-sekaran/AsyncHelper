@@ -255,7 +255,7 @@ public enum AsyncHelper {
 			}
 
 			@Override
-			public Void invokeNextTask() {
+			public Void invokeNextFunction() {
 				runnables[index.getAndIncrement()].run();
 				return null;
 			}
@@ -299,7 +299,7 @@ public enum AsyncHelper {
 			}
 
 			@Override
-			public Void invokeNextTask() {
+			public Void invokeNextFunction() {
 				if(index.get() == runnables.length) {
 					//Cycle again
 					index.set(0);
@@ -350,7 +350,7 @@ public enum AsyncHelper {
 			public void run() {
 				synchronized (schedulingFunction) {
 					if (schedulingFunction.canRun()) {
-						R res = schedulingFunction.invokeNextTask();
+						R res = schedulingFunction.invokeNextFunction();
 						schedulingFunction.consumeResult(res);
 						if (schedulingFunction.canCancel()) {
 							if (scheduleFuture[0] != null) {
@@ -490,7 +490,7 @@ public enum AsyncHelper {
 			}
 
 			@Override
-			public T invokeNextTask() {
+			public T invokeNextFunction() {
 				return suppliers[index.getAndIncrement()].get();
 			}
 
@@ -565,7 +565,7 @@ public enum AsyncHelper {
 			}
 
 			@Override
-			public T invokeNextTask() {
+			public T invokeNextFunction() {
 				if(index.get() == suppliers.length) {
 					//Cycle again
 					index.set(0);
@@ -1067,12 +1067,6 @@ public enum AsyncHelper {
 		scheduleTaskAndWait(initialDelay, 1, unit, false, runnable, 1);
 	}
 
-	/**
-	 * The Interface SchedulingTask.
-	 *
-	 * @param <T> the generic type
-	 * @param <R> the generic type
-	 */
 	interface SchedulingFunction<T,R> {
 		
 		/**
@@ -1089,12 +1083,7 @@ public enum AsyncHelper {
 		 */
 		boolean canCancel();
 		
-		/**
-		 * Invoke next task.
-		 *
-		 * @return the r
-		 */
-		R invokeNextTask();
+		R invokeNextFunction();
 		
 		/**
 		 * Consume result.
