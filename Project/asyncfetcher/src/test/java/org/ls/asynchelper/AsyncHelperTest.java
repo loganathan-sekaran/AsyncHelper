@@ -363,71 +363,71 @@ public class AsyncHelperTest {
 	
 	@Test
 	public void testWaitAndNotifyForFlag() throws InterruptedException {
-		boolean[] retVal = new boolean[1];
+		int[] retVal = new int[1];
 		AsyncHelper.submitTask(delayedRunnable(() -> {
-			retVal[0] = true;
+			retVal[0] = 10;
 			AsyncHelper.notifyFlag("FLAG1");
 		}, 2000));
 		AsyncHelper.waitForFlag("FLAG1");
-		assertTrue(retVal[0]);
+		assertEquals(retVal[0], 10);
 	}
 	
 	@Test
 	public void testSubmitTask() throws InterruptedException {
-		boolean[] retVal = new boolean[1];
+		int[] retVal = new int[1];
 		AsyncHelper.submitTask(delayedRunnable(() -> {
-			retVal[0] = true;
+			retVal[0] = 10;
 		}, 100));
 		
 		Thread.sleep(500);
-		assertTrue(retVal[0]);
+		assertEquals(retVal[0], 10);
 	}
 	
 	@Test
 	public void testSubmitTasks() throws InterruptedException {
-		boolean[] retVal = new boolean[5];
+		int[] retVal = new int[5];
 		AsyncHelper.submitTasks(delayedRunnable(() -> {
-			retVal[0] = true;
+			retVal[0] = 10;
 		}, 100),
 		delayedRunnable(() -> {
-			retVal[1] = true;
+			retVal[1] = 20;
 		}, 100),
 		delayedRunnable(() -> {
-			retVal[2] = true;
+			retVal[2] = 30;
 		}, 100),
 		delayedRunnable(() -> {
-			retVal[3] = true;
+			retVal[3] = 40;
 		}, 100),
 		delayedRunnable(() -> {
-			retVal[4] = true;
+			retVal[4] = 50;
 		}, 100));
 		
 		Thread.sleep(1000);
-		assertArrayEquals(retVal, new boolean[]{true, true, true, true, true});
+		assertArrayEquals(retVal, new int[]{10, 20, 30, 40, 50});
 	}
 	
 	@Test
 	public void testScheduleTasks()  throws InterruptedException {
-		boolean[] retVal = new boolean[5];
+		int[] retVal = new int[5];
 		AsyncHelper.scheduleTasks(10, 100, TimeUnit.MILLISECONDS, true,
 		() -> {
-			retVal[0] = true;
+			retVal[0] = 10;
 		},
 		() -> {
-			retVal[1] = true;
+			retVal[1] = 20;
 		},
 		() -> {
-			retVal[2] = true;
+			retVal[2] = 30;
 		},
 		() -> {
-			retVal[3] = true;
+			retVal[3] = 40;
 		},
 		() -> {
-			retVal[4] = true;
+			retVal[4] = 50;
 		});
 		
 		Thread.sleep(1000);
-		assertArrayEquals(retVal, new boolean[]{true, true, true, true, true});
+		assertArrayEquals(retVal, new int[]{10, 20, 30, 40, 50});
 	}
 	
 	@Test
@@ -487,24 +487,26 @@ public class AsyncHelperTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testScheduleSuppliers()  throws InterruptedException {
-		Supplier<Boolean>[] scheduleSuppliers = AsyncHelper.scheduleSuppliers(10, 100, TimeUnit.MILLISECONDS, true,
+		Supplier<Integer>[] scheduleSuppliers = AsyncHelper.scheduleSuppliers(10, 100, TimeUnit.MILLISECONDS, true,
 		() -> {
-			return true;
+			return 10;
 		},
 		() -> {
-			return true;
+			return 20;
 		},
 		() -> {
-			return true;
+			return 30;
 		},
 		() -> {
-			return true;
+			return 40;
 		},
 		() -> {
-			return true;
+			return 50;
 		});
 		
-		Stream.of(scheduleSuppliers).map(Supplier::get).forEach(Assert::assertTrue);
+		assertEquals(scheduleSuppliers.length, 5);
+		AtomicInteger val = new AtomicInteger(0);
+		Stream.of(scheduleSuppliers).map(Supplier::get).forEach(value -> Assert.assertEquals(val.addAndGet(10), (int)value));
 	}
 	
 	@Test
@@ -530,6 +532,7 @@ public class AsyncHelperTest {
 		Thread.sleep(1000);
 		
 		List<Integer> result = AsyncHelper.notifyAndGetForFlag(Integer.class, "TestSuppliersUntilFlag").collect(Collectors.toList());
+		assertTrue(result.size() > 0);
 		int val = 0;
 		for (int i = 0; i < result.size(); i++) {
 			assertTrue(val == result.get(i));
@@ -555,6 +558,7 @@ public class AsyncHelperTest {
 		Thread.sleep(1000);
 		
 		List<Integer> result = AsyncHelper.notifyAndGetForFlag(Integer.class, "TestSingleSuppliersUntilFlag").collect(Collectors.toList());
+		assertTrue(result.size() > 0);
 		for (int i = 0; i < result.size(); i++) {
 			assertTrue(i == result.get(i));
 		}
@@ -565,23 +569,26 @@ public class AsyncHelperTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testScheduleSuppliersAndWait()  throws InterruptedException {
-		Stream<Boolean> retVals = AsyncHelper.scheduleSuppliersAndWait(0, 3, TimeUnit.SECONDS, true,
-		() -> {
-			return true;
-		},
-		() -> {
-			return true;
-		},
-		() -> {
-			return true;
-		},
-		() -> {
-			return true;
-		},
-		() -> {
-			return true;
-		});
-		retVals.forEach(Assert::assertTrue);
+		List<Integer> retVals = AsyncHelper.scheduleSuppliersAndWait(0, 3, TimeUnit.SECONDS, true,
+				() -> {
+					return 10;
+				},
+				() -> {
+					return 20;
+				},
+				() -> {
+					return 30;
+				},
+				() -> {
+					return 40;
+				},
+				() -> {
+					return 50;
+				}).collect(Collectors.toList());
+		
+		assertEquals(retVals.size(), 5);
+		AtomicInteger val = new AtomicInteger(0);
+		retVals.forEach(value -> Assert.assertEquals(val.addAndGet(10), (int)value));
 	}
 	
 	private void printTime() {
@@ -591,54 +598,56 @@ public class AsyncHelperTest {
 	
 	@Test
 	public void testScheduleTasksWait()  throws InterruptedException {
-		boolean[] retVal = new boolean[5];
+		int[] retVal = new int[5];
 		AsyncHelper.scheduleTasksAndWait(0, 100, TimeUnit.MILLISECONDS, true,
 		() -> {
 			printTime();
-			retVal[0] = true;
+			retVal[0] = 10;
 		},
 		() -> {
 			printTime();
-			retVal[1] = true;
+			retVal[1] = 20;
 		},
 		() -> {
 			printTime();
-			retVal[2] = true;
+			retVal[2] = 30;
 		},
 		() -> {
 			printTime();
-			retVal[3] = true;
+			retVal[3] = 40;
 		},
 		() -> {
 			printTime();
-			retVal[4] = true;
+			retVal[4] = 50;
 		});
 		
 		printTime();
-		assertArrayEquals(retVal, new boolean[]{true, true, true, true, true});
+		assertArrayEquals(retVal, new int[]{10, 20, 30, 40, 50});
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testSuppliers() throws InterruptedException {
-		Supplier<Boolean>[] submitSuppliers = AsyncHelper.submitSuppliers(delayedSupplier(() -> {
-			return true;
+		Supplier<Integer>[] resultSuppliers = AsyncHelper.submitSuppliers(delayedSupplier(() -> {
+			return 10;
 		}, 100),
 		delayedSupplier(() -> {
-			return true;
+			return 20;
 		}, 100),
 		delayedSupplier(() -> {
-			return true;
+			return 30;
 		}, 100),
 		delayedSupplier(() -> {
-			return true;
+			return 40;
 		}, 100),
 		delayedSupplier(() -> {
-			return true;
+			return 50;
 		}, 100)
 		);
 		
-		Stream.of(submitSuppliers).map(Supplier::get).forEach(val -> assertTrue(val));
+		assertEquals(resultSuppliers.length, 5);
+		AtomicInteger val = new AtomicInteger(0);
+		Stream.of(resultSuppliers).map(Supplier::get).forEach(value -> Assert.assertEquals(val.addAndGet(10), (int)value));
 		
 	}
 	
@@ -648,19 +657,19 @@ public class AsyncHelperTest {
 		boolean submitSuppliers = AsyncHelper.scheduleSuppliersForSingleAccess(10, 100, TimeUnit.MILLISECONDS, true,
 				new Supplier[] {
 					() -> {
-						return true;
+						return 10;
 					},
 					() -> {
-						return true;
+						return 20;
 					},
 					() -> {
-						return true;
+						return 30;
 					},
 					() -> {
-						return true;
+						return 40;
 					},
 					() -> {
-						return true;
+						return 50;
 					}
 				}, 
 				"Scheduled", "Multiple","Suppliers","key"
@@ -668,9 +677,10 @@ public class AsyncHelperTest {
 		
 		assertTrue(submitSuppliers);
 		
-		List<Boolean> waitAndGetMultiple = AsyncHelper.waitAndGetMultiple(Boolean.class, "Scheduled", "Multiple","Suppliers","key").collect(Collectors.toList());
-		assertEquals(waitAndGetMultiple.size(), 5);
-		waitAndGetMultiple.forEach(Assert::assertTrue);
+		List<Integer> retVals = AsyncHelper.waitAndGetMultiple(Integer.class, "Scheduled", "Multiple","Suppliers","key").collect(Collectors.toList());
+		assertEquals(retVals.size(), 5);
+		AtomicInteger val = new AtomicInteger(0);
+		retVals.forEach(value -> Assert.assertEquals(val.addAndGet(10), (int)value));
 		
 	}
 	
@@ -680,19 +690,19 @@ public class AsyncHelperTest {
 		boolean submitSuppliers = AsyncHelper.submitSuppliersForSingleAccess(
 				new Supplier[] {
 					delayedSupplier(() -> {
-						return true;
+						return 10;
 					}, 100),
 					delayedSupplier(() -> {
-						return true;
+						return 20;
 					}, 100),
 					delayedSupplier(() -> {
-						return true;
+						return 30;
 					}, 100),
 					delayedSupplier(() -> {
-						return true;
+						return 40;
 					}, 100),
 					delayedSupplier(() -> {
-						return true;
+						return 50;
 					}, 100)
 					}, 
 				"Multiple","Suppliers","key"
@@ -700,17 +710,18 @@ public class AsyncHelperTest {
 		
 		assertTrue(submitSuppliers);
 		
-		List<Boolean> waitAndGetMultiple = AsyncHelper.waitAndGetMultiple(Boolean.class, "Multiple","Suppliers","key").collect(Collectors.toList());
-		assertEquals(waitAndGetMultiple.size(), 5);
-		waitAndGetMultiple.forEach(Assert::assertTrue);
+		List<Integer> retVals = AsyncHelper.waitAndGetMultiple(Integer.class, "Multiple","Suppliers","key").collect(Collectors.toList());
+		assertEquals(retVals.size(), 5);
+		AtomicInteger val = new AtomicInteger(0);
+		retVals.forEach(value -> Assert.assertEquals(val.addAndGet(10), (int)value));
 		
 	}
 	
 	@Test
 	public void testWaitAndNotifyAllForFlag() throws InterruptedException {
-		boolean[] retVal = new boolean[2];
+		int[] retVal = new int[2];
 		AsyncHelper.submitTask(delayedRunnable(() -> {
-			retVal[0] = true;
+			retVal[0] = 10;
 			AsyncHelper.notifyAllFlag("FLAG2");
 		}, 2000));
 		
@@ -718,7 +729,7 @@ public class AsyncHelperTest {
 		AsyncHelper.submitTask(() -> {
 			try {
 				AsyncHelper.waitForFlag("FLAG2");
-				retVal[1] = retVal[0];
+				retVal[1] = retVal[0] + 10;
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -726,10 +737,10 @@ public class AsyncHelperTest {
 		}, "Task2");
 		
 		AsyncHelper.waitForFlag("FLAG2");
-		assertTrue(retVal[0]);
+		assertEquals(retVal[0], 10);
 		
 		AsyncHelper.waitForTask("Task2");
-		assertTrue(retVal[1]);
+		assertEquals(retVal[1], 20);
 	}
 	
 	
@@ -739,129 +750,142 @@ public class AsyncHelperTest {
 
 	@Test
 	public void testScheduleTask()  throws InterruptedException {
-		boolean[] retVal = new boolean[3];
+		int[] retVal = new int[3];
 		AtomicInteger count = new AtomicInteger(0);
 		AsyncHelper.scheduleTask(10, 100, TimeUnit.MILLISECONDS, true,
 		() -> {
-			retVal[count.getAndIncrement()] = true;
+			int index = count.getAndIncrement();
+			retVal[index] = (index + 1) * 10  ;
 		}, 3);
 		
 		Thread.sleep(500);
-		assertArrayEquals(retVal, new boolean[]{true, true, true});
+		assertArrayEquals(retVal, new int[]{10, 20, 30});
 	}
 
 	@Test
 	public void testScheduleSupplier()  throws InterruptedException {
-		Supplier<Boolean>[] scheduleSuppliers = AsyncHelper.scheduleSupplier(10, 100, TimeUnit.MILLISECONDS, true,
+		AtomicInteger count = new AtomicInteger(0);
+		Supplier<Integer>[] scheduleSuppliers = AsyncHelper.scheduleSupplier(10, 100, TimeUnit.MILLISECONDS, true,
 		() -> {
 			printTime();
-			return true;
+			int index = count.getAndIncrement();
+			return (index + 1) * 10;  
 		}, 3);
 		
-		Stream.of(scheduleSuppliers).map(Supplier::get).forEach(Assert::assertTrue);
+		assertEquals(scheduleSuppliers.length, 3);
+		AtomicInteger val = new AtomicInteger(0);
+		Stream.of(scheduleSuppliers).map(Supplier::get).forEach(value -> Assert.assertEquals(val.addAndGet(10), (int)value));
 	}
 
 	@Test
 	public void testScheduleSupplierAndWait()  throws InterruptedException {
-		Stream<Boolean> retVals = AsyncHelper.scheduleSupplierAndWait(0, 100, TimeUnit.MILLISECONDS, true,
+		AtomicInteger count = new AtomicInteger(0);
+		List<Integer> retVals = AsyncHelper.scheduleSupplierAndWait(0, 100, TimeUnit.MILLISECONDS, true,
 		() -> {
 			printTime();
-			return true;
-		}, 3);
-		retVals.forEach(Assert::assertTrue);
+			int index = count.getAndIncrement();
+			return (index + 1) * 10;  
+		}, 3).collect(Collectors.toList());
+		assertEquals(retVals.size(), 3);
+		AtomicInteger val = new AtomicInteger(0);
+		retVals.forEach(value -> Assert.assertEquals(val.addAndGet(10), (int)value));
 	}
 
 	@Test
 	public void testScheduleTaskWait()  throws InterruptedException {
-		boolean[] retVal = new boolean[3];
+		int[] retVal = new int[3];
 		AtomicInteger count = new AtomicInteger(0);
 		AsyncHelper.scheduleTaskAndWait(0, 3, TimeUnit.SECONDS, true,
 		() -> {
 			printTime();
-			retVal[count.getAndIncrement()] = true;
+			int index = count.getAndIncrement();
+			retVal[index] = (index + 1) * 10;
 		}, 3);
 		
 		printTime();
-		assertArrayEquals(retVal, new boolean[]{true, true, true});
+		assertArrayEquals(retVal, new int[]{10, 20, 30});
 	}
 
 	@Test
 	public void testScheduleMultipleSupplierForSingleAccess() throws InterruptedException {
+		AtomicInteger count = new AtomicInteger(0);
 		boolean submitSuppliers = AsyncHelper.scheduleSupplierForSingleAccess(10, 100, TimeUnit.MILLISECONDS, true,
 					() -> {
-						return true;
+						int index = count.getAndIncrement();
+						return (index + 1) * 10;
 					}, 3, 
 				"Scheduled", "Multiple","Suppliers","key"
 		);
 		
 		assertTrue(submitSuppliers);
 		
-		List<Boolean> waitAndGetMultiple = AsyncHelper.waitAndGetMultiple(Boolean.class, "Scheduled", "Multiple","Suppliers","key").collect(Collectors.toList());
-		assertEquals(waitAndGetMultiple.size(), 3);
-		waitAndGetMultiple.forEach(Assert::assertTrue);
+		List<Integer> retVals = AsyncHelper.waitAndGetMultiple(Integer.class, "Scheduled", "Multiple","Suppliers","key").collect(Collectors.toList());
+		assertEquals(retVals.size(), 3);
+		AtomicInteger val = new AtomicInteger(0);
+		retVals.forEach(value -> Assert.assertEquals(val.addAndGet(10), (int)value));
 		
 	}
 
 	@Test
 	public void testScheduleTaskSingleTime()  throws InterruptedException {
-		boolean[] retVal = new boolean[3];
+		int[] retVal = new int[]{0,20,20};
 		AtomicInteger count = new AtomicInteger(0);
 		AsyncHelper.scheduleTask(10, TimeUnit.MILLISECONDS,
 		() -> {
-			retVal[count.getAndIncrement()] = true;
-		});
+			int index = count.getAndIncrement();
+			retVal[index] = (index + 1) * 10;		});
 		
 		Thread.sleep(500);
-		assertArrayEquals(retVal, new boolean[]{true, false, false});
+		assertArrayEquals(retVal, new int[]{10, 20, 20});
 	}
 
 	@Test
 	public void testScheduleSupplierSingleTime()  throws InterruptedException {
-		Supplier<Boolean> scheduleSupplier = AsyncHelper.scheduleSupplier(10, TimeUnit.MILLISECONDS,
+		Supplier<Integer> scheduleSupplier = AsyncHelper.scheduleSupplier(10, TimeUnit.MILLISECONDS,
 		() -> {
-			return true;
+			return 10;
 		});
 		
-		assertTrue(scheduleSupplier.get());
+		assertEquals((int)scheduleSupplier.get(), 10);
 	}
 
 	@Test
 	public void testScheduleSupplierAndWaitSingleTime()  throws InterruptedException {
-		Optional<Boolean> retVal = AsyncHelper.scheduleSupplierAndWait(0, TimeUnit.SECONDS,
+		Optional<Integer> retVal = AsyncHelper.scheduleSupplierAndWait(0, TimeUnit.SECONDS,
 		() -> {
-			return true;
+			return 10;
 		});
-		assertTrue(retVal.get());
+		assertEquals((int)retVal.get(), 10);
 	}
 
 	@Test
 	public void testScheduleTaskWaitSingleTime()  throws InterruptedException {
-		boolean[] retVal = new boolean[3];
+		int[] retVal = new int[]{0,20,20};
 		AtomicInteger count = new AtomicInteger(0);
 		AsyncHelper.scheduleTaskAndWait(0, TimeUnit.SECONDS,
 		() -> {
 			printTime();
-			retVal[count.getAndIncrement()] = true;
+			retVal[count.getAndIncrement()] = 10;
 		});
 		
 		printTime();
-		assertArrayEquals(retVal, new boolean[]{true, false, false});
+		assertArrayEquals(retVal, new int[]{10, 20, 20});
 	}
 
 	@Test
 	public void testScheduleSupplierForSingleAccessSingleTime() throws InterruptedException {
 		boolean submitSuppliers = AsyncHelper.scheduleSupplierForSingleAccess(10, TimeUnit.MILLISECONDS,
 					() -> {
-						return true;
+						return 10;
 					}, 
 				"Scheduled", "Single","Supplier","key"
 		);
 		
 		assertTrue(submitSuppliers);
 		
-		List<Boolean> waitAndGetMultiple = AsyncHelper.waitAndGetMultiple(Boolean.class, "Scheduled", "Single","Supplier","key").collect(Collectors.toList());
-		assertEquals(waitAndGetMultiple.size(), 1);
-		waitAndGetMultiple.forEach(Assert::assertTrue);
+		Optional<Integer> result = AsyncHelper.waitAndGet(Integer.class, "Scheduled", "Single","Supplier","key");
+		assertTrue(result.isPresent());
+		assertEquals((int)result.get(), 10);
 		
 	}
 

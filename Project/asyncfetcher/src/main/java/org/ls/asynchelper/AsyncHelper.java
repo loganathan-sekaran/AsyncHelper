@@ -453,10 +453,15 @@ public enum AsyncHelper {
 			Supplier<T>[] suppliers, Object... keys) {
 		Supplier<T>[] resultSuppliers = doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, false, suppliers);
 		boolean result = true;
-		for (int i = 0; i < resultSuppliers.length; i++) {
-			Supplier<T> supplier = resultSuppliers[i];
-			Object[] indexedKey = getIndexedKey(i, keys);
-			result &= storeSupplier(ObjectsKey.of(indexedKey), supplier, false);
+		if(resultSuppliers.length == 1) {
+			Supplier<T> resSupplier = resultSuppliers[0];
+			result &= storeSupplier(ObjectsKey.of(keys), resSupplier, false);
+		} else {
+			for (int i = 0; i < resultSuppliers.length; i++) {
+				Supplier<T> resSupplier = resultSuppliers[i];
+				Object[] indexedKey = getIndexedKey(i, keys);
+				result &= storeSupplier(ObjectsKey.of(indexedKey), resSupplier, false);
+			}
 		}
 		return result;
 	}
