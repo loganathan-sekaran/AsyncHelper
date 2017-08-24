@@ -2,9 +2,9 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.loganathan001</groupId>
   <artifactId>async-helper</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <name>Async Helper</name>
-  <description>AsyncHelper is a Java utility to invoke/schedule Tasks or fetch data asynchronously using tags/flags in a functional way.</description>
+  <description>AsyncHelper is a Java utility to invoke/schedule Tasks/data fetch operation asynchronously using tags/flags in a functional way.</description>
   <url>https://github.com/loganathan001/AsyncHelper</url>
 	<distributionManagement>
 	  <snapshotRepository>
@@ -17,7 +17,6 @@
 	  </repository>
 	</distributionManagement>
    <build>
-    <sourceDirectory>src/main/java,src/main/test</sourceDirectory>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -27,6 +26,57 @@
           <target>1.8</target>
         </configuration>
       </plugin>
+      <plugin>
+		  <groupId>org.apache.maven.plugins</groupId>
+		  <artifactId>maven-source-plugin</artifactId>
+		  <version>2.2.1</version>
+		  <executions>
+			<execution>
+			  <id>attach-sources</id>
+			  <goals>
+				<goal>jar-no-fork</goal>
+			  </goals>
+			</execution>
+		  </executions>
+		</plugin>
+		<plugin>
+		  <groupId>org.apache.maven.plugins</groupId>
+		  <artifactId>maven-javadoc-plugin</artifactId>
+		  <version>2.9.1</version>
+		  <executions>
+			<execution>
+			  <id>attach-javadocs</id>
+			  <goals>
+				<goal>jar</goal>
+			  </goals>
+			</execution>
+		  </executions>
+		</plugin>
+			<plugin>
+			  <groupId>org.sonatype.plugins</groupId>
+			  <artifactId>nexus-staging-maven-plugin</artifactId>
+			  <version>1.6.7</version>
+			  <extensions>true</extensions>
+			  <configuration>
+				<serverId>ossrh</serverId>
+				<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+				<autoReleaseAfterClose>true</autoReleaseAfterClose>
+			  </configuration>
+			</plugin>
+			<plugin>
+			  <groupId>org.apache.maven.plugins</groupId>
+			  <artifactId>maven-gpg-plugin</artifactId>
+			  <version>1.5</version>
+			  <executions>
+				<execution>
+				  <id>sign-artifacts</id>
+				  <phase>verify</phase>
+				  <goals>
+					<goal>sign</goal>
+				  </goals>
+				</execution>
+			  </executions>
+			</plugin>
     </plugins>    
   </build>
   <dependencies>
@@ -48,4 +98,12 @@
   <developerConnection>scm:git:ssh://github.com:loganathan001/AsyncHelper.git</developerConnection>
   <url>https://github.com/loganathan001/AsyncHelper</url>
 </scm>
+<developers>
+	<developer>
+	  <name>Loganathan Sekaran</name>
+	  <email>loganathan001@gmail.com</email>
+	  <organization>ILink-Systems</organization>
+	  <organizationUrl>https://github.com/loganathan001/AsyncHelper</organizationUrl>
+	</developer>
+ </developers>
 </project>
