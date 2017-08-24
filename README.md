@@ -2,7 +2,7 @@
 <a href="https://github.com/loganathan001/AsyncHelper/blob/master/Project/asyncfetcher/src/main/java/org/ls/asynchelper/AsyncHelper.java">AsyncHelper</a> is a Java utility to invoke/schedule tasks or fetch data asynchronously using tags/flags in a functional way. This internally utilizes ForkJoin pool to submit the tasks.
 
 
-Below is the some of the operations that can be perfomed:
+Below are the some of the operations that can be perfomed using this utility:
 1. Submitting one or more Runnable(s) to run asynchronously.
 2. Submitting one or more Supplier(s) to fetch some data asynchronously, which can be then obtained by a tags(key made of one or more Objects)
 4. Wait for some flag in one thread until that flag is notified in another thread.
