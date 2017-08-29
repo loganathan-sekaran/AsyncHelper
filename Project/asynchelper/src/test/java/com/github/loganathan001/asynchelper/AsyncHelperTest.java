@@ -698,7 +698,7 @@ public class AsyncHelperTest {
 		
 		assertTrue(submitSuppliers);
 		
-		List<Integer> retVals = AsyncHelper.waitAndGetMultiple(Integer.class, "Scheduled", "Multiple","Suppliers","key").collect(Collectors.toList());
+		List<Integer> retVals = AsyncHelper.waitAndGetFromMultipleSuppliers(Integer.class, "Scheduled", "Multiple","Suppliers","key").collect(Collectors.toList());
 		assertEquals(retVals.size(), 5);
 		AtomicInteger val = new AtomicInteger(0);
 		retVals.forEach(value -> Assert.assertEquals(val.addAndGet(10), (int)value));
@@ -731,7 +731,7 @@ public class AsyncHelperTest {
 		
 		assertTrue(submitSuppliers);
 		
-		List<Integer> retVals = AsyncHelper.waitAndGetMultiple(Integer.class, "Multiple","Suppliers","key").collect(Collectors.toList());
+		List<Integer> retVals = AsyncHelper.waitAndGetFromMultipleSuppliers(Integer.class, "Multiple","Suppliers","key").collect(Collectors.toList());
 		assertEquals(retVals.size(), 5);
 		AtomicInteger val = new AtomicInteger(0);
 		retVals.forEach(value -> Assert.assertEquals(val.addAndGet(10), (int)value));
@@ -840,7 +840,7 @@ public class AsyncHelperTest {
 		
 		assertTrue(submitSuppliers);
 		
-		List<Integer> retVals = AsyncHelper.waitAndGetMultiple(Integer.class, "Scheduled", "Multiple","Suppliers","key").collect(Collectors.toList());
+		List<Integer> retVals = AsyncHelper.waitAndGetFromMultipleSuppliers(Integer.class, "Scheduled", "Multiple","Suppliers","key").collect(Collectors.toList());
 		assertEquals(retVals.size(), 3);
 		AtomicInteger val = new AtomicInteger(0);
 		retVals.forEach(value -> Assert.assertEquals(val.addAndGet(10), (int)value));
@@ -908,6 +908,56 @@ public class AsyncHelperTest {
 		assertTrue(result.isPresent());
 		assertEquals((int)result.get(), 10);
 		
+	}
+	
+	@Test
+	public void testSubmitTasksAndWait() {
+		int[] retVal = new int[5];
+		AsyncHelper.submitTasksAndWait(
+		() -> {
+			retVal[0] = 10;
+		},
+		() -> {
+			retVal[1] = 20;
+		},
+		() -> {
+			retVal[2] = 30;
+		},
+		() -> {
+			retVal[3] = 40;
+		},
+		() -> {
+			retVal[4] = 50;
+		});
+		
+		assertArrayEquals(retVal, new int[]{10, 20, 30, 40, 50});
+	}
+	
+	@Test
+	public void testSubmitTasksWithKeys() {
+		int[] retVal = new int[5];
+		Object[] keys = {"Submitted", "Multiple", "Tasks"};
+		AsyncHelper.submitTasks(
+		keys,
+		() -> {
+			retVal[0] = 10;
+		},
+		() -> {
+			retVal[1] = 20;
+		},
+		() -> {
+			retVal[2] = 30;
+		},
+		() -> {
+			retVal[3] = 40;
+		},
+		() -> {
+			retVal[4] = 50;
+		});
+		
+		AsyncHelper.waitForMultipleTasks(keys);
+		
+		assertArrayEquals(retVal, new int[]{10, 20, 30, 40, 50});
 	}
 
 }

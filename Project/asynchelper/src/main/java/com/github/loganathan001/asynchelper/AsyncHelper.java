@@ -22,6 +22,7 @@ package com.github.loganathan001.asynchelper;
 
 import java.lang.reflect.Array;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -38,6 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -186,6 +188,40 @@ public enum AsyncHelper {
 	 */
 	static public void submitTasks(Runnable... runnables) {
 		Stream.of(runnables).forEach(forkJoinPool::execute);
+	}
+	
+	/**
+	 * Submit tasks and wait.
+	 *
+	 * @param runnables the runnables
+	 */
+	static public void submitTasksAndWait(Runnable... runnables) {
+		List<Callable<Object>> tasks = Stream.of(runnables).map(runnable -> (Callable<Object>) () ->  {
+			runnable.run();
+			return (Object)null;
+		}).collect(Collectors.toList());
+		
+		forkJoinPool.invokeAll(tasks).parallelStream().forEach(future -> {
+			try {
+				future.get();
+			} catch (InterruptedException | ExecutionException e) {
+				logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
+			}
+		});
+	}
+	
+	/**
+	 * Submit tasks.
+	 *
+	 * @param keys the keys
+	 * @param runnables the runnables
+	 */
+	static public void submitTasks(Object[] keys, Runnable... runnables) {
+		for (int i = 0; i < runnables.length; i++) {
+			Runnable runnable = runnables[i];
+			Object[] indexedKey = getIndexedKey(i, keys);
+			submitTask(runnable, indexedKey);
+		}
 	}
 	
 	/**
@@ -771,6 +807,30 @@ public enum AsyncHelper {
 			builder.accept(waitAndGet(clazz, indexedKey));
 		}
 		return builder.build().filter(Optional::isPresent).map(Optional::get);
+	}
+	
+	/**
+	 * Wait and get from multiple suppliers.
+	 *
+	 * @param <T> the generic type
+	 * @param clazz the clazz
+	 * @param keys the keys
+	 * @return the stream
+	 */
+	static public <T> Stream<T> waitAndGetFromMultipleSuppliers(Class<T> clazz, Object... keys) {
+		return waitAndGetMultiple(clazz, keys);
+	}
+	
+	/**
+	 * Wait for multiple tasks.
+	 *
+	 * @param keys the keys
+	 */
+	static public void waitForMultipleTasks(Object... keys) {
+		for (int i = 0; originalKeys.containsKey(ObjectsKey.of(getIndexedKey(i, keys))); i++) {
+			Object[] indexedKey = getIndexedKey(i, keys);
+			waitForTask(indexedKey);
+		}
 	}
 
 	/**
