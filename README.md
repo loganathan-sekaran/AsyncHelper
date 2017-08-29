@@ -12,11 +12,11 @@ Below are the some of the operations that can be perfomed using this utility:
 
 Please look into the <a href="https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/test/java/com/github/loganathan001/asynchelper/AsyncHelperTest.java">Unit tests</a> for all the use-cases and examples.
 
-To install, add the below pom dependency entry:
+To install the latest version, add the below pom dependency entry:
 ```
 <dependency>
   <groupId>com.github.loganathan001</groupId>
   <artifactId>async-helper</artifactId>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
 </dependency>
 ```
