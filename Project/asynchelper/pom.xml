@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.loganathan001</groupId>
   <artifactId>async-helper</artifactId>
-  <version>1.1.0</version>
+  <version>1.2.0</version>
   <name>Async Helper</name>
   <description>AsyncHelper is a Java utility to invoke/schedule Tasks/data fetch operation asynchronously using tags/flags in a functional way.</description>
   <url>https://github.com/loganathan001/AsyncHelper</url>

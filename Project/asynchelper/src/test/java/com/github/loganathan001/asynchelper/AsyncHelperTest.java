@@ -29,8 +29,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -44,6 +46,8 @@ import org.junit.Test;
 import com.github.loganathan001.asynchelper.AsyncHelper;
 
 public class AsyncHelperTest {
+	
+	static final Logger logger = Logger.getLogger(AsyncHelperTest.class.getName());
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
@@ -94,9 +98,10 @@ public class AsyncHelperTest {
 		return () -> {
 			try {
 				Thread.sleep(msecs);
-			} catch (InterruptedException e) {
+				runnable.run();
+			} catch (Exception e) {
+				logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
 			}
-			runnable.run();
 		};
 	}
 
@@ -932,6 +937,41 @@ public class AsyncHelperTest {
 		
 		assertArrayEquals(retVal, new int[]{10, 20, 30, 40, 50});
 	}
+	
+	@Test
+	public void testSubmitTasksAndWaitWithCancelWithInterrupt() {
+		int[] retVal = new int[]{0, 0, 0, 0, 0};
+		AtomicBoolean cancel = new AtomicBoolean(false);
+		AsyncHelper.submitTask(delayedRunnable(() -> {
+			cancel.set(true);
+		}, 3500));
+		
+		AsyncHelper.submitTasksAndWait(
+		() -> cancel.get(), true,
+		delayedRunnable(() -> {
+			retVal[0] = 10;
+			printTime();
+		}, 1000),
+		delayedRunnable(() -> {
+			retVal[1] = 20;
+			printTime();
+		}, 2000),
+		delayedRunnable(() -> {
+			retVal[2] = 30;
+			printTime();
+		}, 3000),
+		delayedRunnable(() -> {
+			retVal[3] = 40;
+			printTime();
+		}, 4000),
+		delayedRunnable(() -> {
+			retVal[4] = 50;
+			printTime();
+		}, 5000));
+		
+		assertArrayEquals(retVal, new int[]{10, 20, 30, 0, 0});
+	}
+	
 	
 	@Test
 	public void testSubmitTasksWithKeys() {

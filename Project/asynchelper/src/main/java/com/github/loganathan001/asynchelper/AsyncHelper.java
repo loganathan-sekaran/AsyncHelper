@@ -32,6 +32,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -188,6 +189,55 @@ public enum AsyncHelper {
 	 */
 	static public void submitTasks(Runnable... runnables) {
 		Stream.of(runnables).forEach(forkJoinPool::execute);
+	}
+	
+	/**
+	 * Submit tasks and wait.
+	 *
+	 * @param cancelCondition the cancel condition
+	 * @param cancelCanInterruptRunning the cancel can interrupt running
+	 * @param runnables the runnables
+	 */
+	static public void submitTasksAndWait(Supplier<Boolean> cancelCondition, boolean cancelCanInterruptRunning, Runnable... runnables) {
+		ForkJoinPool forkJoinPool = new ForkJoinPool(ForkJoinPool.getCommonPoolParallelism());
+		List<Future<?>> futures = Stream.of(runnables).map(forkJoinPool::submit).collect(Collectors.toList());
+		AtomicBoolean allTasksCompleted = new AtomicBoolean(false);
+		AsyncHelper.submitTask(() -> {
+			for (Future<?> future : futures) {
+				try {
+					future.get();
+				} catch (Exception e) {
+					logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
+				}
+			}
+			allTasksCompleted.set(true);
+		}, futures, "getting");
+		
+		AsyncHelper.submitTask(() -> {
+			while(!allTasksCompleted.get()) {
+				if(!cancelCondition.get()) {
+					try {
+						Thread.sleep(1);
+					} catch (InterruptedException e) {
+						logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
+					}
+				} else {
+					futures.parallelStream().forEach(future -> {
+						future.cancel(cancelCanInterruptRunning);
+					});
+					break;
+				}
+			}
+		}, futures, "cancelling");
+		
+		AsyncHelper.waitForTask(futures, "getting");
+		AsyncHelper.waitForTask(futures, "cancelling");
+		forkJoinPool.shutdownNow();
+		try {
+			forkJoinPool.awaitTermination(5, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+			logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
+		}
 	}
 	
 	/**
