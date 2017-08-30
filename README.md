@@ -17,6 +17,6 @@ To install the latest version, add the below pom dependency entry:
 <dependency>
   <groupId>com.github.loganathan001</groupId>
   <artifactId>async-helper</artifactId>
-  <version>1.1.0</version>
+  <version>1.2.0</version>
 </dependency>
 ```
