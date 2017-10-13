@@ -15,8 +15,8 @@ Please look into the <a href="https://github.com/loganathan001/AsyncHelper/blob/
 To install the latest version, add the below pom dependency entry:
 ```
 <dependency>
-  <groupId>com.github.loganathan001</groupId>
+  <groupId>org.vishag</groupId>
   <artifactId>async-helper</artifactId>
-  <version>1.2.0</version>
+  <version>1.0.0</version>
 </dependency>
 ```
