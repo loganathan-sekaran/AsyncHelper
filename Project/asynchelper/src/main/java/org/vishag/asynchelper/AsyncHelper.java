@@ -18,7 +18,7 @@
  * under the License.
  */
 
-package com.github.loganathan001.asynchelper;
+package org.vishag.asynchelper;
 
 import java.lang.reflect.Array;
 import java.util.LinkedList;

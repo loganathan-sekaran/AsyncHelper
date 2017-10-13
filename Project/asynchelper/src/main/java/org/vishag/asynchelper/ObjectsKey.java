@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package com.github.loganathan001.asynchelper;
+package org.vishag.asynchelper;
 
 import java.util.Arrays;
 import java.util.List;

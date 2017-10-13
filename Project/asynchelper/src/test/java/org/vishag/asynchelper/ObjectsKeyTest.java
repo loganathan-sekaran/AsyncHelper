@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package com.github.loganathan001.asynchelper;
+package org.vishag.asynchelper;
 
 import static org.junit.Assert.*;
 
@@ -26,8 +26,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import com.github.loganathan001.asynchelper.ObjectsKey;
+import org.vishag.asynchelper.ObjectsKey;
 
 public class ObjectsKeyTest {
 

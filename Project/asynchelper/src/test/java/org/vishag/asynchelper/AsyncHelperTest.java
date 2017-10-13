@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package com.github.loganathan001.asynchelper;
+package org.vishag.asynchelper;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -42,8 +42,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import com.github.loganathan001.asynchelper.AsyncHelper;
+import org.vishag.asynchelper.AsyncHelper;
 
 public class AsyncHelperTest {
 	
