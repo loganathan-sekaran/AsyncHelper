@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.vishag</groupId>
   <artifactId>async-helper</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1-SNAPSHOT</version>
   <name>Async Helper</name>
   <description>AsyncHelper is a Java utility to invoke/schedule Tasks/data fetch operation asynchronously using tags/flags in a functional way.</description>
   <url>https://github.com/loganathan001/AsyncHelper</url>
@@ -16,6 +16,10 @@
 	    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 	  </repository>
 	</distributionManagement>
+	<properties>
+       		<jacoco-maven-plugin.version>0.7.6.201602180812</jacoco-maven-plugin.version>
+	        <coveralls-maven-plugin.version>4.3.0</coveralls-maven-plugin.version>
+	</properties>
    <build>
     <plugins>
       <plugin>
@@ -26,57 +30,52 @@
           <target>1.8</target>
         </configuration>
       </plugin>
-      <plugin>
-		  <groupId>org.apache.maven.plugins</groupId>
-		  <artifactId>maven-source-plugin</artifactId>
-		  <version>2.2.1</version>
-		  <executions>
-			<execution>
-			  <id>attach-sources</id>
-			  <goals>
-				<goal>jar-no-fork</goal>
-			  </goals>
-			</execution>
-		  </executions>
-		</plugin>
-		<plugin>
-		  <groupId>org.apache.maven.plugins</groupId>
-		  <artifactId>maven-javadoc-plugin</artifactId>
-		  <version>2.9.1</version>
-		  <executions>
-			<execution>
-			  <id>attach-javadocs</id>
-			  <goals>
-				<goal>jar</goal>
-			  </goals>
-			</execution>
-		  </executions>
-		</plugin>
 			<plugin>
-			  <groupId>org.sonatype.plugins</groupId>
-			  <artifactId>nexus-staging-maven-plugin</artifactId>
-			  <version>1.6.7</version>
-			  <extensions>true</extensions>
-			  <configuration>
-				<serverId>ossrh</serverId>
-				<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-				<autoReleaseAfterClose>true</autoReleaseAfterClose>
-			  </configuration>
+			 <groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>${jacoco-maven-plugin.version}</version>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>post-unit-test</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+						<configuration>
+							<!-- Sets the path to the file which contains the execution data. -->
+
+							<dataFile>target/jacoco.exec</dataFile>
+							<!-- Sets the output directory for the code coverage report. -->
+							<outputDirectory>target/jacoco-ut</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+				<configuration>
+					<systemPropertyVariables>
+						<jacoco-agent.destfile>target/jacoco.exec</jacoco-agent.destfile>
+					</systemPropertyVariables>
+				</configuration>
 			</plugin>
-			<plugin>
-			  <groupId>org.apache.maven.plugins</groupId>
-			  <artifactId>maven-gpg-plugin</artifactId>
-			  <version>1.5</version>
-			  <executions>
-				<execution>
-				  <id>sign-artifacts</id>
-				  <phase>verify</phase>
-				  <goals>
-					<goal>sign</goal>
-				  </goals>
-				</execution>
-			  </executions>
-			</plugin>
+
+            <plugin>
+                <groupId>org.eluder.coveralls</groupId>
+                <artifactId>coveralls-maven-plugin</artifactId>
+                <version>${coveralls-maven-plugin.version}</version>
+            </plugin>
+			
     </plugins>    
   </build>
   <dependencies>
@@ -87,6 +86,69 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+  
+   <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+					  <groupId>org.apache.maven.plugins</groupId>
+					  <artifactId>maven-source-plugin</artifactId>
+					  <version>2.2.1</version>
+					  <executions>
+						<execution>
+						  <id>attach-sources</id>
+						  <goals>
+							<goal>jar-no-fork</goal>
+						  </goals>
+						</execution>
+					  </executions>
+					</plugin>
+					<plugin>
+					  <groupId>org.apache.maven.plugins</groupId>
+					  <artifactId>maven-javadoc-plugin</artifactId>
+					  <version>2.9.1</version>
+					  <executions>
+						<execution>
+						  <id>attach-javadocs</id>
+						  <goals>
+							<goal>jar</goal>
+						  </goals>
+						</execution>
+					  </executions>
+					</plugin>
+						<plugin>
+						  <groupId>org.sonatype.plugins</groupId>
+						  <artifactId>nexus-staging-maven-plugin</artifactId>
+						  <version>1.6.7</version>
+						  <extensions>true</extensions>
+						  <configuration>
+							<serverId>ossrh</serverId>
+							<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+							<autoReleaseAfterClose>true</autoReleaseAfterClose>
+						  </configuration>
+						</plugin>
+						<plugin>
+						  <groupId>org.apache.maven.plugins</groupId>
+						  <artifactId>maven-gpg-plugin</artifactId>
+						  <version>1.5</version>
+						  <executions>
+							<execution>
+							  <id>sign-artifacts</id>
+							  <phase>verify</phase>
+							  <goals>
+								<goal>sign</goal>
+							  </goals>
+							</execution>
+						  </executions>
+						</plugin>
+                </plugins>
+            </build>
+
+        </profile>
+    </profiles>
+  
   <licenses>
 	  <license>
 	    <name>The Apache License, Version 2.0</name>

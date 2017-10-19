@@ -45,9 +45,12 @@ import java.util.stream.Stream;
 
 /**
  * The AsyncHelper.
+ * @author Loganathan.S <https://github.com/loganathan001>
  */
-public enum AsyncHelper {
-	;
+public final class AsyncHelper {
+	
+	private AsyncHelper() {
+	}
 	
 	/**
 	 * {@code Logger} for this class.
