@@ -1,5 +1,6 @@
 language: java
 install:
+  - cd Project/asynchelper
   - mvn install -DskipTests=true -Dgpg.skip=true -B -V
 jdk:
   - oraclejdk8
