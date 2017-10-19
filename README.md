@@ -1,5 +1,5 @@
 # AsyncHelper
-<a href="https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/com/github/loganathan001/asynchelper/AsyncHelper.java">AsyncHelper</a> is a Java utility to invoke/schedule tasks or fetch data asynchronously using tags/flags in a functional way. This internally utilizes ForkJoin pool to submit the tasks.
+<a href="https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/asynchelper/AsyncHelper.java">AsyncHelper</a> is a Java utility to invoke/schedule tasks or fetch data asynchronously using tags/flags in a functional way. This internally utilizes ForkJoin pool to submit the tasks.
 
 
 Below are the some of the operations that can be perfomed using this utility:
@@ -10,13 +10,13 @@ Below are the some of the operations that can be perfomed using this utility:
 5. Some of the above operations also support option to submit/schedule asynchronously and then wait untill all asynchronous tasks are compete.
 
 
-Please look into the <a href="https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/test/java/com/github/loganathan001/asynchelper/AsyncHelperTest.java">Unit tests</a> for all the use-cases and examples.
+Please look into the <a href="https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/test/java/org/vishag/asynchelper/AsyncHelperTest.java">Unit tests</a> for all the use-cases and examples.
 
 To install the latest version, add the below pom dependency entry:
 ```
 <dependency>
-  <groupId>com.github.loganathan001</groupId>
+  <groupId>org.vishag</groupId>
   <artifactId>async-helper</artifactId>
-  <version>1.2.0</version>
+  <version>1.0.0</version>
 </dependency>
 ```
