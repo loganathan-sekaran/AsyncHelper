@@ -63,7 +63,7 @@ public final class AsyncHelper {
 	static {
 		forkJoinPool = ForkJoinPool.commonPool();
 		if(ForkJoinPool.getCommonPoolParallelism() == 1) {
-			forkJoinPool = new ForkJoinPool(4);
+			forkJoinPool = new ForkJoinPool(5);
 		} else {
 			forkJoinPool = ForkJoinPool.commonPool();
 		}

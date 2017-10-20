@@ -28,7 +28,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -750,25 +749,15 @@ public class AsyncHelperTest {
 	@Test
 	public void testWaitAndNotifyAllForFlag() throws InterruptedException {
 		int[] retVal = new int[2];
-		System.out.println("Common FJP parallalism" + ForkJoinPool.getCommonPoolParallelism());
-		AsyncHelper.submitTask(() -> {
-			System.out.println("Inside notification task.");
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+		AsyncHelper.submitTask(delayedRunnable(() -> {
 			retVal[0] = 10;
 			AsyncHelper.notifyAllFlag("FLAG2");
-			System.out.println("Notifyed FLAG2");
-		});
+		}, 2000));
 		
 		
 		AsyncHelper.submitTask(() -> {
 			try {
-				System.out.println("Wating for FLAG2 in Task2");
 				AsyncHelper.waitForFlag("FLAG2");
-				System.out.println("Completed waiting for FLAG2 in Task2");
 				retVal[1] = retVal[0] + 10;
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
@@ -776,15 +765,11 @@ public class AsyncHelperTest {
 			}
 		}, "Task2");
 		
-		System.out.println("Wating for FLAG2 in main");
 		AsyncHelper.waitForFlag("FLAG2");
-		System.out.println("Completed waiting for FLAG2 in main");
 		assertEquals(retVal[0], 10);
 		
-		System.out.println("Wating for Task2 in main");
 		AsyncHelper.waitForTask("Task2");
 		assertEquals(retVal[1], 20);
-		System.out.println("Completed waiting for Task2 in main");
 	}
 	
 	
@@ -962,30 +947,30 @@ public class AsyncHelperTest {
 		AtomicBoolean cancel = new AtomicBoolean(false);
 		AsyncHelper.submitTask(delayedRunnable(() -> {
 			cancel.set(true);
-		}, 3500));
+		}, 5000));
 		
 		AsyncHelper.submitTasksAndWait(
 		() -> cancel.get(), true,
 		delayedRunnable(() -> {
 			retVal[0] = 10;
 			printTime();
-		}, 1000),
+		}, 2000),
 		delayedRunnable(() -> {
 			retVal[1] = 20;
 			printTime();
-		}, 2000),
+		}, 4000),
 		delayedRunnable(() -> {
 			retVal[2] = 30;
 			printTime();
-		}, 3000),
+		}, 6000),
 		delayedRunnable(() -> {
 			retVal[3] = 40;
 			printTime();
-		}, 4000),
+		}, 8000),
 		delayedRunnable(() -> {
 			retVal[4] = 50;
 			printTime();
-		}, 5000));
+		}, 10000));
 		
 		assertArrayEquals(retVal, new int[]{10, 20, 30, 0, 0});
 	}
