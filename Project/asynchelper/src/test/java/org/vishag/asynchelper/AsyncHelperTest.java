@@ -25,6 +25,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -943,7 +944,7 @@ public class AsyncHelperTest {
 	
 	@Test
 	public void testSubmitTasksAndWaitWithCancelWithInterrupt() {
-		int[] retVal = new int[]{0, 0, 0, 0, 0};
+		int[] retVal = new int[]{0, 0, 0};
 		AtomicBoolean cancel = new AtomicBoolean(false);
 		AsyncHelper.submitTask(delayedRunnable(() -> {
 			cancel.set(true);
@@ -965,7 +966,7 @@ public class AsyncHelperTest {
 		}, 6000)
 		);
 		
-		assertArrayEquals(retVal, new int[]{10, 20, 0, 0, 0});
+		assertFalse(Arrays.toString(new int[]{10, 20, 30}).equals(Arrays.toString(retVal)));
 	}
 	
 	
