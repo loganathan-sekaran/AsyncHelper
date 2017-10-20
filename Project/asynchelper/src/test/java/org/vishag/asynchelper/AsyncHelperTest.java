@@ -762,7 +762,6 @@ public class AsyncHelperTest {
 			}
 		}, "Task2");
 		
-		
 		AsyncHelper.submitTask(delayedRunnable(() -> {
 			retVal[0] = 10;
 			AsyncHelper.notifyAllFlag("FLAG2");
