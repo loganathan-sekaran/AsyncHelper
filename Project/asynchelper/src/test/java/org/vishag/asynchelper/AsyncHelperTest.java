@@ -752,12 +752,15 @@ public class AsyncHelperTest {
 		AsyncHelper.submitTask(delayedRunnable(() -> {
 			retVal[0] = 10;
 			AsyncHelper.notifyAllFlag("FLAG2");
+			System.out.println("Notifyed FLAG2");
 		}, 2000));
 		
 		
 		AsyncHelper.submitTask(() -> {
 			try {
+				System.out.println("Wating for FLAG2 in Task2");
 				AsyncHelper.waitForFlag("FLAG2");
+				System.out.println("Completed waiting for FLAG2 in Task2");
 				retVal[1] = retVal[0] + 10;
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
@@ -765,13 +768,15 @@ public class AsyncHelperTest {
 			}
 		}, "Task2");
 		
-		Thread.sleep(500);
-		
+		System.out.println("Wating for FLAG2 in main");
 		AsyncHelper.waitForFlag("FLAG2");
+		System.out.println("Completed waiting for FLAG2 in main");
 		assertEquals(retVal[0], 10);
 		
+		System.out.println("Wating for Task2 in main");
 		AsyncHelper.waitForTask("Task2");
 		assertEquals(retVal[1], 20);
+		System.out.println("Completed waiting for Task2 in main");
 	}
 	
 	
