@@ -762,11 +762,17 @@ public class AsyncHelperTest {
 			}
 		}, "Task2");
 		
-		AsyncHelper.submitTask(delayedRunnable(() -> {
+		AsyncHelper.submitTask(() -> {
+			System.out.println("Inside notification task.");
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			retVal[0] = 10;
 			AsyncHelper.notifyAllFlag("FLAG2");
 			System.out.println("Notifyed FLAG2");
-		}, 1000));
+		});
 		
 		System.out.println("Wating for FLAG2 in main");
 		AsyncHelper.waitForFlag("FLAG2");
