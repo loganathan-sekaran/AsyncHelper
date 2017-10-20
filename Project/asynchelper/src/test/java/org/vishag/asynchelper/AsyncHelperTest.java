@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -749,11 +750,11 @@ public class AsyncHelperTest {
 	@Test
 	public void testWaitAndNotifyAllForFlag() throws InterruptedException {
 		int[] retVal = new int[2];
-		
+		System.out.println("Common FJP parallalism" + ForkJoinPool.getCommonPoolParallelism());
 		AsyncHelper.submitTask(() -> {
 			System.out.println("Inside notification task.");
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(2000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

@@ -58,7 +58,16 @@ public final class AsyncHelper {
 	static final Logger logger = Logger.getLogger(AsyncHelper.class.getName());
 	
 	/** The fork join pool. */
-	static private ForkJoinPool forkJoinPool = ForkJoinPool.commonPool();
+	static private ForkJoinPool forkJoinPool;
+	
+	static {
+		forkJoinPool = ForkJoinPool.commonPool();
+		if(ForkJoinPool.getCommonPoolParallelism() == 1) {
+			forkJoinPool = new ForkJoinPool(4);
+		} else {
+			forkJoinPool = ForkJoinPool.commonPool();
+		}
+	}
 	
 	/** The scheduled executor service. */
 	static private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(ForkJoinPool.getCommonPoolParallelism());
