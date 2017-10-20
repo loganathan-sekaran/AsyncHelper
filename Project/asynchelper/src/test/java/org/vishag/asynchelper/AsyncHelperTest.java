@@ -962,17 +962,10 @@ public class AsyncHelperTest {
 		delayedRunnable(() -> {
 			retVal[2] = 30;
 			printTime();
-		}, 6000),
-		delayedRunnable(() -> {
-			retVal[3] = 40;
-			printTime();
-		}, 8000),
-		delayedRunnable(() -> {
-			retVal[4] = 50;
-			printTime();
-		}, 10000));
+		}, 6000)
+		);
 		
-		assertArrayEquals(retVal, new int[]{10, 20, 30, 0, 0});
+		assertArrayEquals(retVal, new int[]{10, 20, 0, 0, 0});
 	}
 	
 	
