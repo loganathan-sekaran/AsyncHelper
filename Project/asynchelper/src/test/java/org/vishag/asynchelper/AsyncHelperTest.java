@@ -44,32 +44,11 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 
 public class AsyncHelperTest {
-	
+
 	@Rule
-	public TestRule watcher = new TestWatcher() {
-	   protected void starting(Description description) {
-	      System.out.println("====Starting test: " + description.getMethodName());
-	   }
-	   
-	   protected void succeeded(Description description) {
-		   System.out.println("[Succeeded] test: " + description.getMethodName());
-	   }
-	   
-	   protected void failed(Throwable e, Description description) {
-		   System.err.println("[Failed] test: " + description.getMethodName());
-		   e.printStackTrace();
-	   }
-	   
-	   protected void finished(Description description) {
-		   System.out.println("----Finished test: " + description.getMethodName());
-	   }
-	   
-	   
-	};
+	public TestRule watcher = new TestWatcherAndLogger();
 	
 	static final Logger logger = Logger.getLogger(AsyncHelperTest.class.getName());
 
@@ -785,6 +764,8 @@ public class AsyncHelperTest {
 				e.printStackTrace();
 			}
 		}, "Task2");
+		
+		Thread.sleep(500);
 		
 		AsyncHelper.waitForFlag("FLAG2");
 		assertEquals(retVal[0], 10);

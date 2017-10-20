@@ -25,10 +25,15 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
 import org.vishag.asynchelper.ObjectsKey;
 
 public class ObjectsKeyTest {
+	
+	@Rule
+	public TestRule watcher = new TestWatcherAndLogger();
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
