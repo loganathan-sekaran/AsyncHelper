@@ -762,12 +762,11 @@ public class AsyncHelperTest {
 			}
 		}, "Task2");
 		
-		
 		AsyncHelper.submitTask(delayedRunnable(() -> {
 			retVal[0] = 10;
 			AsyncHelper.notifyAllFlag("FLAG2");
 			System.out.println("Notifyed FLAG2");
-		}, 5000));
+		}, 1000));
 		
 		System.out.println("Wating for FLAG2 in main");
 		AsyncHelper.waitForFlag("FLAG2");
