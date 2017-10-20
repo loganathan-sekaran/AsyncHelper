@@ -751,18 +751,6 @@ public class AsyncHelperTest {
 		int[] retVal = new int[2];
 		
 		AsyncHelper.submitTask(() -> {
-			try {
-				System.out.println("Wating for FLAG2 in Task2");
-				AsyncHelper.waitForFlag("FLAG2");
-				System.out.println("Completed waiting for FLAG2 in Task2");
-				retVal[1] = retVal[0] + 10;
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}, "Task2");
-		
-		AsyncHelper.submitTask(() -> {
 			System.out.println("Inside notification task.");
 			try {
 				Thread.sleep(1000);
@@ -773,6 +761,19 @@ public class AsyncHelperTest {
 			AsyncHelper.notifyAllFlag("FLAG2");
 			System.out.println("Notifyed FLAG2");
 		});
+		
+		
+		AsyncHelper.submitTask(() -> {
+			try {
+				System.out.println("Wating for FLAG2 in Task2");
+				AsyncHelper.waitForFlag("FLAG2");
+				System.out.println("Completed waiting for FLAG2 in Task2");
+				retVal[1] = retVal[0] + 10;
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}, "Task2");
 		
 		System.out.println("Wating for FLAG2 in main");
 		AsyncHelper.waitForFlag("FLAG2");

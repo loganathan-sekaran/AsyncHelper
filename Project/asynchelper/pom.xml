@@ -39,6 +39,10 @@
 	        <additionalClasspathElements>
 	            <additionalClasspathElement>${java.home}/lib/ext/jfxrt.jar</additionalClasspathElement>
 	        </additionalClasspathElements>
+	        <!--  <parallel>classes</parallel> -->
+             <useUnlimitedThreads>true</useUnlimitedThreads>
+             <threadCount>80</threadCount>
+             <perCoreThreadCount>true</perCoreThreadCount>
 	    </configuration>
 	</plugin>
 		<plugin>
