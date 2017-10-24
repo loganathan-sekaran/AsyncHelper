@@ -37,11 +37,6 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -52,22 +47,22 @@ public class AsyncHelperTest {
 	public TestRule watcher = new TestWatcherAndLogger();
 	
 	static final Logger logger = Logger.getLogger(AsyncHelperTest.class.getName());
+//
+//	@BeforeClass
+//	public static void setUpBeforeClass() throws Exception {
+//	}
+//
+//	@AfterClass
+//	public static void tearDownAfterClass() throws Exception {
+//	}
 
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
-	@Before
-	public void setUp() throws Exception {
-	}
-
-	@After
-	public void tearDown() throws Exception {
-	}
+//	@Before
+//	public void setUp() throws Exception {
+//	}
+//
+//	@After
+//	public void tearDown() throws Exception {
+//	}
 
 	@Test
 	public void test() throws InterruptedException {
@@ -232,10 +227,10 @@ public class AsyncHelperTest {
 		assertEquals(AsyncHelper.waitAndGet(String.class, "query33").get(), "Value3");
 		assertEquals(AsyncHelper.waitAndGet(String.class, "query44").get(), "Value4");
 
-		assertTrue(!AsyncHelper.waitAndGet(String.class, "query11").isPresent());
-		assertTrue(!AsyncHelper.waitAndGet(String.class, "query22").isPresent());
-		assertTrue(!AsyncHelper.waitAndGet(String.class, "query33").isPresent());
-		assertTrue(!AsyncHelper.waitAndGet(String.class, "query44").isPresent());
+		assertFalse(AsyncHelper.waitAndGet(String.class, "query11").isPresent());
+		assertFalse(AsyncHelper.waitAndGet(String.class, "query22").isPresent());
+		assertFalse(AsyncHelper.waitAndGet(String.class, "query33").isPresent());
+		assertFalse(AsyncHelper.waitAndGet(String.class, "query44").isPresent());
 	}
 
 	@Test
@@ -346,10 +341,10 @@ public class AsyncHelperTest {
 		assertEquals(AsyncHelper.waitAndGet(String.class, "query33333").get(), "Value33");
 		assertEquals(AsyncHelper.waitAndGet(String.class, "query44444").get(), "Value44");
 		
-		assertTrue(!AsyncHelper.waitAndGet(String.class, "query11111").isPresent());
-		assertTrue(!AsyncHelper.waitAndGet(String.class, "query22222").isPresent());
-		assertTrue(!AsyncHelper.waitAndGet(String.class, "query33333").isPresent());
-		assertTrue(!AsyncHelper.waitAndGet(String.class, "query44444").isPresent());
+		assertFalse(AsyncHelper.waitAndGet(String.class, "query11111").isPresent());
+		assertFalse(AsyncHelper.waitAndGet(String.class, "query22222").isPresent());
+		assertFalse(AsyncHelper.waitAndGet(String.class, "query33333").isPresent());
+		assertFalse(AsyncHelper.waitAndGet(String.class, "query44444").isPresent());
 	}
 	
 	@Test
@@ -367,10 +362,10 @@ public class AsyncHelperTest {
 		assertEquals(AsyncHelper.waitAndGet(String.class, "query333333").get(), "Value3");
 		assertEquals(AsyncHelper.waitAndGet(String.class, "query444444").get(), "Value4");
 		
-		assertTrue(!AsyncHelper.waitAndGet(String.class, "query111111").isPresent());
-		assertTrue(!AsyncHelper.waitAndGet(String.class, "query222222").isPresent());
-		assertTrue(!AsyncHelper.waitAndGet(String.class, "query333333").isPresent());
-		assertTrue(!AsyncHelper.waitAndGet(String.class, "query444444").isPresent());
+		assertFalse(AsyncHelper.waitAndGet(String.class, "query111111").isPresent());
+		assertFalse(AsyncHelper.waitAndGet(String.class, "query222222").isPresent());
+		assertFalse(AsyncHelper.waitAndGet(String.class, "query333333").isPresent());
+		assertFalse(AsyncHelper.waitAndGet(String.class, "query444444").isPresent());
 		
 		assertTrue(AsyncHelper.submitSupplierForMultipleAccess(delayedSupplier(() -> "Value11"), "query111111"));
 		assertTrue(
@@ -536,7 +531,7 @@ public class AsyncHelperTest {
 		
 		assertEquals(scheduleSuppliers.length, 5);
 		AtomicInteger val = new AtomicInteger(0);
-		Stream.of(scheduleSuppliers).map(Supplier::get).forEach(value -> Assert.assertEquals(val.addAndGet(10), (int)value));
+		Stream.of(scheduleSuppliers).map(Supplier::get).forEach(value -> assertEquals(val.addAndGet(10), (int)value));
 	}
 	
 	@Test
@@ -618,7 +613,7 @@ public class AsyncHelperTest {
 		
 		assertEquals(retVals.size(), 5);
 		AtomicInteger val = new AtomicInteger(0);
-		retVals.forEach(value -> Assert.assertEquals(val.addAndGet(10), (int)value));
+		retVals.forEach(value -> assertEquals(val.addAndGet(10), (int)value));
 	}
 	
 	private void printTime() {
@@ -677,7 +672,7 @@ public class AsyncHelperTest {
 		
 		assertEquals(resultSuppliers.length, 5);
 		AtomicInteger val = new AtomicInteger(0);
-		Stream.of(resultSuppliers).map(Supplier::get).forEach(value -> Assert.assertEquals(val.addAndGet(10), (int)value));
+		Stream.of(resultSuppliers).map(Supplier::get).forEach(value -> assertEquals(val.addAndGet(10), (int)value));
 		
 	}
 	
@@ -710,7 +705,7 @@ public class AsyncHelperTest {
 		List<Integer> retVals = AsyncHelper.waitAndGetFromMultipleSuppliers(Integer.class, "Scheduled", "Multiple","Suppliers","key").collect(Collectors.toList());
 		assertEquals(retVals.size(), 5);
 		AtomicInteger val = new AtomicInteger(0);
-		retVals.forEach(value -> Assert.assertEquals(val.addAndGet(10), (int)value));
+		retVals.forEach(value -> assertEquals(val.addAndGet(10), (int)value));
 		
 	}
 	
@@ -743,7 +738,7 @@ public class AsyncHelperTest {
 		List<Integer> retVals = AsyncHelper.waitAndGetFromMultipleSuppliers(Integer.class, "Multiple","Suppliers","key").collect(Collectors.toList());
 		assertEquals(retVals.size(), 5);
 		AtomicInteger val = new AtomicInteger(0);
-		retVals.forEach(value -> Assert.assertEquals(val.addAndGet(10), (int)value));
+		retVals.forEach(value -> assertEquals(val.addAndGet(10), (int)value));
 		
 	}
 	
@@ -804,7 +799,7 @@ public class AsyncHelperTest {
 		
 		assertEquals(scheduleSuppliers.length, 3);
 		AtomicInteger val = new AtomicInteger(0);
-		Stream.of(scheduleSuppliers).map(Supplier::get).forEach(value -> Assert.assertEquals(val.addAndGet(10), (int)value));
+		Stream.of(scheduleSuppliers).map(Supplier::get).forEach(value -> assertEquals(val.addAndGet(10), (int)value));
 	}
 
 	@Test
@@ -818,7 +813,7 @@ public class AsyncHelperTest {
 		}, 3).collect(Collectors.toList());
 		assertEquals(retVals.size(), 3);
 		AtomicInteger val = new AtomicInteger(0);
-		retVals.forEach(value -> Assert.assertEquals(val.addAndGet(10), (int)value));
+		retVals.forEach(value -> assertEquals(val.addAndGet(10), (int)value));
 	}
 
 	@Test
@@ -852,7 +847,7 @@ public class AsyncHelperTest {
 		List<Integer> retVals = AsyncHelper.waitAndGetFromMultipleSuppliers(Integer.class, "Scheduled", "Multiple","Suppliers","key").collect(Collectors.toList());
 		assertEquals(retVals.size(), 3);
 		AtomicInteger val = new AtomicInteger(0);
-		retVals.forEach(value -> Assert.assertEquals(val.addAndGet(10), (int)value));
+		retVals.forEach(value -> assertEquals(val.addAndGet(10), (int)value));
 		
 	}
 

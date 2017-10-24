@@ -19,37 +19,33 @@
 
 package org.vishag.asynchelper;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
-import org.vishag.asynchelper.ObjectsKey;
 
 public class ObjectsKeyTest {
 	
 	@Rule
 	public TestRule watcher = new TestWatcherAndLogger();
 
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
-	@Before
-	public void setUp() throws Exception {
-	}
-
-	@After
-	public void tearDown() throws Exception {
-	}
+//	@BeforeClass
+//	public static void setUpBeforeClass() throws Exception {
+//	}
+//
+//	@AfterClass
+//	public static void tearDownAfterClass() throws Exception {
+//	}
+//
+//	@Before
+//	public void setUp() throws Exception {
+//	}
+//
+//	@After
+//	public void tearDown() throws Exception {
+//	}
 
 	@Test (expected = AssertionError.class)
 	public void testEmptyArray() {
@@ -63,6 +59,8 @@ public class ObjectsKeyTest {
 	
 	@Test
 	public void testEqualKey() {
+		ObjectsKey objectsKey = ObjectsKey.of("111");
+		assertEquals(objectsKey, objectsKey);
 		assertEquals(ObjectsKey.of("111"), ObjectsKey.of("111"));
 		assertEquals(ObjectsKey.of("111", Integer.class), ObjectsKey.of("111", Integer.class));
 		assertEquals(ObjectsKey.of("111", String.class), ObjectsKey.of(String.class, "111"));
@@ -70,6 +68,8 @@ public class ObjectsKeyTest {
 	
 	@Test
 	public void testUnEqualKey() {
+		assertNotEquals(ObjectsKey.of("111"), null);
+		assertNotEquals(ObjectsKey.of("111"), 111);
 		assertNotEquals(ObjectsKey.of("111"), ObjectsKey.of("222"));
 		assertNotEquals(ObjectsKey.of("111", Integer.class), ObjectsKey.of("111"));
 		assertNotEquals(ObjectsKey.of("111"), ObjectsKey.of("111", String.class));
