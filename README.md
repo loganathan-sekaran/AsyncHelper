@@ -3,6 +3,7 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.vishag/async-helper/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.vishag/async-helper)
 [![Build Status](https://travis-ci.org/loganathan001/AsyncHelper.svg?branch=master)](https://travis-ci.org/loganathan001/AsyncHelper)
 [![Coverage Status](https://coveralls.io/repos/github/loganathan001/AsyncHelper/badge.svg?branch=master)](https://coveralls.io/github/loganathan001/AsyncHelper?branch=master)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/a2fef06aa2e946ca86a5ea05fbfccdc3)](https://www.codacy.com/app/loganathan001/AsyncHelper?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=loganathan001/AsyncHelper&amp;utm_campaign=Badge_Grade)
 [![HitCount](http://hits.dwyl.io/loganathan001/loganathan001/AsyncHelper.svg)](http://hits.dwyl.io/loganathan001/loganathan001/AsyncHelper)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/loganathan001/AsyncHelper/issues)
