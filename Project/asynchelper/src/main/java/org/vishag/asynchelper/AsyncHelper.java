@@ -49,13 +49,10 @@ import java.util.stream.Stream;
  */
 public final class AsyncHelper {
 	
-	private AsyncHelper() {
-	}
-	
 	/**
 	 * {@code Logger} for this class.
 	 */
-	static final Logger logger = Logger.getLogger(AsyncHelper.class.getName());
+	private static final Logger logger = Logger.getLogger(AsyncHelper.class.getName());
 	
 	/** The fork join pool. */
 	static private ForkJoinPool forkJoinPool;
@@ -83,6 +80,10 @@ public final class AsyncHelper {
 	
 	/** The multiple accessed values. */
 	static private Map<ObjectsKey, Object> multipleAccessedValues = new ConcurrentHashMap<>();
+	
+	private AsyncHelper() {
+	}
+	
 
 	/**
 	 * Gets the fork join pool.
@@ -380,6 +381,7 @@ public final class AsyncHelper {
 
 			@Override
 			public  void consumeResult(Void v) {
+				//Does nothing
 			}
 			
 		};
@@ -519,7 +521,7 @@ public final class AsyncHelper {
 	@SafeVarargs
 	static public <T> void scheduleSuppliersUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			String flag, Supplier<T>... suppliers) {
-		doScheduleSupplierUntilFlag(initialDelay, delay, unit, waitForPreviousTask, false, suppliers, flag);
+		doScheduleSupplierUntilFlag(initialDelay, delay, unit, waitForPreviousTask, suppliers, flag);
 	}
 	
 	/**
@@ -666,13 +668,12 @@ public final class AsyncHelper {
 	 * @param delay the delay
 	 * @param unit the unit
 	 * @param waitForPreviousTask the wait for previous task
-	 * @param waitForAllTasks the wait for all tasks
 	 * @param suppliers the suppliers
 	 * @param flag the flag
 	 * @return the scheduled future
 	 */
 	static private <T> ScheduledFuture<?> doScheduleSupplierUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
-			boolean waitForAllTasks, Supplier<T>[] suppliers, String flag) {
+			Supplier<T>[] suppliers, String flag) {
 		AtomicBoolean canCancel = new AtomicBoolean(false);
 		LinkedList<Supplier<T>> resultSuppliers = new LinkedList<Supplier<T>>(); 
 		SchedulingFunction<Supplier<T>, T> schedulingSuppliers = new SchedulingFunction<Supplier<T>, T>() {

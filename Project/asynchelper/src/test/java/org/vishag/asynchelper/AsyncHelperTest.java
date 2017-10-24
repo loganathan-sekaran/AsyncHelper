@@ -37,11 +37,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -52,22 +48,22 @@ public class AsyncHelperTest {
 	public TestRule watcher = new TestWatcherAndLogger();
 	
 	static final Logger logger = Logger.getLogger(AsyncHelperTest.class.getName());
+//
+//	@BeforeClass
+//	public static void setUpBeforeClass() throws Exception {
+//	}
+//
+//	@AfterClass
+//	public static void tearDownAfterClass() throws Exception {
+//	}
 
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
-	}
-
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}
-
-	@Before
-	public void setUp() throws Exception {
-	}
-
-	@After
-	public void tearDown() throws Exception {
-	}
+//	@Before
+//	public void setUp() throws Exception {
+//	}
+//
+//	@After
+//	public void tearDown() throws Exception {
+//	}
 
 	@Test
 	public void test() throws InterruptedException {
