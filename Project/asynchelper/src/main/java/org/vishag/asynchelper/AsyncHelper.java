@@ -967,17 +967,34 @@ public final class AsyncHelper {
 	}
 	
 	/**
+	 * Notify all flag.
+	 *
+	 * @param flag the flag
+	 */
+	static public void notifyAllFlag(String... flag) {
+		notify(true, flag);
+	}
+	
+	/**
 	 * Notify flag.
 	 *
 	 * @param flag the flag
 	 */
 	static public void notifyFlag(String... flag) {
+		notify(false, flag);
+	}
+
+	private static void notify(boolean all, String... flag) {
 		ObjectsKey key = ObjectsKey.of((Object[])flag);
 		ObjectsKey originalKey = originalKeys.get(key);
 		if(originalKey != null) {
 			originalKeys.remove(key);
 			synchronized (originalKey) {
-				originalKey.notify();
+				if(all) {
+					originalKey.notifyAll();
+				} else {
+					originalKey.notify();
+				}
 			}
 		}
 	}
@@ -1003,22 +1020,6 @@ public final class AsyncHelper {
 		return builder.build();
 	}
 	
-	/**
-	 * Notify all flag.
-	 *
-	 * @param flag the flag
-	 */
-	static public void notifyAllFlag(String... flag) {
-		ObjectsKey key = ObjectsKey.of((Object[])flag);
-		ObjectsKey originalKey = originalKeys.get(key);
-		if(originalKey != null) {
-			originalKeys.remove(key);
-			synchronized (originalKey) {
-				originalKey.notifyAll();
-			}
-		}
-	}
-
 	/**
 	 * Schedule supplier.
 	 *
