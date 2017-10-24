@@ -46,7 +46,7 @@ public class AsyncHelperTest {
 	@Rule
 	public TestRule watcher = new TestWatcherAndLogger();
 	
-	static final Logger logger = Logger.getLogger(AsyncHelperTest.class.getName());
+	private static final Logger logger = Logger.getLogger(AsyncHelperTest.class.getName());
 //
 //	@BeforeClass
 //	public static void setUpBeforeClass() throws Exception {

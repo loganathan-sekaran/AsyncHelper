@@ -473,10 +473,8 @@ public final class AsyncHelper {
 					if (schedulingFunction.canRun()) {
 						R res = schedulingFunction.invokeNextFunction();
 						schedulingFunction.consumeResult(res);
-						if (schedulingFunction.canCancel()) {
-							if (scheduleFuture[0] != null) {
-								scheduleFuture[0].cancel(true);
-							}
+						if (schedulingFunction.canCancel() && scheduleFuture[0] != null) {
+							scheduleFuture[0].cancel(true);
 						}
 					}
 				}
