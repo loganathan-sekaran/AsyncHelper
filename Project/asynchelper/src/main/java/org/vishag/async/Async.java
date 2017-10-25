@@ -69,7 +69,7 @@ public final class Async {
 	 *
 	 * @return the fork join pool
 	 */
-	static ForkJoinPool getForkJoinPool() {
+	protected static ForkJoinPool getForkJoinPool() {
 		return forkJoinPool;
 	}
 
@@ -92,7 +92,7 @@ public final class Async {
 	 * @param task the task
 	 * @return the optional
 	 */
-	static <T> Optional<T> safeGet(ForkJoinTask<T> task) {
+	protected static <T> Optional<T> safeGet(ForkJoinTask<T> task) {
 		try {
 			return Optional.ofNullable(task.get());
 		} catch (InterruptedException | ExecutionException e) {
@@ -107,7 +107,7 @@ public final class Async {
 	 * @param task the task
 	 * @return the supplier
 	 */
-	static <T> Supplier<T> safeSupplier(ForkJoinTask<T> task) {
+	protected static <T> Supplier<T> safeSupplier(ForkJoinTask<T> task) {
 		return () -> {
 			try {
 				return task.get();
@@ -126,7 +126,7 @@ public final class Async {
 	 * @param multipleAccess the multiple access
 	 * @return true, if successful
 	 */
-	static <T> boolean storeSupplier(ObjectsKey key, Supplier<T> resultSupplier, boolean multipleAccess) {
+	protected static <T> boolean storeSupplier(ObjectsKey key, Supplier<T> resultSupplier, boolean multipleAccess) {
 		if (!futureSuppliers.containsKey(key)) {
 			futureSuppliers.put(key, resultSupplier);
 			originalKeys.put(key, key);
@@ -151,7 +151,7 @@ public final class Async {
 	 * @param keys the keys
 	 * @return the indexed key
 	 */
-	static Object[] getIndexedKey(int i, Object... keys) {
+	protected static Object[] getIndexedKey(int i, Object... keys) {
 		return Stream.concat(Stream.of(keys), Stream.of(i)).toArray();
 	}
 
@@ -163,7 +163,7 @@ public final class Async {
 	 * @param supplier the supplier
 	 * @return the casted value
 	 */
-	static <T> Optional<T> getCastedValue(Class<T> clazz, Supplier<? extends Object> supplier) {
+	protected static <T> Optional<T> getCastedValue(Class<T> clazz, Supplier<? extends Object> supplier) {
 		Object object = supplier.get();
 		if (clazz.isInstance(object)) {
 			return Optional.of(clazz.cast(object));
@@ -183,7 +183,7 @@ public final class Async {
 	 * @return the t[]
 	 */
 	@SuppressWarnings("unchecked")
-	static <T> T[] arrayOfTimes(T t, int times) {
+	protected static <T> T[] arrayOfTimes(T t, int times) {
 		return Stream.generate(() -> t).limit(times).toArray(size -> (T[]) Array.newInstance(t.getClass(), size));
 	}
 	
