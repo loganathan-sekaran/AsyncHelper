@@ -207,7 +207,7 @@ public final class Schedule {
 	 * @param flag the flag
 	 * @return the scheduled future
 	 */
-	static ScheduledFuture<?> doScheduleTasksUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+	private static ScheduledFuture<?> doScheduleTasksUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Runnable[] runnables, String flag) {
 		AtomicBoolean canCancel = new AtomicBoolean(false);
 		SchedulingFunction<Runnable, Void> schedulingRunnables = new SchedulingFunction<Runnable, Void>() {
@@ -474,7 +474,7 @@ public final class Schedule {
 	 * @param flag the flag
 	 * @return the scheduled future
 	 */
-	static <T> ScheduledFuture<?> doScheduleSupplierUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+	private static <T> ScheduledFuture<?> doScheduleSupplierUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Supplier<T>[] suppliers, String flag) {
 		AtomicBoolean canCancel = new AtomicBoolean(false);
 		LinkedList<Supplier<T>> resultSuppliers = new LinkedList<Supplier<T>>(); 

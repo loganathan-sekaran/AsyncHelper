@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 public class TestUtil {
 	private static final Logger logger = Logger.getLogger(TestUtil.class.getName());
 
-	static <T> Supplier<T> delayedSupplier(Supplier<T> supplier, long msecs) {
+	protected static <T> Supplier<T> delayedSupplier(Supplier<T> supplier, long msecs) {
 		return () -> {
 			try {
 				Thread.sleep(msecs);
@@ -18,11 +18,11 @@ public class TestUtil {
 		};
 	}
 
-	static <T> Runnable delayedRunnable(Runnable runnable) {
+	protected static <T> Runnable delayedRunnable(Runnable runnable) {
 		return delayedRunnable(runnable, 500);
 	}
 
-	static <T> Runnable delayedRunnable(Runnable runnable, long msecs) {
+	protected static <T> Runnable delayedRunnable(Runnable runnable, long msecs) {
 		return () -> {
 			try {
 				Thread.sleep(msecs);
@@ -33,15 +33,15 @@ public class TestUtil {
 		};
 	}
 
-	static <T> Supplier<T> delayedSupplier(Supplier<T> supplier) {
+	protected static <T> Supplier<T> delayedSupplier(Supplier<T> supplier) {
 		return delayedSupplier(supplier, 500);
 	}
 
-	static void printTime() {
+	protected static void printTime() {
 		System.out.println(new SimpleDateFormat("hh:mm:ss.SSS").format(new Date()));
 	}
 
-	static void print(String msg) {
+	protected static void print(String msg) {
 		System.out.println(msg);
 	}
 

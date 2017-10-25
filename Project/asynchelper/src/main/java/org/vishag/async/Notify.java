@@ -48,7 +48,7 @@ public final class Notify {
 		notify(false, flag);
 	}
 
-	static void notify(boolean all, String... flag) {
+	private static void notify(boolean all, String... flag) {
 		ObjectsKey key = ObjectsKey.of((Object[])flag);
 		ObjectsKey originalKey = Async.originalKeys.get(key);
 		if(originalKey != null) {
