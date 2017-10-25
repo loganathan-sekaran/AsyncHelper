@@ -17,14 +17,23 @@
  * under the License.
  */
 
-package org.vishag.asynchelper;
+package org.vishag.async;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
-@RunWith(Suite.class)
-@SuiteClasses({ AsyncHelperTest.class, ObjectsKeyTest.class })
-public class AllTests {
 
+/**
+ * The class AllTests.
+ * @author Loganathan.S <https://github.com/loganathan001>
+ */
+@RunWith(Suite.class)
+@SuiteClasses({ 
+	AsyncTest.class, 
+	ObjectsKeyTest.class,  
+	SubmitTest.class, 
+	ScheduleTest.class,
+	WaitAndNotifyTest.class})
+public class AllTests {
 }

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.vishag.asynchelper;
+package org.vishag.async;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -25,27 +25,16 @@ import static org.junit.Assert.assertNotEquals;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
+import org.vishag.async.ObjectsKey;
 
+/**
+ * The class ObjectsKeyTest.
+ * @author Loganathan.S <https://github.com/loganathan001>
+ */
 public class ObjectsKeyTest {
 	
 	@Rule
 	public TestRule watcher = new TestWatcherAndLogger();
-
-//	@BeforeClass
-//	public static void setUpBeforeClass() throws Exception {
-//	}
-//
-//	@AfterClass
-//	public static void tearDownAfterClass() throws Exception {
-//	}
-//
-//	@Before
-//	public void setUp() throws Exception {
-//	}
-//
-//	@After
-//	public void tearDown() throws Exception {
-//	}
 
 	@Test (expected = AssertionError.class)
 	public void testEmptyArray() {

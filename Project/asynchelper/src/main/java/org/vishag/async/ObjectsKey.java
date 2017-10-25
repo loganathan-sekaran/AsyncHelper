@@ -17,13 +17,13 @@
  * under the License.
  */
 
-package org.vishag.asynchelper;
+package org.vishag.async;
 
 import java.util.Arrays;
 import java.util.List;
 
 /**
- * The Class ObjectsKey.
+ * The class ObjectsKey.
  * @author Loganathan.S <https://github.com/loganathan001>
  */
 class ObjectsKey {
