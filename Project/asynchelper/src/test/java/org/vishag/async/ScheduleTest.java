@@ -37,7 +37,7 @@ import org.junit.rules.TestRule;
 
 /**
  * The class ScheduleTest.
- * @author Loganathan.S <https://github.com/loganathan001>
+ * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
 public class ScheduleTest {
 	

@@ -36,7 +36,7 @@ import java.util.stream.Stream;
 
 /**
  * The class Schedule.
- * @author Loganathan.S <https://github.com/loganathan001>
+ * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
 public final class Schedule {
 	

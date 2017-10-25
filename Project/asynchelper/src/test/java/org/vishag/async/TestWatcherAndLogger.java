@@ -24,7 +24,7 @@ import org.junit.runner.Description;
 
 /**
  * The class TestWatcherAndLogger.
- * @author Loganathan.S <https://github.com/loganathan001>
+ * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
 final class TestWatcherAndLogger extends TestWatcher {
 		protected void starting(Description description) {

@@ -26,7 +26,7 @@ import org.junit.runners.Suite.SuiteClasses;
 
 /**
  * The class AllTests.
- * @author Loganathan.S <https://github.com/loganathan001>
+ * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
 @RunWith(Suite.class)
 @SuiteClasses({ 

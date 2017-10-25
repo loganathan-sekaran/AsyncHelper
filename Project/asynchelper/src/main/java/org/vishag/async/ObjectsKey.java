@@ -24,7 +24,7 @@ import java.util.List;
 
 /**
  * The class ObjectsKey.
- * @author Loganathan.S <https://github.com/loganathan001>
+ * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
 class ObjectsKey {
 

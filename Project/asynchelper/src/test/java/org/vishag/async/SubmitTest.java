@@ -38,7 +38,7 @@ import org.junit.rules.TestRule;
 
 /**
  * The class SubmitTest.
- * @author Loganathan.S <https://github.com/loganathan001>
+ * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
 public class SubmitTest {
 	
