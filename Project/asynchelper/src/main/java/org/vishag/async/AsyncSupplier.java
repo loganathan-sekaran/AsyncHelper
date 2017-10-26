@@ -25,8 +25,6 @@ import java.util.concurrent.ForkJoinTask;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import org.junit.experimental.theories.Theories;
-
 /**
  * The class Submit.
  * 
@@ -43,7 +41,7 @@ public final class AsyncSupplier {
 	/**
 	 * Submit supplier. The result can be obtained by calling the
 	 * {@link Supplier#get()} from the returning result.
-	 * 
+	 * 	
 	 *
 	 * @param <T>
 	 *            the generic type
