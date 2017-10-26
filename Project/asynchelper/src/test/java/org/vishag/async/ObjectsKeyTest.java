@@ -29,23 +29,34 @@ import org.vishag.async.ObjectsKey;
 
 /**
  * The class ObjectsKeyTest.
+ * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
 public class ObjectsKeyTest {
-	
+
+	/** The watcher. */
 	@Rule
 	public TestRule watcher = new TestWatcherAndLogger();
 
-	@Test (expected = AssertionError.class)
+	/**
+	 * Test empty array.
+	 */
+	@Test(expected = AssertionError.class)
 	public void testEmptyArray() {
 		ObjectsKey.of(new Object[0]);
 	}
-	
-	@Test (expected = AssertionError.class)
+
+	/**
+	 * Test null key.
+	 */
+	@Test(expected = AssertionError.class)
 	public void testNullKey() {
-		ObjectsKey.of(new Object[]{null});
+		ObjectsKey.of(new Object[] { null });
 	}
-	
+
+	/**
+	 * Test equal key.
+	 */
 	@Test
 	public void testEqualKey() {
 		ObjectsKey objectsKey = ObjectsKey.of("111");
@@ -54,7 +65,10 @@ public class ObjectsKeyTest {
 		assertEquals(ObjectsKey.of("111", Integer.class), ObjectsKey.of("111", Integer.class));
 		assertEquals(ObjectsKey.of("111", String.class), ObjectsKey.of(String.class, "111"));
 	}
-	
+
+	/**
+	 * Test un equal key.
+	 */
 	@Test
 	public void testUnEqualKey() {
 		assertNotEquals(ObjectsKey.of("111"), null);

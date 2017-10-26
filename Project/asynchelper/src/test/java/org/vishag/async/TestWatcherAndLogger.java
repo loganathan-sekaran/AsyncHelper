@@ -24,23 +24,46 @@ import org.junit.runner.Description;
 
 /**
  * The class TestWatcherAndLogger.
+ * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
 final class TestWatcherAndLogger extends TestWatcher {
-		protected void starting(Description description) {
-		      System.out.println("====Starting test: " + description.getMethodName());
-		   }
 
-		protected void succeeded(Description description) {
-			   System.out.println("[Succeeded] test: " + description.getMethodName());
-		   }
-
-		protected void failed(Throwable e, Description description) {
-			   System.err.println("[Failed] test: " + description.getMethodName());
-			   e.printStackTrace();
-		   }
-
-		protected void finished(Description description) {
-			   System.out.println("----Finished test: " + description.getMethodName());
-		   }
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.junit.rules.TestWatcher#starting(org.junit.runner.Description)
+	 */
+	protected void starting(Description description) {
+		System.out.println("====Starting test: " + description.getMethodName());
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.junit.rules.TestWatcher#succeeded(org.junit.runner.Description)
+	 */
+	protected void succeeded(Description description) {
+		System.out.println("[Succeeded] test: " + description.getMethodName());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.junit.rules.TestWatcher#failed(java.lang.Throwable,
+	 * org.junit.runner.Description)
+	 */
+	protected void failed(Throwable e, Description description) {
+		System.err.println("[Failed] test: " + description.getMethodName());
+		e.printStackTrace();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.junit.rules.TestWatcher#finished(org.junit.runner.Description)
+	 */
+	protected void finished(Description description) {
+		System.out.println("----Finished test: " + description.getMethodName());
+	}
+}

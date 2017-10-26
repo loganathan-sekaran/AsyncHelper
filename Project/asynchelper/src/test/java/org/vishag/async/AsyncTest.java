@@ -27,16 +27,60 @@ import org.junit.rules.TestRule;
 
 /**
  * The class AsyncTest.
+ * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
 public class AsyncTest {
 
+	/** The watcher. */
 	@Rule
 	public TestRule watcher = new TestWatcherAndLogger();
-	
+
+	/**
+	 * Test wait and notify all for flag.
+	 *
+	 * @throws InterruptedException
+	 *             the interrupted exception
+	 */
 	@Test
-	public void testAsync() throws InterruptedException {
-		assertEquals(Async.get(TestUtil.delayedSupplier(() -> "Value1")).get(), "Value1");
+	public void testWaitAndNotifyAllForFlag() throws InterruptedException {
+		int[] retVal = new int[2];
+		AsyncTask.submitTask(TestUtil.delayedRunnable(() -> {
+			retVal[0] = 10;
+			Async.notifyAllFlag("FLAG2");
+		}, 2000));
+
+		AsyncTask.submitTask(() -> {
+			try {
+				Async.waitForFlag("FLAG2");
+				retVal[1] = retVal[0] + 10;
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}, "Task2");
+
+		Async.waitForFlag("FLAG2");
+		assertEquals(retVal[0], 10);
+
+		AsyncTask.waitForTask("Task2");
+		assertEquals(retVal[1], 20);
 	}
 
+	/**
+	 * Test wait and notify for flag.
+	 *
+	 * @throws InterruptedException
+	 *             the interrupted exception
+	 */
+	@Test
+	public void testWaitAndNotifyForFlag() throws InterruptedException {
+		int[] retVal = new int[1];
+		AsyncTask.submitTask(TestUtil.delayedRunnable(() -> {
+			retVal[0] = 10;
+			Async.notifyFlag("FLAG1");
+		}, 2000));
+		Async.waitForFlag("FLAG1");
+		assertEquals(retVal[0], 10);
+	}
 }

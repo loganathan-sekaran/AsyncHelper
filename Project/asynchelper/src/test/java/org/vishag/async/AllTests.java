@@ -23,17 +23,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
-
 /**
  * The class AllTests.
+ * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
 @RunWith(Suite.class)
-@SuiteClasses({ 
-	AsyncTest.class, 
-	ObjectsKeyTest.class,  
-	SubmitTest.class, 
-	ScheduleTest.class,
-	WaitAndNotifyTest.class})
+@SuiteClasses({ ObjectsKeyTest.class, AsyncTest.class, AsyncTaskTest.class, AsyncSupplierTest.class,
+		SchedulingTaskTest.class, SchedulingSupplierTest.class })
 public class AllTests {
 }

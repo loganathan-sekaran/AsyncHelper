@@ -24,17 +24,19 @@ import java.util.List;
 
 /**
  * The class ObjectsKey.
+ * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
 class ObjectsKey {
 
 	/** The keys. */
 	private List<Object> keys;
-	
+
 	/**
 	 * Instantiates a new objects key.
 	 *
-	 * @param keys the keys
+	 * @param keys
+	 *            the keys
 	 */
 	private ObjectsKey(Object[] keys) {
 		this.keys = Arrays.asList(keys);
@@ -44,19 +46,22 @@ class ObjectsKey {
 	/**
 	 * Of.
 	 *
-	 * @param keys the keys
+	 * @param keys
+	 *            the keys
 	 * @return the objects key
 	 */
 	public static ObjectsKey of(Object... keys) {
-		assert(keys != null);
-		assert(keys.length > 0);
+		assert (keys != null);
+		assert (keys.length > 0);
 		for (Object key : keys) {
-			assert(key != null);
+			assert (key != null);
 		}
 		return new ObjectsKey(keys);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -69,7 +74,9 @@ class ObjectsKey {
 		return result;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -85,7 +92,9 @@ class ObjectsKey {
 
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
