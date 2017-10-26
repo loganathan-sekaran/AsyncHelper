@@ -1,4 +1,4 @@
-# AsyncHelper
+# Async-Helper
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.vishag/async-helper/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.vishag/async-helper)
 [![Build Status](https://travis-ci.org/loganathan001/AsyncHelper.svg?branch=master)](https://travis-ci.org/loganathan001/AsyncHelper)
@@ -8,8 +8,9 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/loganathan001/AsyncHelper/issues)
 
-<a href="https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/asynchelper/AsyncHelper.java">AsyncHelper</a> is a Java utility to invoke/schedule tasks or fetch data asynchronously using tags/flags in a functional way. This internally utilizes ForkJoin pool to submit the tasks.
+Async-Helper is a Java utility to invoke/schedule tasks or fetch data asynchronously using tags/flags in a functional way. This internally utilizes ForkJoin pool to submit the tasks.
 
+This contains various utility classes such as [Async](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/Async.java), [Submit](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/Submit.java), [Schedule](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/Schedule.java), [Wait](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/Wait.java) and [Notify](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/Notify.java) to perform various asynchronous operations.
 
 Below are the some of the operations that can be perfomed using this utility:
 1. Submitting one or more Runnable(s) to run asynchronously.
@@ -19,7 +20,7 @@ Below are the some of the operations that can be perfomed using this utility:
 5. Some of the above operations also support option to submit/schedule asynchronously and then wait untill all asynchronous tasks are compete.
 
 
-Please look into the <a href="https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/test/java/org/vishag/asynchelper/AsyncHelperTest.java">Unit tests</a> for all the use-cases and examples.
+Please look into the <a href="https://github.com/loganathan001/AsyncHelper/tree/master/Project/asynchelper/src/test/java/org/vishag/async">Unit tests</a> for all the use-cases and examples.
 
 To install the latest version, add the below pom dependency entry:
 ```
