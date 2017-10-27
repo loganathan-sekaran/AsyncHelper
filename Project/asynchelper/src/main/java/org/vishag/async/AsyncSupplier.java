@@ -33,15 +33,17 @@ import java.util.stream.Stream;
 public final class AsyncSupplier {
 
 	/**
-	 * Instantiates a new async supplier.
+	 * Prevent instantiation outside the class
 	 */
 	private AsyncSupplier() {
 	}
 
 	/**
-	 * Submit supplier. The result can be obtained by calling the
-	 * {@link Supplier#get()} from the returning result.
-	 * 	
+	 * Submit a supplier to be invoke asynchronously and get a result Supplier
+	 * handle. The result of the supplier can be obtained by calling the
+	 * {@link Supplier#get()} from the returning supplier which may wait until
+	 * the submitted Supplier code completes.
+	 * 
 	 *
 	 * @param <T>
 	 *            the generic type
@@ -54,7 +56,10 @@ public final class AsyncSupplier {
 	}
 
 	/**
-	 * Submit multiple suppliers.
+	 * Submit multiple suppliers to be invoke asynchronously and get an array of
+	 * result Suppliers handles. The result of each suppliers can be obtained by
+	 * calling the {@link Supplier#get()} from the returning suppliers which
+	 * will wait until the submitted Supplier code completes.
 	 *
 	 * @param <T>
 	 *            the generic type
@@ -68,7 +73,10 @@ public final class AsyncSupplier {
 	}
 
 	/**
-	 * Submit supplier for multiple access.
+	 * Submit a supplier to be invoke asynchronously for multiple access with
+	 * keys. The result can be obtained multiple times by invoking
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} from any
+	 * thread which will wait until the supplier code completes.
 	 *
 	 * @param <T>
 	 *            the generic type
@@ -83,7 +91,16 @@ public final class AsyncSupplier {
 	}
 
 	/**
-	 * Submit supplier for single access.
+	 * Submit a supplier to be invoke asynchronously for single access and get
+	 * the status of the submission. The result can be obtained only once by
+	 * invoking {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)}
+	 * from any thread which will wait until the supplier code completes. <br>
+	 * <br>
+	 * The submission will fail if any exception occurs during the execution of
+	 * supplier or due to thread interruption, or else, if any supplier is already
+	 * submitted with the same keys and the result is not yet obtained using
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} at-least
+	 * once.
 	 *
 	 * @param <T>
 	 *            the generic type
@@ -98,8 +115,20 @@ public final class AsyncSupplier {
 	}
 
 	/**
-	 * Submit multiple suppliers for single access.
+	 * Submit multiple suppliers to be invoke asynchronously for single access
+	 * and get the status of the submission. The result can be obtained only
+	 * once by invoking
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} from any
+	 * thread which will wait until the supplier code completes.
 	 *
+	 * <br>
+	 * <br>
+	 * The submission will fail if any exception occurs during the execution of
+	 * supplier or due to thread interruption, or else, if any supplier is already
+	 * submitted with the same keys and the result is not yet obtained using
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} at-least
+	 * once.
+	 * 
 	 * @param <T>
 	 *            the generic type
 	 * @param suppliers
@@ -141,7 +170,9 @@ public final class AsyncSupplier {
 	}
 
 	/**
-	 * Wait and get.
+	 * Wait and get the result from a supplier as an Optional based on the keys.
+	 * If no supplier is submitted already with the keys provided result will be
+	 * an empty optional.
 	 *
 	 * @param <T>
 	 *            the generic type
@@ -176,7 +207,11 @@ public final class AsyncSupplier {
 	}
 
 	/**
-	 * Wait and get multiple.
+	 * Wait and get the result from multiple suppliers submitted asynchronously
+	 * (using
+	 * {@link AsyncSupplier#submitSupplierForSingleAccess(Supplier, Object...)})
+	 * as a Stream based on the keys. If no supplier is submitted already with
+	 * the keys provided result will be an empty stream.
 	 *
 	 * @param <T>
 	 *            the generic type
@@ -196,8 +231,9 @@ public final class AsyncSupplier {
 	}
 
 	/**
-	 * Async get. Gets the supplier in another thread and returns the Optional
-	 * of value from supplier.
+	 * Submits a supplier asynchronously and gets the value as Optional. If any
+	 * exception occurs during the execution of supplier or due to thread
+	 * interruption it will return empty result.
 	 *
 	 * @param <T>
 	 *            the generic type
