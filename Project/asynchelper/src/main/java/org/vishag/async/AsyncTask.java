@@ -32,7 +32,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * The class AsyncTask.
+ * The AsyncSupplier Helper class with methods for submitting Runnables to
+ * invoke them as asynchronous tasks and optionally wait for them in same of
+ * another thread.
  * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
@@ -44,13 +46,13 @@ public final class AsyncTask {
 	private static final Logger logger = Logger.getLogger(AsyncTask.class.getName());
 
 	/**
-	 * Instantiates a new async task.
+	 * Prevent instantiation outside the class
 	 */
 	private AsyncTask() {
 	}
 
 	/**
-	 * AsyncTask task.
+	 * Submits a task (Runnable) to be invoke asynchronously.
 	 *
 	 * @param runnable
 	 *            the runnable
@@ -60,7 +62,7 @@ public final class AsyncTask {
 	}
 
 	/**
-	 * AsyncTask tasks.
+	 * Submits multiple tasks (Runnable) to be invoke asynchronously.
 	 *
 	 * @param runnables
 	 *            the runnables
@@ -70,18 +72,19 @@ public final class AsyncTask {
 	}
 
 	/**
-	 * AsyncTask tasks and wait. This will submit the task, waits until it
-	 * finishes or the cancel condition returns true.
+	 * Submits multiple tasks (Runnable) to be invoke asynchronously and wait
+	 * until the tasks are finished. But this can be cancelled in the middle by
+	 * providing a Supplier that returns false at any time.
 	 *
-	 * @param cancelCondition
-	 *            the cancel condition
+	 * @param cancelConditionSupplier
+	 *            the cancel condition supplier
 	 * @param cancelCanInterruptRunning
 	 *            the cancel can interrupt running
 	 * @param runnables
 	 *            the runnables
 	 */
-	static public void submitTasksAndWaitCancellable(Supplier<Boolean> cancelCondition, boolean cancelCanInterruptRunning,
-			Runnable... runnables) {
+	static public void submitTasksAndWaitCancellable(Supplier<Boolean> cancelConditionSupplier,
+			boolean cancelCanInterruptRunning, Runnable... runnables) {
 		ForkJoinPool forkJoinPool = new ForkJoinPool(ForkJoinPool.getCommonPoolParallelism());
 		List<Future<?>> futures = Stream.of(runnables).map(forkJoinPool::submit).collect(Collectors.toList());
 		AtomicBoolean allTasksCompleted = new AtomicBoolean(false);
@@ -98,7 +101,7 @@ public final class AsyncTask {
 
 		AsyncTask.submitTask(() -> {
 			while (!allTasksCompleted.get()) {
-				if (!cancelCondition.get()) {
+				if (!cancelConditionSupplier.get()) {
 					try {
 						Thread.sleep(1);
 					} catch (InterruptedException e) {
@@ -124,7 +127,8 @@ public final class AsyncTask {
 	}
 
 	/**
-	 * AsyncTask tasks and wait. This will submit the tasks, waits until it finishes.
+	 * Submits multiple tasks (Runnable) to be invoke asynchronously and wait
+	 * until the tasks are finished.
 	 *
 	 * @param runnables
 	 *            the runnables
@@ -145,7 +149,10 @@ public final class AsyncTask {
 	}
 
 	/**
-	 * AsyncTask tasks.
+	 * Submits multiple tasks (Runnable) to be invoke asynchronously which is
+	 * marked by keys. The keys can be then used with
+	 * {@link AsyncTask#waitForMultipleTasks(Object...)} which can be invoked in
+	 * any thread so that that thread will wait until the tasks are finished.
 	 *
 	 * @param keys
 	 *            the keys
@@ -161,7 +168,10 @@ public final class AsyncTask {
 	}
 
 	/**
-	 * AsyncTask task.
+	 * Submits a task (Runnable) to be invoke asynchronously which is marked by
+	 * keys. The keys can be then used with
+	 * {@link AsyncTask#waitForMultipleTasks(Object...)} which can be invoked in
+	 * any thread so that that thread will wait until the task is finished.
 	 *
 	 * @param runnable
 	 *            the runnable
@@ -182,7 +192,10 @@ public final class AsyncTask {
 	}
 
 	/**
-	 * Wait for multiple tasks.
+	 * Wait for multiple tasks submitted by
+	 * {@link AsyncTask#submitTasks(Object[], Runnable...)}. The keys should be
+	 * the same keys provided during the tasks submission. This can be invoked
+	 * in any thread so that that thread will wait until the tasks are finished.
 	 *
 	 * @param keys
 	 *            the keys
@@ -195,7 +208,10 @@ public final class AsyncTask {
 	}
 
 	/**
-	 * Wait for task.
+	 * Wait for a task submitted by
+	 * {@link AsyncTask#submitTask(Runnable, Object...)}. The keys should be the
+	 * same keys provided during the task submission. This can be invoked in any
+	 * thread so that that thread will wait until the task is finished.
 	 *
 	 * @param keys
 	 *            the keys

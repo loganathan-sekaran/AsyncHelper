@@ -35,7 +35,8 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
- * The Async class.
+ * The Async Helper method. This contains utility methods to wait for a flag in
+ * one thread and notify the flag in another thread.
  * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
@@ -240,7 +241,9 @@ public final class Async {
 	}
 
 	/**
-	 * Wait for flag.
+	 * Waits for flag, until the flag is notified by either
+	 * {@link Async#notifyFlag(String...)} or
+	 * {@link Async#notifyAllFlag(String...)} in another thread.
 	 *
 	 * @param flag
 	 *            the flag
@@ -260,7 +263,8 @@ public final class Async {
 	}
 
 	/**
-	 * Notify all flag.
+	 * Notify all threads which are waiting for a flag with the invocation of
+	 * {@link Async#waitForFlag(String...)}
 	 *
 	 * @param flag
 	 *            the flag
@@ -270,7 +274,8 @@ public final class Async {
 	}
 
 	/**
-	 * Notify flag.
+	 * Notify a thread that is waiting for a flag with the invocation of
+	 * {@link Async#waitForFlag(String...)}
 	 *
 	 * @param flag
 	 *            the flag
@@ -303,8 +308,14 @@ public final class Async {
 	}
 
 	/**
-	 * Notify and get for flag.
-	 *
+	 * Notifies the scheduler of one or more Supplier(s) which are cyclically
+	 * scheduled using either
+	 * {@link SchedulingSupplier#scheduleSupplierUntilFlag(int, int, TimeUnit, boolean, String, Supplier...)}
+	 * or
+	 * {@link SchedulingSupplier#scheduleSuppliersAndWait(int, int, TimeUnit, boolean, Supplier...)}
+	 * with the flag passed, and obtains the Stream of results of the type passed. <br>
+	 * If no Supplier is scheduled for the flag, returns an empty stream.
+	 * 
 	 * @param <T>
 	 *            the generic type
 	 * @param clazz
