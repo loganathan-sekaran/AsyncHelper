@@ -2,9 +2,9 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.vishag</groupId>
   <artifactId>async-helper</artifactId>
-  <version>3.0.0-SNAPSHOT</version>
+  <version>3.0.0</version>
   <name>Async Helper</name>
-  <description>Async-Helper is a Java utility to invoke/schedule Tasks/data fetch operation asynchronously using tags/flags in a functional way.</description>
+  <description>Async-Helper is a Java utility to invoke/schedule Tasks/data fetch operation asynchronously using tags/flags in a functional way. This 3.0.0 update includes major refactoring to have easy to use asynchronous APIs with more detailed Java Docs.</description>
   <url>https://github.com/loganathan001/AsyncHelper</url>
 	<distributionManagement>
 	  <snapshotRepository>
