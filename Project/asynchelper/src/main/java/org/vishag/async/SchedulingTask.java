@@ -28,7 +28,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 /**
- * The class SchedulingTask.
+ * The SchedulingTask Helper class with methods for scheduling {@link Runnable}
+ * to invoke them as asynchronous tasks
  * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */

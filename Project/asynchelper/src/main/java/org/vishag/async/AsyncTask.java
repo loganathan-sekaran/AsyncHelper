@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * The AsyncSupplier Helper class with methods for submitting Runnables to
+ * The AsyncSupplier Helper class with methods for submitting {@link Runnable}s to
  * invoke them as asynchronous tasks and optionally wait for them in same of
  * another thread.
  * 
