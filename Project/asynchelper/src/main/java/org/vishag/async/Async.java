@@ -313,7 +313,8 @@ public final class Async {
 	 * {@link SchedulingSupplier#scheduleSupplierUntilFlag(int, int, TimeUnit, boolean, String, Supplier...)}
 	 * or
 	 * {@link SchedulingSupplier#scheduleSuppliersAndWait(int, int, TimeUnit, boolean, Supplier...)}
-	 * with the flag passed, and obtains the Stream of results of the type passed. <br>
+	 * with the flag passed, and obtains the Stream of results of the type
+	 * passed. <br>
 	 * If no Supplier is scheduled for the flag, returns an empty stream.
 	 * 
 	 * @param <T>

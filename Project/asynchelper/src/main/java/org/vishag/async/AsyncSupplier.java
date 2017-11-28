@@ -95,13 +95,14 @@ public final class AsyncSupplier {
 	 * Submits a supplier to be invoke asynchronously for single access and get
 	 * the status of the submission. The result can be obtained only once by
 	 * invoking {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)}
-	 * from any thread which will wait until the supplier code execution completes. <br>
+	 * from any thread which will wait until the supplier code execution
+	 * completes. <br>
 	 * <br>
 	 * The submission will fail if any exception occurs during the execution of
-	 * supplier or due to thread interruption, or, if any supplier is
-	 * already submitted with the same keys and the result is not yet obtained
-	 * using {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)}
-	 * at-least once.
+	 * supplier or due to thread interruption, or, if any supplier is already
+	 * submitted with the same keys and the result is not yet obtained using
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} at-least
+	 * once.
 	 *
 	 * @param <T>
 	 *            the generic type
@@ -125,10 +126,10 @@ public final class AsyncSupplier {
 	 * <br>
 	 * <br>
 	 * The submission will fail if any exception occurs during the execution of
-	 * supplier or due to thread interruption, or, if any supplier is
-	 * already submitted with the same keys and the result is not yet obtained
-	 * using {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)}
-	 * at-least once.
+	 * supplier or due to thread interruption, or, if any supplier is already
+	 * submitted with the same keys and the result is not yet obtained using
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} at-least
+	 * once.
 	 * 
 	 * @param <T>
 	 *            the generic type
