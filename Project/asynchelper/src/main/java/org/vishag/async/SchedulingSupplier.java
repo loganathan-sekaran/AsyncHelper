@@ -128,10 +128,10 @@ public final class SchedulingSupplier {
 	}
 
 	/**
-	 * Schedules a single suppliers to be invoked sequentially (as per the
+	 * Schedules a single suppliers to be invoked repeatedly (as per the
 	 * <code>initialDelay</code>, <code>delay</code> and
 	 * <code>waitForPreviousTask</code> arguments), and this scheduling supplier
-	 * will be rotated until a flag is notified using
+	 * will be repeatedly until a flag is notified using
 	 * {@link Async#notifyAndGetForFlag(Class, String...)} invocation with the
 	 * same flag, in same thread or different thread, which will also return a
 	 * stream of results.
@@ -558,7 +558,7 @@ public final class SchedulingSupplier {
 	 *            the initial delay for the first Supplier invocation
 	 * @param unit
 	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
-	 *            and <code>delay</code> arguments are to be used.
+	 *            argument is used.
 	 * @param supplier
 	 *            the supplier to be scheduled
 	 * @return the result supplier, whose result can be obtained using
@@ -581,7 +581,7 @@ public final class SchedulingSupplier {
 	 *            the initial delay for the first Supplier invocation
 	 * @param unit
 	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
-	 *            and <code>delay</code> arguments are to be used.
+	 *            argument is used.
 	 * @param supplier
 	 *            the supplier to be scheduled
 	 * @return the {@link Optional} of the result. This {@link Optional} may be
@@ -611,7 +611,7 @@ public final class SchedulingSupplier {
 	 *            the initial delay for the first Supplier invocation
 	 * @param unit
 	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
-	 *            and <code>delay</code> arguments are to be used.
+	 *            argument is used.
 	 * @param supplier
 	 *            the supplier to be scheduled
 	 * @param keys

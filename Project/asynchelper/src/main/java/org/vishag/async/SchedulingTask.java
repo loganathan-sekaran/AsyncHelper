@@ -46,18 +46,33 @@ public final class SchedulingTask {
 	}
 
 	/**
-	 * SchedulingTask tasks.
+	 * Schedules multiple tasks to be invoked sequentially (as per the
+	 * <code>initialDelay</code>, <code>delay</code> and
+	 * <code>waitForPreviousTask</code> arguments).
 	 *
+	 * @param <T>
+	 *            the generic type
 	 * @param initialDelay
-	 *            the initial delay
+	 *            the initial delay for the first task invocation
 	 * @param delay
-	 *            the delay
+	 *            if<code>waitForPreviousTask</code> argument is
+	 *            <code>true</code> this is the delay between the completion of
+	 *            the predecessor task code execution and its succeeding task
+	 *            code start. Otherwise, the delay will be periodic from the
+	 *            start of the initial task (not related to the completion of
+	 *            the tasks' code execution).
 	 * @param unit
-	 *            the unit
+	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
+	 *            and <code>delay</code> arguments are to be used.
 	 * @param waitForPreviousTask
-	 *            the wait for previous task
+	 *            Set it to <code>true</code> argument is.... <code>true</code>
+	 *            this is the delay between the completion of the predecessor
+	 *            task code execution and its succeeding task code start.
+	 *            Otherwise, the delay will be periodic from the start of the
+	 *            initial task (not related to the completion of the tasks' code
+	 *            execution).
 	 * @param runnables
-	 *            the runnables
+	 *            the tasks to be scheduled sequentially
 	 */
 	static public void scheduleTasks(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Runnable... runnables) {
@@ -65,21 +80,43 @@ public final class SchedulingTask {
 	}
 
 	/**
-	 * SchedulingTask tasks until flag. This will schedule the tasks, waits until the flag is notified using 
-	 * {@link Async#notifyFlag(String...)} or {@link Async#notifyAllFlag(String...)}
+	 * Schedules multiple tasks to be invoked sequentially (as per the
+	 * <code>initialDelay</code>, <code>delay</code> and
+	 * <code>waitForPreviousTask</code> arguments), and this scheduling tasks
+	 * will be rotated until a flag is notified using
+	 * {@link Async#notifyFlag(String...)} or
+	 * {@link Async#notifyAllFlag(String...)} invocation with the same flag, in
+	 * same thread or different thread.
 	 *
+	 * @param <T>
+	 *            the generic type
 	 * @param initialDelay
-	 *            the initial delay
+	 *            the initial delay for the first task invocation
 	 * @param delay
-	 *            the delay
+	 *            if<code>waitForPreviousTask</code> argument is
+	 *            <code>true</code> this is the delay between the completion of
+	 *            the predecessor task code execution and its succeeding task
+	 *            code start. Otherwise, the delay will be periodic from the
+	 *            start of the initial task (not related to the completion of
+	 *            the tasks' code execution).
 	 * @param unit
-	 *            the unit
+	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
+	 *            and <code>delay</code> arguments are to be used.
 	 * @param waitForPreviousTask
-	 *            the wait for previous task
+	 *            Set it to <code>true</code> argument is.... <code>true</code>
+	 *            this is the delay between the completion of the predecessor
+	 *            task code execution and its succeeding task code start.
+	 *            Otherwise, the delay will be periodic from the start of the
+	 *            initial task (not related to the completion of the tasks' code
+	 *            execution).
 	 * @param flag
-	 *            the flag
+	 *            the flag with which the tasks will be rotated for scheduling,
+	 *            until notified using {@link Async#notifyFlag(String...)} or
+	 *            {@link Async#notifyAllFlag(String...)}
 	 * @param runnables
-	 *            the runnables
+	 *            the tasks to be scheduled sequentially and rotated until
+	 *            notified using {@link Async#notifyFlag(String...)} or
+	 *            {@link Async#notifyAllFlag(String...)}
 	 */
 	static public void scheduleTasksUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			String flag, Runnable... runnables) {
@@ -87,21 +124,43 @@ public final class SchedulingTask {
 	}
 
 	/**
-	 * SchedulingTask task until flag. This will schedule the task, waits until the flag is notified using 
-	 * {@link Async#notifyFlag(String...)} or {@link Async#notifyAllFlag(String...)}
+	 * Schedules a single task to be invoked repeatedly (as per the
+	 * <code>initialDelay</code>, <code>delay</code> and
+	 * <code>waitForPreviousTask</code> arguments), and this scheduling tasks
+	 * will be repeated until a flag is notified using
+	 * {@link Async#notifyFlag(String...)} or
+	 * {@link Async#notifyAllFlag(String...)} invocation with the same flag, in
+	 * same thread or different thread.
 	 *
+	 * @param <T>
+	 *            the generic type
 	 * @param initialDelay
-	 *            the initial delay
+	 *            the initial delay for the first task invocation
 	 * @param delay
-	 *            the delay
+	 *            if<code>waitForPreviousTask</code> argument is
+	 *            <code>true</code> this is the delay between the completion of
+	 *            the predecessor task code execution and its succeeding task
+	 *            code start. Otherwise, the delay will be periodic from the
+	 *            start of the initial task (not related to the completion of
+	 *            the tasks' code execution).
 	 * @param unit
-	 *            the unit
+	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
+	 *            and <code>delay</code> arguments are to be used.
 	 * @param waitForPreviousTask
-	 *            the wait for previous task
+	 *            Set it to <code>true</code> argument is.... <code>true</code>
+	 *            this is the delay between the completion of the predecessor
+	 *            task code execution and its succeeding task code start.
+	 *            Otherwise, the delay will be periodic from the start of the
+	 *            initial task (not related to the completion of the tasks' code
+	 *            execution).
 	 * @param flag
-	 *            the flag
+	 *            the flag with which the tasks will be rotated for scheduling,
+	 *            until notified using {@link Async#notifyFlag(String...)} or
+	 *            {@link Async#notifyAllFlag(String...)}
 	 * @param runnable
-	 *            the runnable
+	 *            the task to be scheduled repeatedly until notified using
+	 *            {@link Async#notifyFlag(String...)} or
+	 *            {@link Async#notifyAllFlag(String...)}
 	 */
 	static public void scheduleTaskUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			String flag, Runnable runnable) {
@@ -109,18 +168,44 @@ public final class SchedulingTask {
 	}
 
 	/**
-	 * SchedulingTask tasks and wait. This will schedule the tasks, waits until it finishes.
+	 * Schedules multiple tasks to be invoked sequentially (as per the
+	 * <code>initialDelay</code>, <code>delay</code> and
+	 * <code>waitForPreviousTask</code> arguments), and this scheduling tasks
+	 * will be rotated until a flag is notified using
+	 * {@link Async#notifyFlag(String...)} or
+	 * {@link Async#notifyAllFlag(String...)} invocation with the same flag, in
+	 * same thread or different thread. This will wait until the completion of
+	 * the execution of the scheduled tasks code.
 	 *
+	 * @param <T>
+	 *            the generic type
 	 * @param initialDelay
-	 *            the initial delay
+	 *            the initial delay for the first task invocation
 	 * @param delay
-	 *            the delay
+	 *            if<code>waitForPreviousTask</code> argument is
+	 *            <code>true</code> this is the delay between the completion of
+	 *            the predecessor task code execution and its succeeding task
+	 *            code start. Otherwise, the delay will be periodic from the
+	 *            start of the initial task (not related to the completion of
+	 *            the tasks' code execution).
 	 * @param unit
-	 *            the unit
+	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
+	 *            and <code>delay</code> arguments are to be used.
 	 * @param waitForPreviousTask
-	 *            the wait for previous task
+	 *            Set it to <code>true</code> argument is.... <code>true</code>
+	 *            this is the delay between the completion of the predecessor
+	 *            task code execution and its succeeding task code start.
+	 *            Otherwise, the delay will be periodic from the start of the
+	 *            initial task (not related to the completion of the tasks' code
+	 *            execution).
+	 * @param flag
+	 *            the flag with which the tasks will be rotated for scheduling,
+	 *            until notified using {@link Async#notifyFlag(String...)} or
+	 *            {@link Async#notifyAllFlag(String...)}
 	 * @param runnables
-	 *            the runnables
+	 *            the tasks to be scheduled sequentially and rotated until
+	 *            notified using {@link Async#notifyFlag(String...)} or
+	 *            {@link Async#notifyAllFlag(String...)}
 	 */
 	static public void scheduleTasksAndWait(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Runnable... runnables) {
@@ -239,20 +324,36 @@ public final class SchedulingTask {
 	}
 
 	/**
-	 * SchedulingTask task.
+	 * Schedules a single task to be invoked multiple times (as per the
+	 * <code>initialDelay</code>, <code>delay</code>,
+	 * <code>waitForPreviousTask</code> and <code>times</code> arguments) and
+	 * gets an array of result tasks handles.
 	 *
+	 * @param <T>
+	 *            the generic type
 	 * @param initialDelay
-	 *            the initial delay
+	 *            the initial delay for the first task invocation
 	 * @param delay
-	 *            the delay
+	 *            if<code>waitForPreviousTask</code> argument is
+	 *            <code>true</code> this is the delay between the completion of
+	 *            the predecessor task code execution and its succeeding task
+	 *            code start. Otherwise, the delay will be periodic from the
+	 *            start of the initial task (not related to the completion of
+	 *            the tasks' code execution).
 	 * @param unit
-	 *            the unit
+	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
+	 *            and <code>delay</code> arguments are to be used.
 	 * @param waitForPreviousTask
-	 *            the wait for previous task
-	 * @param runnable
-	 *            the runnable
+	 *            Set it to <code>true</code> argument is.... <code>true</code>
+	 *            this is the delay between the completion of the predecessor
+	 *            task code execution and its succeeding task code start.
+	 *            Otherwise, the delay will be periodic from the start of the
+	 *            initial task (not related to the completion of the tasks' code
+	 *            execution).
 	 * @param times
-	 *            the times
+	 *            the number of times the scheduling should be done for the task
+	 * @param runnable
+	 *            the task to be scheduled
 	 */
 	static public void scheduleTask(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Runnable runnable, int times) {
@@ -260,20 +361,37 @@ public final class SchedulingTask {
 	}
 
 	/**
-	 * SchedulingTask task and wait. This will schedule the task, waits until it finishes.
+	 * Schedules a single task to be invoked multiple times (as per the
+	 * <code>initialDelay</code>, <code>delay</code>,
+	 * <code>waitForPreviousTask</code> and <code>times</code> arguments) and
+	 * gets an array of result tasks handles. This will wait until the
+	 * completion of the execution of the scheduled tasks code.
 	 *
+	 * @param <T>
+	 *            the generic type
 	 * @param initialDelay
-	 *            the initial delay
+	 *            the initial delay for the first task invocation
 	 * @param delay
-	 *            the delay
+	 *            if<code>waitForPreviousTask</code> argument is
+	 *            <code>true</code> this is the delay between the completion of
+	 *            the predecessor task code execution and its succeeding task
+	 *            code start. Otherwise, the delay will be periodic from the
+	 *            start of the initial task (not related to the completion of
+	 *            the tasks' code execution).
 	 * @param unit
-	 *            the unit
+	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
+	 *            and <code>delay</code> arguments are to be used.
 	 * @param waitForPreviousTask
-	 *            the wait for previous task
-	 * @param runnable
-	 *            the runnable
+	 *            Set it to <code>true</code> argument is.... <code>true</code>
+	 *            this is the delay between the completion of the predecessor
+	 *            task code execution and its succeeding task code start.
+	 *            Otherwise, the delay will be periodic from the start of the
+	 *            initial task (not related to the completion of the tasks' code
+	 *            execution).
 	 * @param times
-	 *            the times
+	 *            the number of times the scheduling should be done for the task
+	 * @param runnable
+	 *            the task to be scheduled
 	 */
 	static public void scheduleTaskAndWait(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Runnable runnable, int times) {
@@ -281,28 +399,37 @@ public final class SchedulingTask {
 	}
 
 	/**
-	 * SchedulingTask task.
+	 * Schedules a single task to be invoked one time (as per the
+	 * <code>initialDelay</code> argument).
 	 *
+	 * @param <T>
+	 *            the generic type
 	 * @param initialDelay
-	 *            the initial delay
+	 *            the initial delay for the first task invocation
 	 * @param unit
-	 *            the unit
+	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
+	 *            argument is used.
 	 * @param runnable
-	 *            the runnable
+	 *            the task to be scheduled
 	 */
 	static public void scheduleTask(int initialDelay, TimeUnit unit, Runnable runnable) {
 		scheduleTask(initialDelay, 1, unit, false, runnable, 1);
 	}
 
 	/**
-	 * SchedulingTask task and wait.
+	 * Schedules a single task to be invoked one time (as per the
+	 * <code>initialDelay</code> argument). This will wait until the completion
+	 * of the execution of the scheduled task code.
 	 *
+	 * @param <T>
+	 *            the generic type
 	 * @param initialDelay
-	 *            the initial delay
+	 *            the initial delay for the first task invocation
 	 * @param unit
-	 *            the unit
+	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
+	 *            argument is used.
 	 * @param runnable
-	 *            the runnable
+	 *            the task to be scheduled
 	 */
 	static public void scheduleTaskAndWait(int initialDelay, TimeUnit unit, Runnable runnable) {
 		scheduleTaskAndWait(initialDelay, 1, unit, false, runnable, 1);
