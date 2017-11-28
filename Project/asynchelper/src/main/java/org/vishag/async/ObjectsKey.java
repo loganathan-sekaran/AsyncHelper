@@ -23,7 +23,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * The class ObjectsKey.
+ * The class ObjectsKey - This is internally used as a key made of multiple
+ * objects (the order does not matter). The equality and hash-code generation of
+ * this key will be based on the equality and hash-codes of the objects.
  * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
