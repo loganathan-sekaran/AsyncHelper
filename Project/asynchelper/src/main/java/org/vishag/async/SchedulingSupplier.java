@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 
 /**
  * The SchedulingSupplier Helper class with methods for scheduling Suppliers and
- * obtaining their results asynchronously
+ * obtaining their results asynchronously.
  * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
@@ -479,8 +479,8 @@ public final class SchedulingSupplier {
 	 *            start. Otherwise, the delay will be periodic from the start of
 	 *            the initial task (not related to the completion of the
 	 *            suppliers' code execution).
-	 * @param suppliers
-	 *            the suppliers to be scheduled sequentially
+	 * @param supplier
+	 *            the supplier to be scheduled repeatedly
 	 * @param times
 	 *            the number of times the scheduling should be done for the
 	 *            supplier
@@ -528,8 +528,8 @@ public final class SchedulingSupplier {
 	 *            start. Otherwise, the delay will be periodic from the start of
 	 *            the initial task (not related to the completion of the
 	 *            suppliers' code execution).
-	 * @param suppliers
-	 *            the suppliers to be scheduled sequentially
+	 * @param supplier
+	 *            the supplier to be scheduled repeatedly
 	 * @param times
 	 *            the number of times the scheduling should be done for the
 	 *            supplier

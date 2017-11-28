@@ -43,7 +43,8 @@ import java.util.stream.Stream;
 public final class Async {
 
 	/**
-	 * The Interface SchedulingFunction.
+	 * The Interface SchedulingFunction. This is used internally to schedule
+	 * task(s) and Supplier(s).
 	 *
 	 * @param <T>
 	 *            the generic type
@@ -310,9 +311,9 @@ public final class Async {
 	/**
 	 * Notifies the scheduler of one or more Supplier(s) which are cyclically
 	 * scheduled using either
-	 * {@link SchedulingSupplier#scheduleSupplierUntilFlag(int, int, TimeUnit, boolean, String, Supplier...)}
+	 * {@link SchedulingSupplier#scheduleSuppliersUntilFlag(int, int, TimeUnit, boolean, String, Supplier...)}
 	 * or
-	 * {@link SchedulingSupplier#scheduleSuppliersAndWait(int, int, TimeUnit, boolean, Supplier...)}
+	 * {@link SchedulingSupplier#scheduleSupplierUntilFlag(int, int, TimeUnit, boolean, String, Supplier)}
 	 * with the flag passed, and obtains the Stream of results of the type
 	 * passed. <br>
 	 * If no Supplier is scheduled for the flag, returns an empty stream.

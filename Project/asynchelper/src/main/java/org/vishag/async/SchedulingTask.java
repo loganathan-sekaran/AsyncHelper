@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 
 /**
  * The SchedulingTask Helper class with methods for scheduling {@link Runnable}
- * to invoke them as asynchronous tasks
+ * to invoke them as asynchronous tasks.
  * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
@@ -51,8 +51,6 @@ public final class SchedulingTask {
 	 * <code>initialDelay</code>, <code>delay</code> and
 	 * <code>waitForPreviousTask</code> arguments).
 	 *
-	 * @param <T>
-	 *            the generic type
 	 * @param initialDelay
 	 *            the initial delay for the first task invocation
 	 * @param delay
@@ -89,8 +87,6 @@ public final class SchedulingTask {
 	 * {@link Async#notifyAllFlag(String...)} invocation with the same flag, in
 	 * same thread or different thread.
 	 *
-	 * @param <T>
-	 *            the generic type
 	 * @param initialDelay
 	 *            the initial delay for the first task invocation
 	 * @param delay
@@ -133,8 +129,6 @@ public final class SchedulingTask {
 	 * {@link Async#notifyAllFlag(String...)} invocation with the same flag, in
 	 * same thread or different thread.
 	 *
-	 * @param <T>
-	 *            the generic type
 	 * @param initialDelay
 	 *            the initial delay for the first task invocation
 	 * @param delay
@@ -178,8 +172,6 @@ public final class SchedulingTask {
 	 * same thread or different thread. This will wait until the completion of
 	 * the execution of the scheduled tasks code.
 	 *
-	 * @param <T>
-	 *            the generic type
 	 * @param initialDelay
 	 *            the initial delay for the first task invocation
 	 * @param delay
@@ -199,14 +191,8 @@ public final class SchedulingTask {
 	 *            Otherwise, the delay will be periodic from the start of the
 	 *            initial task (not related to the completion of the tasks' code
 	 *            execution).
-	 * @param flag
-	 *            the flag with which the tasks will be rotated for scheduling,
-	 *            until notified using {@link Async#notifyFlag(String...)} or
-	 *            {@link Async#notifyAllFlag(String...)}
 	 * @param runnables
-	 *            the tasks to be scheduled sequentially and rotated until
-	 *            notified using {@link Async#notifyFlag(String...)} or
-	 *            {@link Async#notifyAllFlag(String...)}
+	 *            the tasks to be scheduled sequentially
 	 */
 	static public void scheduleTasksAndWait(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Runnable... runnables) {
@@ -330,8 +316,6 @@ public final class SchedulingTask {
 	 * <code>waitForPreviousTask</code> and <code>times</code> arguments) and
 	 * gets an array of result tasks handles.
 	 *
-	 * @param <T>
-	 *            the generic type
 	 * @param initialDelay
 	 *            the initial delay for the first task invocation
 	 * @param delay
@@ -368,8 +352,6 @@ public final class SchedulingTask {
 	 * gets an array of result tasks handles. This will wait until the
 	 * completion of the execution of the scheduled tasks code.
 	 *
-	 * @param <T>
-	 *            the generic type
 	 * @param initialDelay
 	 *            the initial delay for the first task invocation
 	 * @param delay
@@ -403,8 +385,6 @@ public final class SchedulingTask {
 	 * Schedules a single task to be invoked one time (as per the
 	 * <code>initialDelay</code> argument).
 	 *
-	 * @param <T>
-	 *            the generic type
 	 * @param initialDelay
 	 *            the initial delay for the first task invocation
 	 * @param unit
@@ -422,8 +402,6 @@ public final class SchedulingTask {
 	 * <code>initialDelay</code> argument). This will wait until the completion
 	 * of the execution of the scheduled task code.
 	 *
-	 * @param <T>
-	 *            the generic type
 	 * @param initialDelay
 	 *            the initial delay for the first task invocation
 	 * @param unit

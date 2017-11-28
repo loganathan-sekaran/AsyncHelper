@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 
 /**
  * The AsyncSupplier Helper class with methods for submitting Suppliers for
- * asynchronous invocation and obtaining their results asynchronously
+ * asynchronous invocation and obtaining their results asynchronously.
  * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
