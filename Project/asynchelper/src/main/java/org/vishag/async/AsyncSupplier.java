@@ -98,7 +98,7 @@ public final class AsyncSupplier {
 	 * from any thread which will wait until the supplier code execution completes. <br>
 	 * <br>
 	 * The submission will fail if any exception occurs during the execution of
-	 * supplier or due to thread interruption, or else, if any supplier is
+	 * supplier or due to thread interruption, or, if any supplier is
 	 * already submitted with the same keys and the result is not yet obtained
 	 * using {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)}
 	 * at-least once.
@@ -125,7 +125,7 @@ public final class AsyncSupplier {
 	 * <br>
 	 * <br>
 	 * The submission will fail if any exception occurs during the execution of
-	 * supplier or due to thread interruption, or else, if any supplier is
+	 * supplier or due to thread interruption, or, if any supplier is
 	 * already submitted with the same keys and the result is not yet obtained
 	 * using {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)}
 	 * at-least once.

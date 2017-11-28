@@ -72,7 +72,7 @@ public final class SchedulingSupplier {
 	 *            the initial task (not related to the completion of the
 	 *            suppliers' code execution).
 	 * @param suppliers
-	 *            the suppliers to schedule sequentially
+	 *            the suppliers to be scheduled sequentially
 	 * @return the array of result supplier, whose result can be obtained using
 	 *         {@link Supplier#get()}, which may wait until the completion of
 	 *         Supplier code execution.
@@ -117,7 +117,7 @@ public final class SchedulingSupplier {
 	 *            scheduling, until notified using
 	 *            {@link Async#notifyAndGetForFlag(Class, String...)}
 	 * @param suppliers
-	 *            the suppliers to schedule sequentially and rotated until
+	 *            the suppliers to be scheduled sequentially and rotated until
 	 *            notified using
 	 *            {@link Async#notifyAndGetForFlag(Class, String...)}
 	 */
@@ -162,8 +162,8 @@ public final class SchedulingSupplier {
 	 *            scheduling, until notified using
 	 *            {@link Async#notifyAndGetForFlag(Class, String...)}
 	 * @param supplier
-	 *            the single supplier to schedule sequentially and rotated until
-	 *            notified using
+	 *            the single supplier to be scheduled sequentially and rotated
+	 *            until notified using
 	 *            {@link Async#notifyAndGetForFlag(Class, String...)}
 	 */
 	static public <T> void scheduleSupplierUntilFlag(int initialDelay, int delay, TimeUnit unit,
@@ -175,7 +175,8 @@ public final class SchedulingSupplier {
 	 * Schedules multiple suppliers to be invoked sequentially (as per the
 	 * <code>initialDelay</code>, <code>delay</code> and
 	 * <code>waitForPreviousTask</code> arguments), waits for the completion of
-	 * execution of all scheduled Suppliers and gets a {@link Stream} of results.
+	 * execution of all scheduled Suppliers and gets a {@link Stream} of
+	 * results.
 	 *
 	 * @param <T>
 	 *            the generic type
@@ -199,7 +200,7 @@ public final class SchedulingSupplier {
 	 *            the initial task (not related to the completion of the
 	 *            suppliers' code execution).
 	 * @param suppliers
-	 *            the suppliers to schedule sequentially
+	 *            the suppliers to be scheduled sequentially
 	 * @return the {@link Stream} of results
 	 */
 	static public <T> Stream<T> scheduleSuppliersAndWait(int initialDelay, int delay, TimeUnit unit,
@@ -209,23 +210,48 @@ public final class SchedulingSupplier {
 	}
 
 	/**
-	 * SchedulingTask multiple suppliers for single access.
+	 * Schedules multiple suppliers to be invoked sequentially (as per the
+	 * <code>initialDelay</code>, <code>delay</code> and
+	 * <code>waitForPreviousTask</code> arguments). The result can be obtained
+	 * only once as a {@link Stream} by invoking
+	 * {@link AsyncSupplier#waitAndGetFromSuppliers(Class, Object...)} with the
+	 * same <code>keys</code> argument used in this method call, from any
+	 * thread, which will wait until the supplier code execution completes. <br>
+	 * <br>
+	 * The submission will fail if any exception occurs during the execution of
+	 * supplier or due to thread interruption, or, if any supplier is already
+	 * submitted with the same keys and the result is not yet obtained using
+	 * {@link AsyncSupplier#waitAndGetFromSuppliers(Class, Object...)} at-least
+	 * once.
 	 *
 	 * @param <T>
 	 *            the generic type
 	 * @param initialDelay
-	 *            the initial delay
+	 *            the initial delay for the first Supplier invocation
 	 * @param delay
-	 *            the delay
+	 *            if<code>waitForPreviousTask</code> argument is
+	 *            <code>true</code> this is the delay between the completion of
+	 *            the predecessor supplier code execution and its succeeding
+	 *            supplier code start. Otherwise, the delay will be periodic
+	 *            from the start of the initial task (not related to the
+	 *            completion of the suppliers' code execution).
 	 * @param unit
-	 *            the unit
+	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
+	 *            and <code>delay</code> arguments are to be used.
 	 * @param waitForPreviousTask
-	 *            the wait for previous task
+	 *            Set it to <code>true</code> argument is.... <code>true</code>
+	 *            this is the delay between the completion of the predecessor
+	 *            supplier code execution and its succeeding supplier code
+	 *            start. Otherwise, the delay will be periodic from the start of
+	 *            the initial task (not related to the completion of the
+	 *            suppliers' code execution).
 	 * @param suppliers
-	 *            the suppliers
+	 *            the suppliers to be scheduled sequentially
 	 * @param keys
-	 *            the keys
-	 * @return true, if successful
+	 *            the keys which will be used to obtain the {@link Stream} of
+	 *            results by invoking the method
+	 *            {@link AsyncSupplier#waitAndGetFromSuppliers(Class, Object...)}.
+	 * @return true, if scheduling the supplier is successful
 	 */
 	static public <T> boolean scheduleSuppliersForSingleAccess(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, Supplier<T>[] suppliers, Object... keys) {
@@ -339,7 +365,7 @@ public final class SchedulingSupplier {
 	 *            the flag
 	 * @return the scheduled future
 	 */
-	static <T> ScheduledFuture<?> doScheduleSupplierUntilFlag(int initialDelay, int delay, TimeUnit unit,
+	private static <T> ScheduledFuture<?> doScheduleSupplierUntilFlag(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, Supplier<T>[] suppliers, String flag) {
 		AtomicBoolean canCancel = new AtomicBoolean(false);
 		LinkedList<Supplier<T>> resultSuppliers = new LinkedList<Supplier<T>>();
@@ -382,23 +408,43 @@ public final class SchedulingSupplier {
 	}
 
 	/**
-	 * SchedulingTask supplier.
+	 * Schedules a supplier to be invoked multiple times (as per the
+	 * <code>initialDelay</code>, <code>delay</code>,
+	 * <code>waitForPreviousTask</code> and <code>times</code> arguments) and
+	 * gets an array of result Suppliers handles. The result of each supplier
+	 * execution can be obtained by calling the {@link Supplier#get()} from the
+	 * returning suppliers which will wait until the scheduled Supplier code
+	 * execution completes.
 	 *
 	 * @param <T>
 	 *            the generic type
 	 * @param initialDelay
-	 *            the initial delay
+	 *            the initial delay for the first Supplier invocation
 	 * @param delay
-	 *            the delay
+	 *            if<code>waitForPreviousTask</code> argument is
+	 *            <code>true</code> this is the delay between the completion of
+	 *            the predecessor supplier code execution and its succeeding
+	 *            supplier code start. Otherwise, the delay will be periodic
+	 *            from the start of the initial task (not related to the
+	 *            completion of the suppliers' code execution).
 	 * @param unit
-	 *            the unit
+	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
+	 *            and <code>delay</code> arguments are to be used.
 	 * @param waitForPreviousTask
-	 *            the wait for previous task
+	 *            Set it to <code>true</code> argument is.... <code>true</code>
+	 *            this is the delay between the completion of the predecessor
+	 *            supplier code execution and its succeeding supplier code
+	 *            start. Otherwise, the delay will be periodic from the start of
+	 *            the initial task (not related to the completion of the
+	 *            suppliers' code execution).
 	 * @param supplier
-	 *            the supplier
+	 *            the supplier to be scheduled repeatedly for the given times
 	 * @param times
-	 *            the times
-	 * @return the supplier[]
+	 *            the number of times the scheduling should be done for the
+	 *            supplier
+	 * @return the array of result supplier, whose result can be obtained using
+	 *         {@link Supplier#get()}, which may wait until the completion of
+	 *         Supplier code execution.
 	 */
 	static public <T> Supplier<T>[] scheduleSupplier(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, Supplier<T> supplier, int times) {
@@ -406,23 +452,39 @@ public final class SchedulingSupplier {
 	}
 
 	/**
-	 * SchedulingTask supplier and wait.
+	 * Schedules a single supplier to be invoked multiple times (as per the
+	 * <code>initialDelay</code>, <code>delay</code>,
+	 * <code>waitForPreviousTask</code> and <code>times</code> arguments), waits
+	 * for the completion of execution of all scheduled Suppliers and gets a
+	 * {@link Stream} of results.
 	 *
 	 * @param <T>
 	 *            the generic type
 	 * @param initialDelay
-	 *            the initial delay
+	 *            the initial delay for the first Supplier invocation
 	 * @param delay
-	 *            the delay
+	 *            if<code>waitForPreviousTask</code> argument is
+	 *            <code>true</code> this is the delay between the completion of
+	 *            the predecessor supplier code execution and its succeeding
+	 *            supplier code start. Otherwise, the delay will be periodic
+	 *            from the start of the initial task (not related to the
+	 *            completion of the suppliers' code execution).
 	 * @param unit
-	 *            the unit
+	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
+	 *            and <code>delay</code> arguments are to be used.
 	 * @param waitForPreviousTask
-	 *            the wait for previous task
-	 * @param supplier
-	 *            the supplier
+	 *            Set it to <code>true</code> argument is.... <code>true</code>
+	 *            this is the delay between the completion of the predecessor
+	 *            supplier code execution and its succeeding supplier code
+	 *            start. Otherwise, the delay will be periodic from the start of
+	 *            the initial task (not related to the completion of the
+	 *            suppliers' code execution).
+	 * @param suppliers
+	 *            the suppliers to be scheduled sequentially
 	 * @param times
-	 *            the times
-	 * @return the stream
+	 *            the number of times the scheduling should be done for the
+	 *            supplier
+	 * @return the {@link Stream} of results
 	 */
 	static public <T> Stream<T> scheduleSupplierAndWait(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, Supplier<T> supplier, int times) {
@@ -431,25 +493,51 @@ public final class SchedulingSupplier {
 	}
 
 	/**
-	 * SchedulingTask supplier for single access.
+	 * Schedules a supplier to be invoked multiple times (as per the
+	 * <code>initialDelay</code>, <code>delay</code>,
+	 * <code>waitForPreviousTask</code> and <code>times</code> arguments). The
+	 * result can be obtained only once as a {@link Stream} by invoking
+	 * {@link AsyncSupplier#waitAndGetFromSuppliers(Class, Object...)} with the
+	 * same <code>keys</code> argument used in this method call, from any
+	 * thread, which will wait until the supplier code execution completes. <br>
+	 * <br>
+	 * The submission will fail if any exception occurs during the execution of
+	 * supplier or due to thread interruption, or, if any supplier is already
+	 * submitted with the same keys and the result is not yet obtained using
+	 * {@link AsyncSupplier#waitAndGetFromSuppliers(Class, Object...)} at-least
+	 * once.
 	 *
 	 * @param <T>
 	 *            the generic type
 	 * @param initialDelay
-	 *            the initial delay
+	 *            the initial delay for the first Supplier invocation
 	 * @param delay
-	 *            the delay
+	 *            if<code>waitForPreviousTask</code> argument is
+	 *            <code>true</code> this is the delay between the completion of
+	 *            the predecessor supplier code execution and its succeeding
+	 *            supplier code start. Otherwise, the delay will be periodic
+	 *            from the start of the initial task (not related to the
+	 *            completion of the suppliers' code execution).
 	 * @param unit
-	 *            the unit
+	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
+	 *            and <code>delay</code> arguments are to be used.
 	 * @param waitForPreviousTask
-	 *            the wait for previous task
-	 * @param supplier
-	 *            the supplier
+	 *            Set it to <code>true</code> argument is.... <code>true</code>
+	 *            this is the delay between the completion of the predecessor
+	 *            supplier code execution and its succeeding supplier code
+	 *            start. Otherwise, the delay will be periodic from the start of
+	 *            the initial task (not related to the completion of the
+	 *            suppliers' code execution).
+	 * @param suppliers
+	 *            the suppliers to be scheduled sequentially
 	 * @param times
-	 *            the times
+	 *            the number of times the scheduling should be done for the
+	 *            supplier
 	 * @param keys
-	 *            the keys
-	 * @return true, if successful
+	 *            the keys which will be used to obtain the {@link Stream} of
+	 *            results by invoking the method
+	 *            {@link AsyncSupplier#waitAndGetFromSuppliers(Class, Object...)}.
+	 * @return true, if scheduling the supplier is successful
 	 */
 	static public <T> boolean scheduleSupplierForSingleAccess(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, Supplier<T> supplier, int times, Object... keys) {
@@ -458,53 +546,79 @@ public final class SchedulingSupplier {
 	}
 
 	/**
-	 * SchedulingTask supplier.
+	 * Schedules a supplier to be invoked one time (as per the
+	 * <code>initialDelay</code> argument) and gets an array of result Suppliers
+	 * handles. The result of each supplier execution can be obtained by calling
+	 * the {@link Supplier#get()} from the returning suppliers which will wait
+	 * until the scheduled Supplier code execution completes.
 	 *
 	 * @param <T>
 	 *            the generic type
 	 * @param initialDelay
-	 *            the initial delay
+	 *            the initial delay for the first Supplier invocation
 	 * @param unit
-	 *            the unit
+	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
+	 *            and <code>delay</code> arguments are to be used.
 	 * @param supplier
-	 *            the supplier
-	 * @return the supplier[]
+	 *            the supplier to be scheduled
+	 * @return the result supplier, whose result can be obtained using
+	 *         {@link Supplier#get()}, which may wait until the completion of
+	 *         Supplier code execution.
 	 */
 	static public <T> Supplier<T> scheduleSupplier(int initialDelay, TimeUnit unit, Supplier<T> supplier) {
 		return scheduleSupplier(initialDelay, 1, unit, false, supplier, 1)[0];
 	}
 
 	/**
-	 * SchedulingTask supplier and wait.
+	 * Schedules a supplier to be invoked one time (as per the
+	 * <code>initialDelay</code> argument) . This will wait until the scheduled
+	 * Supplier code execution completes, and will return the {@link Optional}
+	 * of result.
 	 *
 	 * @param <T>
 	 *            the generic type
 	 * @param initialDelay
-	 *            the initial delay
+	 *            the initial delay for the first Supplier invocation
 	 * @param unit
-	 *            the unit
+	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
+	 *            and <code>delay</code> arguments are to be used.
 	 * @param supplier
-	 *            the supplier
-	 * @return the stream
+	 *            the supplier to be scheduled
+	 * @return the {@link Optional} of the result. This {@link Optional} may be
+	 *         empty based on the result or if the scheduling is not successful.
 	 */
 	static public <T> Optional<T> scheduleSupplierAndWait(int initialDelay, TimeUnit unit, Supplier<T> supplier) {
 		return scheduleSupplierAndWait(initialDelay, 1, unit, false, supplier, 1).findAny();
 	}
 
 	/**
-	 * SchedulingTask supplier for single access.
+	 * Schedules a supplier to be invoked one time (as per the
+	 * <code>initialDelay</code> argument). The result can be obtained only once
+	 * as a {@link Stream} by invoking
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} with the
+	 * same <code>keys</code> argument used in this method call, from any
+	 * thread, which will wait until the supplier code execution completes. <br>
+	 * <br>
+	 * The submission will fail if any exception occurs during the execution of
+	 * supplier or due to thread interruption, or, if any supplier is already
+	 * submitted with the same keys and the result is not yet obtained using
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} at-least
+	 * once.
 	 *
 	 * @param <T>
 	 *            the generic type
 	 * @param initialDelay
-	 *            the initial delay
+	 *            the initial delay for the first Supplier invocation
 	 * @param unit
-	 *            the unit
+	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
+	 *            and <code>delay</code> arguments are to be used.
 	 * @param supplier
-	 *            the supplier
+	 *            the supplier to be scheduled
 	 * @param keys
-	 *            the keys
-	 * @return true, if successful
+	 *            the keys which will be used to obtain the {@link Stream} of
+	 *            results by invoking the method
+	 *            {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)}.
+	 * @return true, if scheduling the supplier is successful
 	 */
 	static public <T> boolean scheduleSupplierForSingleAccess(int initialDelay, TimeUnit unit, Supplier<T> supplier,
 			Object... keys) {
