@@ -145,7 +145,7 @@ public final class AsyncSupplierTest {
 		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query3333").get(), "Value33");
 		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query4444").get(), "Value44");
 	}
-
+	
 	/**
 	 * Test multiple time async supplier submitted for multiple access then
 	 * single access.
@@ -336,6 +336,68 @@ public final class AsyncSupplierTest {
 
 	}
 	
+	@Test
+	public void testsuppliersForSingleAccess2() throws InterruptedException {
+		@SuppressWarnings("unchecked")
+		boolean suppliers = AsyncSupplier
+				.submitSuppliersForSingleAccess(new Supplier[] { TestUtil.delayedSupplier(() -> {
+					return 10;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 20;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 30;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 40;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 50;
+				}, 100) }, "Multiple", "Suppliers", "key");
+
+		assertTrue(suppliers);
+
+		List<Integer> retVals = AsyncSupplier.waitAndGetFromSuppliers(Integer.class, "Multiple", "Suppliers", "key")
+				.collect(Collectors.toList());
+		assertEquals(retVals.size(), 5);
+		AtomicInteger val = new AtomicInteger(0);
+		retVals.forEach(value -> assertEquals(val.addAndGet(10), (int) value));
+		
+		List<Integer> retVals1 = AsyncSupplier.waitAndGetFromSuppliers(Integer.class, "Multiple", "Suppliers", "key")
+				.collect(Collectors.toList());
+		assertEquals(retVals1.size(), 0);
+	}
+	
+	
+	@Test
+	public void testsuppliersForMultipleAccess() throws InterruptedException {
+		@SuppressWarnings("unchecked")
+		boolean suppliers = AsyncSupplier
+				.submitSuppliersForMultipleAccess(new Supplier[] { TestUtil.delayedSupplier(() -> {
+					return 10;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 20;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 30;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 40;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 50;
+				}, 100) }, "Multiple", "Suppliers", "key");
+
+		assertTrue(suppliers);
+
+		List<Integer> retVals = AsyncSupplier.waitAndGetFromSuppliers(Integer.class, "Multiple", "Suppliers", "key")
+				.collect(Collectors.toList());
+		assertEquals(retVals.size(), 5);
+		AtomicInteger val = new AtomicInteger(0);
+		retVals.forEach(value -> assertEquals(val.addAndGet(10), (int) value));
+		
+		List<Integer> retVals1 = AsyncSupplier.waitAndGetFromSuppliers(Integer.class, "Multiple", "Suppliers", "key")
+				.collect(Collectors.toList());
+		assertEquals(retVals1.size(), 5);
+		AtomicInteger val1 = new AtomicInteger(0);
+		retVals1.forEach(value -> assertEquals(val1.addAndGet(10), (int) value));
+
+	}
+	
 	/**
 	 * Test submit.
 	 *
@@ -356,5 +418,458 @@ public final class AsyncSupplierTest {
 		});
 		Thread.sleep(1000);
 		assertEquals(val[0], "Value5");
+	}
+
+	@Test
+	public void testDropSuppliersSubmittedForMultipleAccess() {
+		@SuppressWarnings("unchecked")
+		boolean suppliers = AsyncSupplier
+				.submitSuppliersForMultipleAccess(new Supplier[] { TestUtil.delayedSupplier(() -> {
+					return 10;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 20;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 30;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 40;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 50;
+				}, 100) }, "Multiple", "Suppliers", "key1");
+
+		assertTrue(suppliers);
+		
+		AsyncSupplier.dropSubmittedSuppliers("Multiple", "Suppliers", "key1");
+
+		List<Integer> retVals = AsyncSupplier.waitAndGetFromSuppliers(Integer.class, "Multiple", "Suppliers", "key1")
+				.collect(Collectors.toList());
+		assertEquals(retVals.size(), 0);
+	
+	}
+
+	public void testDropSuppliersSubmittedForMultipleAccessWithOneFetch() {
+		@SuppressWarnings("unchecked")
+		boolean suppliers = AsyncSupplier
+				.submitSuppliersForMultipleAccess(new Supplier[] { TestUtil.delayedSupplier(() -> {
+					return 10;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 20;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 30;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 40;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 50;
+				}, 100) }, "Multiple", "Suppliers", "key2");
+
+		assertTrue(suppliers);
+		
+		AsyncSupplier.dropSubmittedSuppliers("Multiple", "Suppliers", "key2");
+
+		List<Integer> retVals = AsyncSupplier.waitAndGetFromSuppliers(Integer.class, "Multiple", "Suppliers", "key2")
+				.collect(Collectors.toList());
+		assertEquals(retVals.size(), 5);
+		AtomicInteger val = new AtomicInteger(0);
+		retVals.forEach(value -> assertEquals(val.addAndGet(10), (int) value));
+		
+		List<Integer> retVals1 = AsyncSupplier.waitAndGetFromSuppliers(Integer.class, "Multiple", "Suppliers", "key2")
+				.collect(Collectors.toList());
+		assertEquals(retVals1.size(), 0);
+	
+	}
+
+	@Test
+	public void testDropSuppliersSubmittedForSingleAccess() {
+		@SuppressWarnings("unchecked")
+		boolean suppliers = AsyncSupplier
+				.submitSuppliersForSingleAccess(new Supplier[] { TestUtil.delayedSupplier(() -> {
+					return 10;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 20;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 30;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 40;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 50;
+				}, 100) }, "Multiple", "Suppliers", "key3");
+
+		assertTrue(suppliers);
+		
+		AsyncSupplier.dropSubmittedSuppliers("Multiple", "Suppliers", "key3");
+
+		List<Integer> retVals = AsyncSupplier.waitAndGetFromSuppliers(Integer.class, "Multiple", "Suppliers", "key3")
+				.collect(Collectors.toList());
+		assertEquals(retVals.size(), 0);
+	
+	}
+
+	public void testDropSuppliersSubmittedForSingleAccessWithOneFetch() {
+		@SuppressWarnings("unchecked")
+		boolean suppliers = AsyncSupplier
+				.submitSuppliersForSingleAccess(new Supplier[] { TestUtil.delayedSupplier(() -> {
+					return 10;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 20;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 30;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 40;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 50;
+				}, 100) }, "Multiple", "Suppliers", "key4");
+
+		assertTrue(suppliers);
+		
+		AsyncSupplier.dropSubmittedSuppliers("Multiple", "Suppliers", "key4");
+
+		List<Integer> retVals = AsyncSupplier.waitAndGetFromSuppliers(Integer.class, "Multiple", "Suppliers", "key4")
+				.collect(Collectors.toList());
+		assertEquals(retVals.size(), 5);
+		AtomicInteger val = new AtomicInteger(0);
+		retVals.forEach(value -> assertEquals(val.addAndGet(10), (int) value));
+		
+		List<Integer> retVals1 = AsyncSupplier.waitAndGetFromSuppliers(Integer.class, "Multiple", "Suppliers", "key4")
+				.collect(Collectors.toList());
+		assertEquals(retVals1.size(), 0);
+	
+	}
+
+	@Test
+	public void testDropNonExistingSuppliers() {
+		AsyncSupplier.dropSubmittedSuppliers("Multiple", "Suppliers", "key5");
+
+		List<Integer> retVals = AsyncSupplier.waitAndGetFromSuppliers(Integer.class, "Multiple", "Suppliers", "key5")
+				.collect(Collectors.toList());
+		assertEquals(retVals.size(), 0);
+	}
+
+	@Test
+	public void testDropSupplierSubmittedForMultipleAccess() {
+		assertTrue(
+				AsyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value1"), "query1111"));
+		assertTrue(AsyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value2", 1000),
+				"query2222"));
+		assertTrue(AsyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value3", 700),
+				"query3333"));
+		assertTrue(AsyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value4", 1000),
+				"query4444"));
+	
+		
+		AsyncSupplier.dropSubmittedSupplier("query1111");
+		AsyncSupplier.dropSubmittedSupplier("query2222");
+		AsyncSupplier.dropSubmittedSupplier("query3333");
+		AsyncSupplier.dropSubmittedSupplier("query4444");
+	
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query1111").isPresent(), false);
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query2222").isPresent(), false);
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query3333").isPresent(), false);
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query4444").isPresent(), false);
+	
+	}
+
+	public void testDropSupplierSubmittedForMultipleAccessWithOneFetch() {
+		assertTrue(
+				AsyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value1"), "query1111"));
+		assertTrue(AsyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value2", 1000),
+				"query2222"));
+		assertTrue(AsyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value3", 700),
+				"query3333"));
+		assertTrue(AsyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value4", 1000),
+				"query4444"));
+		
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query1111").get(), "Value1");
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query2222").get(), "Value2");
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query3333").get(), "Value3");
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query4444").get(), "Value4");
+	
+		
+		AsyncSupplier.dropSubmittedSupplier("query1111");
+		AsyncSupplier.dropSubmittedSupplier("query2222");
+		AsyncSupplier.dropSubmittedSupplier("query3333");
+		AsyncSupplier.dropSubmittedSupplier("query4444");
+	
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query1111").isPresent(), false);
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query2222").isPresent(), false);
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query3333").isPresent(), false);
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query4444").isPresent(), false);
+	
+	}
+
+	@Test
+	public void testDropSupplierSubmittedForSingleAccess() {
+		assertTrue(
+				AsyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value1"), "query1111"));
+		assertTrue(AsyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value2", 1000),
+				"query2222"));
+		assertTrue(AsyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value3", 700),
+				"query3333"));
+		assertTrue(AsyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value4", 1000),
+				"query4444"));
+		
+		AsyncSupplier.dropSubmittedSupplier("query1111");
+		AsyncSupplier.dropSubmittedSupplier("query2222");
+		AsyncSupplier.dropSubmittedSupplier("query3333");
+		AsyncSupplier.dropSubmittedSupplier("query4444");
+	
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query1111").isPresent(), false);
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query2222").isPresent(), false);
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query3333").isPresent(), false);
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query4444").isPresent(), false);
+	
+	}
+
+	public void testDropSupplierSubmittedForSingleAccessWithOneFetch() {
+		assertTrue(
+				AsyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value1"), "query1111"));
+		assertTrue(AsyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value2", 1000),
+				"query2222"));
+		assertTrue(AsyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value3", 700),
+				"query3333"));
+		assertTrue(AsyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value4", 1000),
+				"query4444"));
+		
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query1111").get(), "Value1");
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query2222").get(), "Value2");
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query3333").get(), "Value3");
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query4444").get(), "Value4");
+	
+		
+		AsyncSupplier.dropSubmittedSupplier("query1111");
+		AsyncSupplier.dropSubmittedSupplier("query2222");
+		AsyncSupplier.dropSubmittedSupplier("query3333");
+		AsyncSupplier.dropSubmittedSupplier("query4444");
+	
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query1111").isPresent(), false);
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query2222").isPresent(), false);
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query3333").isPresent(), false);
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query4444").isPresent(), false);
+	
+	}
+
+	@Test
+	public void testDropNonExistingSupplier() {
+		AsyncSupplier.dropSubmittedSupplier("query1111aa");
+		AsyncSupplier.dropSubmittedSupplier("query2222aa");
+		AsyncSupplier.dropSubmittedSupplier("query3333aa");
+		AsyncSupplier.dropSubmittedSupplier("query4444aa");
+	
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query1111aa").isPresent(), false);
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query2222aa").isPresent(), false);
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query3333aa").isPresent(), false);
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query4444aa").isPresent(), false);
+	}
+
+	//
+	// @BeforeClass
+	// public static void setUpBeforeClass() throws Exception {
+	// }
+	//
+	// @AfterClass
+	// public static void tearDownAfterClass() throws Exception {
+	// }
+	
+	// @Before
+	// public void setUp() throws Exception {
+	// }
+	//
+	// @After
+	// public void tearDown() throws Exception {
+	// }
+	
+	@Test
+	public void testMultipleAsyncSupplierSubmittedWithDropExistingForMultipleAccess0() {
+		AsyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value11"), "query1aa");
+		AsyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value22", 1000), "query2aa");
+		AsyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value33", 700), "query3aa");
+		AsyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value44", 1000), "query4aa");
+	
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query1aa").get(), "Value11");
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query2aa").get(), "Value22");
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query3aa").get(), "Value33");
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query4aa").get(), "Value44");
+	
+	}
+	
+	@Test
+	public void testMultipleAsyncSupplierSubmittedWithDropExistingForMultipleAccess() {
+		AsyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value1"), "query1");
+		AsyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value2", 1000), "query2");
+		AsyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value3", 700), "query3");
+		AsyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value4", 1000), "query4");
+		
+		AsyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value11"), "query1");
+		AsyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value22", 1000), "query2");
+		AsyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value33", 700), "query3");
+		AsyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value44", 1000), "query4");
+	
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query1").get(), "Value11");
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query2").get(), "Value22");
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query3").get(), "Value33");
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query4").get(), "Value44");
+	
+	}
+	
+	@Test
+	public void testMultipleAsyncSupplierSubmittedWithDropExistingForSingleAccess0() {
+		AsyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value1a"), "query11b");
+		AsyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value2a", 1000), "query22b");
+		AsyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value3a", 700), "query33b");
+		AsyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value4a", 1000), "query44b");
+	
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query11b").get(), "Value1a");
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query22b").get(), "Value2a");
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query33b").get(), "Value3a");
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query44b").get(), "Value4a");
+	
+		assertFalse(AsyncSupplier.waitAndGetFromSupplier(String.class, "query11").isPresent());
+		assertFalse(AsyncSupplier.waitAndGetFromSupplier(String.class, "query22").isPresent());
+		assertFalse(AsyncSupplier.waitAndGetFromSupplier(String.class, "query33").isPresent());
+		assertFalse(AsyncSupplier.waitAndGetFromSupplier(String.class, "query44").isPresent());
+	}
+
+	@Test
+	public void testMultipleAsyncSupplierSubmittedWithDropExistingForSingleAccess() {
+		AsyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value1"), "query11");
+		AsyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value2", 1000), "query22");
+		AsyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value3", 700), "query33");
+		AsyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value4", 1000), "query44");
+		
+		AsyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value1a"), "query11");
+		AsyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value2a", 1000), "query22");
+		AsyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value3a", 700), "query33");
+		AsyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value4a", 1000), "query44");
+	
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query11").get(), "Value1a");
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query22").get(), "Value2a");
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query33").get(), "Value3a");
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "query44").get(), "Value4a");
+	
+		assertFalse(AsyncSupplier.waitAndGetFromSupplier(String.class, "query11").isPresent());
+		assertFalse(AsyncSupplier.waitAndGetFromSupplier(String.class, "query22").isPresent());
+		assertFalse(AsyncSupplier.waitAndGetFromSupplier(String.class, "query33").isPresent());
+		assertFalse(AsyncSupplier.waitAndGetFromSupplier(String.class, "query44").isPresent());
+	}
+
+	/**
+	 * Testsuppliers for single access.
+	 *
+	 * @throws InterruptedException
+	 *             the interrupted exception
+	 */
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testsuppliersWithDropExistingForSingleAccess() throws InterruptedException {
+		boolean suppliers = AsyncSupplier
+				.submitSuppliersForSingleAccess(new Supplier[] { TestUtil.delayedSupplier(() -> {
+					return 10;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 20;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 30;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 40;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 50;
+				}, 100) }, "Multiple", "Suppliers", "key");
+	
+		assertTrue(suppliers);
+		
+		suppliers = AsyncSupplier
+				.submitSuppliersWithDropExistingForSingleAccess(new Supplier[] { TestUtil.delayedSupplier(() -> {
+					return 100;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 200;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 300;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 400;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 500;
+				}, 100) }, "Multiple", "Suppliers", "key");
+	
+		assertTrue(suppliers);
+	
+		List<Integer> retVals = AsyncSupplier.waitAndGetFromSuppliers(Integer.class, "Multiple", "Suppliers", "key")
+				.collect(Collectors.toList());
+		assertEquals(retVals.size(), 5);
+		AtomicInteger val = new AtomicInteger(0);
+		retVals.forEach(value -> assertEquals(val.addAndGet(100), (int) value));
+	
+	}
+
+	@Test
+	public void testsuppliersWithDropExistingForSingleAccess2() throws InterruptedException {
+		@SuppressWarnings("unchecked")
+		boolean suppliers = AsyncSupplier
+				.submitSuppliersWithDropExistingForSingleAccess(new Supplier[] { TestUtil.delayedSupplier(() -> {
+					return 10;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 20;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 30;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 40;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 50;
+				}, 100) }, "Multiple", "Suppliers", "key");
+	
+		assertTrue(suppliers);
+	
+		List<Integer> retVals = AsyncSupplier.waitAndGetFromSuppliers(Integer.class, "Multiple", "Suppliers", "key")
+				.collect(Collectors.toList());
+		assertEquals(retVals.size(), 5);
+		AtomicInteger val = new AtomicInteger(0);
+		retVals.forEach(value -> assertEquals(val.addAndGet(10), (int) value));
+		
+		List<Integer> retVals1 = AsyncSupplier.waitAndGetFromSuppliers(Integer.class, "Multiple", "Suppliers", "key")
+				.collect(Collectors.toList());
+		assertEquals(retVals1.size(), 0);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testsuppliersWithDropExistingForMultipleAccess() throws InterruptedException {
+		boolean suppliers = AsyncSupplier
+				.submitSuppliersForMultipleAccess(new Supplier[] { TestUtil.delayedSupplier(() -> {
+					return 10;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 20;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 30;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 40;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 50;
+				}, 100) }, "Multiple", "Suppliers", "key");
+	
+		assertTrue(suppliers);
+		
+		suppliers = AsyncSupplier
+				.submitSuppliersWithDropExistingForMultipleAccess(new Supplier[] { TestUtil.delayedSupplier(() -> {
+					return 100;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 200;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 300;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 400;
+				}, 100), TestUtil.delayedSupplier(() -> {
+					return 500;
+				}, 100) }, "Multiple", "Suppliers", "key");
+	
+		assertTrue(suppliers);
+	
+		List<Integer> retVals = AsyncSupplier.waitAndGetFromSuppliers(Integer.class, "Multiple", "Suppliers", "key")
+				.collect(Collectors.toList());
+		assertEquals(retVals.size(), 5);
+		AtomicInteger val = new AtomicInteger(0);
+		retVals.forEach(value -> assertEquals(val.addAndGet(100), (int) value));
+		
+		List<Integer> retVals1 = AsyncSupplier.waitAndGetFromSuppliers(Integer.class, "Multiple", "Suppliers", "key")
+				.collect(Collectors.toList());
+		assertEquals(retVals1.size(), 5);
+		AtomicInteger val1 = new AtomicInteger(0);
+		retVals1.forEach(value -> assertEquals(val1.addAndGet(100), (int) value));
+	
 	}
 }

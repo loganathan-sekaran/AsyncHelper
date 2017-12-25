@@ -78,6 +78,12 @@ public final class AsyncSupplier {
 	 * keys. The result can be obtained multiple times by invoking
 	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} from any
 	 * thread which will wait until the supplier code execution completes.
+	 * <br>
+	 * The submission will fail if any exception occurs during the execution of
+	 * supplier or due to thread interruption, or, if any supplier is already
+	 * submitted with the same keys and the result is not yet obtained using
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} at-least
+	 * once.
 	 *
 	 * @param <T>
 	 *            the generic type
@@ -115,6 +121,55 @@ public final class AsyncSupplier {
 	static public <T> boolean submitSupplierForSingleAccess(Supplier<T> supplier, Object... keys) {
 		return doSubmitSupplier(supplier, false, keys);
 	}
+	
+	/**
+	 * This first drops the already submitted supplier with the same key (if any)
+	 * and then submits a supplier to be invoke asynchronously for multiple access
+	 * with keys. The result can be obtained multiple times by invoking
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} from any
+	 * thread which will wait until the supplier code execution completes. <br>
+	 * The submission will fail if any exception occurs during the execution of
+	 * supplier or due to thread interruption, or, if any supplier is already
+	 * submitted with the same keys and the result is not yet obtained using
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} at-least once.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param supplier
+	 *            the supplier
+	 * @param keys
+	 *            the keys
+	 * @return true, if successful
+	 */
+	static public <T> boolean submitSupplierWithDropExistingForMultipleAccess(Supplier<T> supplier, Object... keys) {
+		dropSubmittedSupplier(keys);
+		return submitSupplierForMultipleAccess(supplier, keys);
+	}
+
+	/**
+	 * This first drops the already submitted supplier with the same key (if any)
+	 * and then submits a supplier to be invoke asynchronously for single access and
+	 * get the status of the submission. The result can be obtained only once by
+	 * invoking {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} from
+	 * any thread which will wait until the supplier code execution completes. <br>
+	 * <br>
+	 * The submission will fail if any exception occurs during the execution of
+	 * supplier or due to thread interruption, or, if any supplier is already
+	 * submitted with the same keys and the result is not yet obtained using
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} at-least once.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param supplier
+	 *            the supplier
+	 * @param keys
+	 *            the keys
+	 * @return true, if successful
+	 */
+	static public <T> boolean submitSupplierWithDropExistingForSingleAccess(Supplier<T> supplier, Object... keys) {
+		dropSubmittedSupplier(keys);
+		return submitSupplierForSingleAccess(supplier, keys);
+	}
 
 	/**
 	 * Submits multiple suppliers to be invoke asynchronously for single access
@@ -123,7 +178,6 @@ public final class AsyncSupplier {
 	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} from any
 	 * thread which will wait until the supplier code execution completes.
 	 *
-	 * <br>
 	 * <br>
 	 * The submission will fail if any exception occurs during the execution of
 	 * supplier or due to thread interruption, or, if any supplier is already
@@ -147,6 +201,92 @@ public final class AsyncSupplier {
 			result &= doSubmitSupplier(supplier, false, indexedKey);
 		}
 		return result;
+	}
+	
+	/**
+	 * Submits multiple suppliers to be invoke asynchronously for multiple access
+	 * and get the status of the submission. The result can be obtained only
+	 * once by invoking
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} from any
+	 * thread which will wait until the supplier code execution completes.
+	 *
+	 * <br>
+	 * The submission will fail if any exception occurs during the execution of
+	 * supplier or due to thread interruption, or, if any supplier is already
+	 * submitted with the same keys and the result is not yet obtained using
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} at-least
+	 * once.
+	 * 
+	 * @param <T>
+	 *            the generic type
+	 * @param suppliers
+	 *            the suppliers
+	 * @param keys
+	 *            the keys
+	 * @return true, if successful
+	 */
+	static public <T> boolean submitSuppliersForMultipleAccess(Supplier<T>[] suppliers, Object... keys) {
+		boolean result = true;
+		for (int i = 0; i < suppliers.length; i++) {
+			Supplier<T> supplier = suppliers[i];
+			Object[] indexedKey = Async.getIndexedKey(i, keys);
+			result &= doSubmitSupplier(supplier, true, indexedKey);
+		}
+		return result;
+	}
+	
+	/**
+	 * This first drops the already submitted suppliers with the same key (if any)
+	 * and then submits multiple suppliers to be invoke asynchronously for single
+	 * access and get the status of the submission. The result can be obtained only
+	 * once by invoking
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} from any
+	 * thread which will wait until the supplier code execution completes.
+	 *
+	 * <br>
+	 * The submission will fail if any exception occurs during the execution of
+	 * supplier or due to thread interruption, or, if any supplier is already
+	 * submitted with the same keys and the result is not yet obtained using
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} at-least once.
+	 * 
+	 * @param <T>
+	 *            the generic type
+	 * @param suppliers
+	 *            the suppliers
+	 * @param keys
+	 *            the keys
+	 * @return true, if successful
+	 */
+	static public <T> boolean submitSuppliersWithDropExistingForSingleAccess(Supplier<T>[] suppliers, Object... keys) {
+		dropSubmittedSuppliers(keys);
+		return submitSuppliersForSingleAccess(suppliers, keys);
+	}
+	
+	/**
+	 * This first drops the already submitted suppliers with the same key (if any)
+	 * and then submits multiple suppliers to be invoke asynchronously for multiple
+	 * access and get the status of the submission. The result can be obtained only
+	 * once by invoking
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} from any
+	 * thread which will wait until the supplier code execution completes.
+	 *
+	 * <br>
+	 * The submission will fail if any exception occurs during the execution of
+	 * supplier or due to thread interruption, or, if any supplier is already
+	 * submitted with the same keys and the result is not yet obtained using
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} at-least once.
+	 * 
+	 * @param <T>
+	 *            the generic type
+	 * @param suppliers
+	 *            the suppliers
+	 * @param keys
+	 *            the keys
+	 * @return true, if successful
+	 */
+	static public <T> boolean submitSuppliersWithDropExistingForMultipleAccess(Supplier<T>[] suppliers, Object... keys) {
+		dropSubmittedSuppliers(keys);
+		return submitSuppliersForMultipleAccess(suppliers, keys);
 	}
 
 	/**

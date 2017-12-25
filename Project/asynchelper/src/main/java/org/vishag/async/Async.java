@@ -35,7 +35,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
- * The Async Helper method. This contains utility methods to wait for a flag in
+ * The Async helper class. This contains utility methods to wait for a flag in
  * one thread and notify the flag in another thread.
  * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
