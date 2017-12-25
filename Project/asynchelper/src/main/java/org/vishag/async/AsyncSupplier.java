@@ -207,6 +207,26 @@ public final class AsyncSupplier {
 		}
 		return Optional.empty();
 	}
+	
+	static public <T> void dropSubmittedSupplier(Object... keys) {
+		ObjectsKey objectsKey = ObjectsKey.of(keys);
+		if (Async.originalKeys.containsKey(objectsKey)) {
+			synchronized (Async.originalKeys.get(objectsKey)) {
+				if (Async.multipleAccessedValues.containsKey(objectsKey)) {
+					Async.multipleAccessedValues.remove(objectsKey);
+				}
+
+				if (Async.futureSuppliers.containsKey(objectsKey)) {
+					Async.futureSuppliers.remove(objectsKey);
+
+					if (Async.multipleAccessedKeys.containsKey(objectsKey)) {
+						Async.multipleAccessedKeys.remove(objectsKey);
+					}
+					Async.originalKeys.remove(objectsKey);
+				}
+			}
+		}
+	}
 
 	/**
 	 * Waits and gets the result from multiple suppliers submitted
@@ -230,6 +250,13 @@ public final class AsyncSupplier {
 			builder.accept(waitAndGetFromSupplier(clazz, indexedKey));
 		}
 		return builder.build().filter(Optional::isPresent).map(Optional::get);
+	}
+	
+	static public <T> void dropSubmittedSuppliers(Object... keys) {
+		for (int i = 0; Async.originalKeys.containsKey(ObjectsKey.of(Async.getIndexedKey(i, keys))); i++) {
+			Object[] indexedKey = Async.getIndexedKey(i, keys);
+			dropSubmittedSupplier(indexedKey);
+		}
 	}
 
 	/**
