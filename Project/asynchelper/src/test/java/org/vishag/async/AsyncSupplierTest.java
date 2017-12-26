@@ -902,10 +902,10 @@ public final class AsyncSupplierTest {
 		AsyncSupplier.submitValue(obj, "Object3");
 	
 		
-		AsyncSupplier.dropSubmittedSupplier("String3");
-		AsyncSupplier.dropSubmittedSupplier("Integer3");
-		AsyncSupplier.dropSubmittedSupplier("Boolean3");
-		AsyncSupplier.dropSubmittedSupplier("Object3");
+		AsyncSupplier.dropValue("String3");
+		AsyncSupplier.dropValue("Integer3");
+		AsyncSupplier.dropValue("Boolean3");
+		AsyncSupplier.dropValue("Object3");
 	
 		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "String3").isPresent(), false);
 		assertEquals(AsyncSupplier.waitAndGetFromSupplier(Integer.class, "Integer3").isPresent(), false);
