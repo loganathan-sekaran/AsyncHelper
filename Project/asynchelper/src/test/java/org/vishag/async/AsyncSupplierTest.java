@@ -872,4 +872,65 @@ public final class AsyncSupplierTest {
 		retVals1.forEach(value -> assertEquals(val1.addAndGet(100), (int) value));
 	
 	}
+
+	
+	@Test
+	public void testValueSubmitted() {
+		AsyncSupplier.submitValue("StringValue", "String1");
+		AsyncSupplier.submitValue(100, "Integer1");
+		AsyncSupplier.submitValue(true, "Boolean1");
+		Object obj = new Object();
+		AsyncSupplier.submitValue(obj, "Object1");
+	
+		assertEquals(AsyncSupplier.waitAndGetValue(String.class, "String1").get(), "StringValue");
+		assertEquals(AsyncSupplier.waitAndGetValue(Integer.class, "Integer1").get(), Integer.valueOf(100));
+		assertEquals(AsyncSupplier.waitAndGetValue(Boolean.class, "Boolean1").get(), Boolean.valueOf(true));
+		assertEquals(AsyncSupplier.waitAndGetValue(Object.class, "Object1").get(), obj);
+	
+		assertEquals(AsyncSupplier.waitAndGetValue(String.class, "String1").get(), "StringValue");
+		assertEquals(AsyncSupplier.waitAndGetValue(Integer.class, "Integer1").get(), Integer.valueOf(100));
+		assertEquals(AsyncSupplier.waitAndGetValue(Boolean.class, "Boolean1").get(), Boolean.valueOf(true));
+		assertEquals(AsyncSupplier.waitAndGetValue(Object.class, "Object1").get(), obj);
+	}
+
+	@Test
+	public void testDropValue() {
+		AsyncSupplier.submitValue("StringValue", "String3");
+		AsyncSupplier.submitValue(100, "Integer3");
+		AsyncSupplier.submitValue(true, "Boolean3");
+		Object obj = new Object();
+		AsyncSupplier.submitValue(obj, "Object3");
+	
+		
+		AsyncSupplier.dropSubmittedSupplier("String3");
+		AsyncSupplier.dropSubmittedSupplier("Integer3");
+		AsyncSupplier.dropSubmittedSupplier("Boolean3");
+		AsyncSupplier.dropSubmittedSupplier("Object3");
+	
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(String.class, "String3").isPresent(), false);
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(Integer.class, "Integer3").isPresent(), false);
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(Boolean.class, "Boolean3").isPresent(), false);
+		assertEquals(AsyncSupplier.waitAndGetFromSupplier(Object.class, "Object3").isPresent(), false);
+	
+	}
+
+	@Test
+	public void testValueSubmittedWithDropExisting() {
+		AsyncSupplier.submitValue("StringValue", "String2");
+		AsyncSupplier.submitValue(100, "Integer2");
+		AsyncSupplier.submitValue(true, "Boolean2");
+		Object obj = new Object();
+		AsyncSupplier.submitValue(obj, "Object2");
+		
+		AsyncSupplier.submitValueWithDropExisting("StringValue2", "String2");
+		AsyncSupplier.submitValueWithDropExisting(200, "Integer2");
+		AsyncSupplier.submitValueWithDropExisting(false, "Boolean2");
+		Object obj1 = new Object();
+		AsyncSupplier.submitValueWithDropExisting(obj1, "Object2");
+	
+		assertEquals(AsyncSupplier.waitAndGetValue(String.class, "String2").get(), "StringValue2");
+		assertEquals(AsyncSupplier.waitAndGetValue(Integer.class, "Integer2").get(), Integer.valueOf(200));
+		assertEquals(AsyncSupplier.waitAndGetValue(Boolean.class, "Boolean2").get(), Boolean.valueOf(false));
+		assertEquals(AsyncSupplier.waitAndGetValue(Object.class, "Object2").get(), obj1);	
+	}
 }

@@ -96,6 +96,28 @@ public final class AsyncSupplier {
 	static public <T> boolean submitSupplierForMultipleAccess(Supplier<T> supplier, Object... keys) {
 		return doSubmitSupplier(supplier, true, keys);
 	}
+	
+	/**
+	 * Submits a value for the keys. The value can be obtained multiple times by
+	 * invoking {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} from
+	 * any thread which will wait until the supplier code execution completes. <br>
+	 * The submission will fail if any exception occurs during the execution of
+	 * supplier or due to thread interruption, or, if any supplier is already
+	 * submitted with the same keys and the result is not yet obtained using
+	 * {@link AsyncSupplier#waitAndGetValue(Class, Object...)} at-least once.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param supplier
+	 *            the supplier
+	 * @param keys
+	 *            the keys
+	 * @return true, if successful
+	 */
+	static public <T> boolean submitValue(T value, Object... keys) {
+		Supplier<T> supplier = () -> value;
+		return submitSupplierForMultipleAccess(supplier, keys);
+	}
 
 	/**
 	 * Submits a supplier to be invoke asynchronously for single access and get
@@ -144,6 +166,29 @@ public final class AsyncSupplier {
 	static public <T> boolean submitSupplierWithDropExistingForMultipleAccess(Supplier<T> supplier, Object... keys) {
 		dropSubmittedSupplier(keys);
 		return submitSupplierForMultipleAccess(supplier, keys);
+	}
+	
+	/**
+	 * This first drops the already submitted value with the same key (if any)
+	 * and then submits the value for the keys. The value can be obtained multiple times by
+	 * invoking {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)} from
+	 * any thread which will wait until the supplier code execution completes. <br>
+	 * The submission will fail if any exception occurs during the execution of
+	 * supplier or due to thread interruption, or, if any supplier is already
+	 * submitted with the same keys and the result is not yet obtained using
+	 * {@link AsyncSupplier#waitAndGetValue(Class, Object...)} at-least once.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param supplier
+	 *            the supplier
+	 * @param keys
+	 *            the keys
+	 * @return true, if successful
+	 */
+	static public <T> boolean submitValueWithDropExisting(T value, Object... keys) {
+		Supplier<T> supplier = () -> value;
+		return submitSupplierWithDropExistingForMultipleAccess(supplier, keys);
 	}
 
 	/**
@@ -312,9 +357,16 @@ public final class AsyncSupplier {
 	}
 
 	/**
-	 * Waits and gets the result from a supplier as an Optional based on the
-	 * keys. If no supplier is submitted already with the keys provided, the
-	 * result will be an empty optional.
+	 * Waits and gets the result from a supplier submitted asynchronously
+	 * (using
+	 * {@link AsyncSupplier#submitSupplierForSingleAccess(Supplier, Object...)}) or
+	 * {@link AsyncSupplier#submitSupplierForMultipleAccess(Supplier[], Object...)})
+	 * or
+	 * {@link AsyncSupplier#submitSupplierWithDropExistingForSingleAccess(Supplier[], Object...)})
+	 * or
+	 * {@link AsyncSupplier#submitSupplierWithDropExistingForMultipleAccess(Supplier[], Object...)})
+	 * as a {@link Optional} based on the keys. If no supplier is submitted already with the
+	 * keys provided, the result will be an empty {@link Optional}.
 	 *
 	 * @param <T>
 	 *            the generic type
@@ -348,6 +400,56 @@ public final class AsyncSupplier {
 		return Optional.empty();
 	}
 	
+	/**
+	 * Waits and gets the value submitted asynchronously (using
+	 * {@link AsyncSupplier#submitValue(Object, Object...)}) or
+	 * {@link AsyncSupplier#submitValueWithDropExisting(Supplier, Object...)}) as a
+	 * {@link Optional} based on the keys. If no supplier is submitted already with
+	 * the keys provided, the result will be an empty {@link Optional}.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param clazz
+	 *            the clazz
+	 * @param keys
+	 *            the keys
+	 * @return the optional
+	 */
+	static public <T> Optional<T> waitAndGetValue(Class<T> clazz, Object... keys) {
+		return waitAndGetFromSupplier(clazz, keys);
+	}
+	
+	/**
+	 * Drops a value submitted for the keys by with one of the methods
+	 * {@link AsyncSupplier#submitValue(Object, Object...)},
+	 * or
+	 * {@link AsyncSupplier#submitValueWithDropExisting(Supplier, Object...)}
+	 * <br>
+	 * Once drop the submitted supplier will no longer be accessible by
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)}.
+	 * 
+	 * @param keys
+	 *            the keys
+	 */
+	static public <T> void dropValue(Object... keys) {
+		dropSubmittedSupplier(keys);
+	}
+	
+	/**
+	 * Drops a supplier submitted for the keys by with one of the methods
+	 * {@link AsyncSupplier#submitSupplierForMultipleAccess(Supplier, Object...)},
+	 * or {@link AsyncSupplier#submitSupplierForSingleAccess(Supplier, Object...)},
+	 * or
+	 * {@link AsyncSupplier#submitSupplierWithDropExistingForMultipleAccess(Supplier, Object...)},
+	 * or
+	 * {@link AsyncSupplier#submitSupplierWithDropExistingForSingleAccess(Supplier, Object...)}
+	 * <br>
+	 * Once drop the submitted supplier will no longer be accessible by
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)}.
+	 * 
+	 * @param keys
+	 *            the keys
+	 */
 	static public <T> void dropSubmittedSupplier(Object... keys) {
 		ObjectsKey objectsKey = ObjectsKey.of(keys);
 		if (Async.originalKeys.containsKey(objectsKey)) {
@@ -369,11 +471,16 @@ public final class AsyncSupplier {
 	}
 
 	/**
-	 * Waits and gets the result from multiple suppliers submitted
-	 * asynchronously (using
-	 * {@link AsyncSupplier#submitSupplierForSingleAccess(Supplier, Object...)})
-	 * as a Stream based on the keys. If no supplier is submitted already with
-	 * the keys provided, the result will be an empty stream.
+	 * Waits and gets the result from multiple suppliers submitted asynchronously
+	 * (using
+	 * {@link AsyncSupplier#submitSuppliersForSingleAccess(Supplier, Object...)}) or
+	 * {@link AsyncSupplier#submitSuppliersForMultipleAccess(Supplier[], Object...)})
+	 * or
+	 * {@link AsyncSupplier#submitSuppliersWithDropExistingForSingleAccess(Supplier[], Object...)})
+	 * or
+	 * {@link AsyncSupplier#submitSuppliersWithDropExistingForMultipleAccess(Supplier[], Object...)})
+	 * as a {@link Stream} based on the keys. If no supplier is submitted already with the
+	 * keys provided, the result will be an empty {@link Stream}.
 	 *
 	 * @param <T>
 	 *            the generic type
@@ -392,6 +499,21 @@ public final class AsyncSupplier {
 		return builder.build().filter(Optional::isPresent).map(Optional::get);
 	}
 	
+	/**
+	 * Drops the suppliers submitted for the keys by with one of the methods
+	 * {@link AsyncSupplier#submitSuppliersForMultipleAccess(Supplier, Object...)},
+	 * or {@link AsyncSupplier#submitSuppliersForSingleAccess(Supplier, Object...)},
+	 * or
+	 * {@link AsyncSupplier#submitSuppliersWithDropExistingForMultipleAccess(Supplier, Object...)},
+	 * or
+	 * {@link AsyncSupplier#submitSuppliersWithDropExistingForSingleAccess(Supplier, Object...)}
+	 * <br>
+	 * Once drop the submitted suppliers will no longer be accessible by
+	 * {@link AsyncSupplier#waitAndGetFromSuppliers(Class, Object...)}.
+	 * 
+	 * @param keys
+	 *            the keys
+	 */
 	static public <T> void dropSubmittedSuppliers(Object... keys) {
 		for (int i = 0; Async.originalKeys.containsKey(ObjectsKey.of(Async.getIndexedKey(i, keys))); i++) {
 			Object[] indexedKey = Async.getIndexedKey(i, keys);
