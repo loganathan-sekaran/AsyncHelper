@@ -10,7 +10,9 @@
 
 Async-Helper is a Java utility to invoke/schedule tasks or fetch data asynchronously using tags/flags in a functional way. This internally utilizes ForkJoin pool to submit the tasks.
 
-This contains various utility classes such as [Async](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/Async.java), [Submit](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/Submit.java), [Schedule](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/Schedule.java), [Wait](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/Wait.java) and [Notify](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/Notify.java) to perform various asynchronous operations.
+This contains various helper classes such as  [Async](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/Async.java), [AsyncTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncTask.java), [AsyncSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncSupplier.java), [SchedulingTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingTask.java) and [SchedulingSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingSupplier.java) to perform various asynchronous operations.
+
+Please refer to the [JavaDocs](http://www.javadoc.io/doc/org.vishag/async-helper/3.0.0)  also.  
 
 Below are the some of the operations that can be perfomed using this utility:
 1. Submitting one or more Runnable(s) to run asynchronously.
@@ -27,6 +29,6 @@ To install the latest version, add the below pom dependency entry:
 <dependency>
   <groupId>org.vishag</groupId>
   <artifactId>async-helper</artifactId>
-  <version>2.0.0</version>
+  <version>3.0.0</version>
 </dependency>
 ```
