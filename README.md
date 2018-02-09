@@ -35,7 +35,7 @@ Also refer to the <a href="https://github.com/loganathan001/AsyncHelper/wiki/Som
 </dependency>
 ```
 ## Some Example Usages of Async-Helper
-<br>
+
 If it is desired to run a set of method calls or code blocks asynchronously, the **[Async-Helper](https://github.com/loganathan001/AsyncHelper)** library includes an useful helper method **[AsyncTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncTask.java).submitTasks** as in below snippet.
 
 ```
