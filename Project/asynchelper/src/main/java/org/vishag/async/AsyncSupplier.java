@@ -21,7 +21,7 @@ package org.vishag.async;
 
 import java.util.Optional;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.Future;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -53,7 +53,7 @@ public final class AsyncSupplier {
 	 * @return the supplier
 	 */
 	static public <T> Supplier<T> submitSupplier(Supplier<T> supplier) {
-		return Async.safeSupplier(Async.forkJoinPool.submit(() -> supplier.get()));
+		return Async.safeSupplier(Async.getThreadPool().submit(() -> supplier.get()));
 	}
 
 	/**
@@ -350,7 +350,7 @@ public final class AsyncSupplier {
 	static private <T> boolean doSubmitSupplier(Supplier<T> supplier, boolean multipleAccess, Object... keys) {
 		ObjectsKey key = ObjectsKey.of(keys);
 		if (!Async.futureSuppliers.containsKey(key)) {
-			Supplier<T> safeSupplier = Async.safeSupplier(Async.forkJoinPool.submit(() -> supplier.get()));
+			Supplier<T> safeSupplier = Async.safeSupplier(Async.getThreadPool().submit(() -> supplier.get()));
 			return Async.storeSupplier(key, safeSupplier, multipleAccess);
 		}
 		return false;
@@ -533,7 +533,7 @@ public final class AsyncSupplier {
 	 * @return the optional
 	 */
 	static public <T> Optional<T> submitAndGetSupplier(Supplier<T> supplier) {
-		ForkJoinTask<T> task = Async.forkJoinPool.submit(() -> supplier.get());
+		Future<T> task = Async.getThreadPool().submit(() -> supplier.get());
 		return Async.safeGet(task);
 	}
 
@@ -547,7 +547,7 @@ public final class AsyncSupplier {
 	 * @return the supplier
 	 */
 	static public <T> Supplier<T> submitCallable(Callable<T> callable) {
-		return Async.safeSupplier(Async.forkJoinPool.submit(callable));
+		return Async.safeSupplier(Async.getThreadPool().submit(callable));
 	}
 
 	/**
@@ -561,7 +561,7 @@ public final class AsyncSupplier {
 	 * @return the optional
 	 */
 	static public synchronized <T> Optional<T> submitAndGetCallable(Callable<T> callable) {
-		ForkJoinTask<T> task = Async.forkJoinPool.submit(callable);
+		Future<T> task = Async.getThreadPool().submit(callable);
 		return Async.safeGet(task);
 	}
 

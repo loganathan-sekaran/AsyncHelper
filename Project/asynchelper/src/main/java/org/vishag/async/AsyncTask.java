@@ -22,7 +22,7 @@ package org.vishag.async;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -58,7 +58,7 @@ public final class AsyncTask {
 	 *            the runnable
 	 */
 	static public void submitTask(Runnable runnable) {
-		Async.forkJoinPool.execute(runnable);
+		Async.getThreadPool().execute(runnable);
 	}
 
 	/**
@@ -68,7 +68,7 @@ public final class AsyncTask {
 	 *            the runnables
 	 */
 	static public void submitTasks(Runnable... runnables) {
-		Stream.of(runnables).forEach(Async.forkJoinPool::execute);
+		Stream.of(runnables).forEach(Async.getThreadPool()::execute);
 	}
 
 	/**
@@ -85,8 +85,8 @@ public final class AsyncTask {
 	 */
 	static public void submitTasksAndWaitCancellable(Supplier<Boolean> cancelConditionSupplier,
 			boolean cancelCanInterruptRunning, Runnable... runnables) {
-		ForkJoinPool forkJoinPool = new ForkJoinPool(ForkJoinPool.getCommonPoolParallelism());
-		List<Future<?>> futures = Stream.of(runnables).map(forkJoinPool::submit).collect(Collectors.toList());
+		ExecutorService threadPool = Async.newThreadPool();
+		List<Future<?>> futures = Stream.of(runnables).map(threadPool::submit).collect(Collectors.toList());
 		AtomicBoolean allTasksCompleted = new AtomicBoolean(false);
 		AsyncTask.submitTask(() -> {
 			for (Future<?> future : futures) {
@@ -118,9 +118,9 @@ public final class AsyncTask {
 
 		AsyncTask.waitForTask(futures, "getting");
 		AsyncTask.waitForTask(futures, "cancelling");
-		forkJoinPool.shutdownNow();
+		threadPool.shutdownNow();
 		try {
-			forkJoinPool.awaitTermination(5, TimeUnit.SECONDS);
+			threadPool.awaitTermination(5, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
 			logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
 		}
@@ -139,13 +139,17 @@ public final class AsyncTask {
 			return (Object) null;
 		}).collect(Collectors.toList());
 
-		Async.forkJoinPool.invokeAll(tasks).parallelStream().forEach(future -> {
-			try {
-				future.get();
-			} catch (InterruptedException | ExecutionException e) {
-				logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
-			}
-		});
+		try {
+			Async.getThreadPool().invokeAll(tasks).parallelStream().forEach(future -> {
+				try {
+					future.get();
+				} catch (InterruptedException | ExecutionException e) {
+					logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
+				}
+			});
+		} catch (InterruptedException e) {
+			logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
+		}
 	}
 
 	/**
@@ -182,7 +186,7 @@ public final class AsyncTask {
 	static public boolean submitTask(Runnable runnable, Object... keys) {
 		ObjectsKey key = ObjectsKey.of(keys);
 		if (!Async.futureSuppliers.containsKey(key)) {
-			Supplier<Void> safeSupplier = Async.safeSupplier(Async.forkJoinPool.submit(() -> {
+			Supplier<Void> safeSupplier = Async.safeSupplier(Async.getThreadPool().submit(() -> {
 				runnable.run();
 				return null;
 			}));

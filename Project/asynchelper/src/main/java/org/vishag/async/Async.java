@@ -25,9 +25,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -84,14 +85,14 @@ public final class Async {
 	}
 
 	/** The fork join pool. */
-	protected static ForkJoinPool forkJoinPool;
+	private static ExecutorService threadPool;
 
 	static {
-		forkJoinPool = ForkJoinPool.commonPool();
+		threadPool = ForkJoinPool.commonPool();
 		if (ForkJoinPool.getCommonPoolParallelism() == 1) {
-			forkJoinPool = new ForkJoinPool(5);
+			threadPool = new ForkJoinPool(5);
 		} else {
-			forkJoinPool = ForkJoinPool.commonPool();
+			threadPool = ForkJoinPool.commonPool();
 		}
 	}
 
@@ -122,8 +123,12 @@ public final class Async {
 	 *
 	 * @return the fork join pool
 	 */
-	protected static ForkJoinPool getForkJoinPool() {
-		return forkJoinPool;
+	protected static ExecutorService getThreadPool() {
+		return threadPool;
+	}
+	
+	protected static ExecutorService newThreadPool() {
+		return new ForkJoinPool(ForkJoinPool.getCommonPoolParallelism());
 	}
 
 	/**
@@ -135,7 +140,7 @@ public final class Async {
 	 *            the task
 	 * @return the optional
 	 */
-	protected static <T> Optional<T> safeGet(ForkJoinTask<T> task) {
+	protected static <T> Optional<T> safeGet(Future<T> task) {
 		try {
 			return Optional.ofNullable(task.get());
 		} catch (InterruptedException | ExecutionException e) {
@@ -152,7 +157,7 @@ public final class Async {
 	 *            the task
 	 * @return the supplier
 	 */
-	protected static <T> Supplier<T> safeSupplier(ForkJoinTask<T> task) {
+	protected static <T> Supplier<T> safeSupplier(Future<T> task) {
 		return () -> {
 			try {
 				return task.get();
