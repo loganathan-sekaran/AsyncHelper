@@ -24,7 +24,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
@@ -32,23 +31,77 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * The AsyncSupplier Helper class with methods for submitting {@link Runnable}s to
- * invoke them as asynchronous tasks and optionally wait for them in same of
- * another thread.
+ * The AsyncSupplier Helper class with methods for submitting {@link Runnable}s
+ * to invoke them as asynchronous tasks and optionally wait for them in same of
+ * another thread. <br>
+ * <br>
+ * Note: The default thread pool used in the default instance
+ * ({@link AsyncTask#getDefault()}) is ForkJoinPool. A I/O intensive or blocking
+ * task should prevent using the default instance, instead pass its own thread
+ * pool executor (using {@link AsyncTask#of(ExecutorService)}) or
+ * {@link AsyncTask#of(ExecutorService, AsyncContext)} or use
+ * {@link AsyncTask#submitTaskInNewThread(Runnable)} if applicable.
  * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
-public final class AsyncTask {
+public final class AsyncTask implements AutoCloseable{
 
 	/**
 	 * {@code Logger} for this class.
 	 */
 	private static final Logger logger = Logger.getLogger(AsyncTask.class.getName());
+	
+	/** The executor. */
+	private Executor executor;
+	
+	/** The closed. */
+	private volatile boolean closed;
+
+	/** The async context. */
+	private AsyncContext asyncContext;
+	
+	/** The default instance. */
+	private static AsyncTask DEFAULT_INSTANCE = new AsyncTask(Executor.getDefault(), AsyncContext.getDefault()); 
 
 	/**
-	 * Prevent instantiation outside the class
+	 * Prevent instantiation outside the class.
+	 *
+	 * @param executor the executor
+	 * @param asyncContext the async context
 	 */
-	private AsyncTask() {
+	private AsyncTask(Executor executor, AsyncContext asyncContext) {
+		this.executor = executor;
+		this.asyncContext = asyncContext;
+	}
+	
+	/**
+	 * Gets the default instance of AsyncTask.
+	 *
+	 * @return the default
+	 */
+	public static AsyncTask getDefault() {
+		return DEFAULT_INSTANCE;
+	}
+	
+	/**
+	 * Gets a new AsyncTask instance made of the given executor service.
+	 *
+	 * @param executorService the executor service
+	 * @return the async task
+	 */
+	public static AsyncTask of(ExecutorService executorService) {
+		return of(executorService, AsyncContext.getDefault());
+	}
+	
+	/**
+	 * Gets a new AsyncTask instance made of the given executor service and async context.
+	 *
+	 * @param executorService the executor service
+	 * @param asyncContext the async context
+	 * @return the async task
+	 */
+	public static AsyncTask of(ExecutorService executorService, AsyncContext asyncContext) {
+		return new AsyncTask(Executor.ofExecutorService(executorService), asyncContext);
 	}
 
 	/**
@@ -57,18 +110,38 @@ public final class AsyncTask {
 	 * @param runnable
 	 *            the runnable
 	 */
-	static public void submitTask(Runnable runnable) {
-		Async.getThreadPool().execute(runnable);
+	public void submitTask(Runnable runnable) {
+		getThreadPool().execute(runnable);
+	}
+	
+	
+	/**
+	 * Submit task in new thread.
+	 *
+	 * @param runnable the runnable
+	 */
+	public static void submitTaskInNewThread(Runnable runnable) {
+		new Thread(runnable).start();
 	}
 
+	/**
+	 * Gets the thread pool.
+	 *
+	 * @return the thread pool
+	 */
+	private ExecutorService getThreadPool() {
+		assertNotClosed();
+		return executor.getThreadPool();
+	}
+	
 	/**
 	 * Submits multiple tasks (Runnable) to be invoke asynchronously.
 	 *
 	 * @param runnables
 	 *            the runnables
 	 */
-	static public void submitTasks(Runnable... runnables) {
-		Stream.of(runnables).forEach(Async.getThreadPool()::execute);
+	public void submitTasks(Runnable... runnables) {
+		Stream.of(runnables).forEach(getThreadPool()::execute);
 	}
 
 	/**
@@ -83,12 +156,12 @@ public final class AsyncTask {
 	 * @param runnables
 	 *            the runnables
 	 */
-	static public void submitTasksAndWaitCancellable(Supplier<Boolean> cancelConditionSupplier,
+	public void submitTasksAndWaitCancellable(Supplier<Boolean> cancelConditionSupplier,
 			boolean cancelCanInterruptRunning, Runnable... runnables) {
-		ExecutorService threadPool = Async.newThreadPool();
+		ExecutorService threadPool = getThreadPool();
 		List<Future<?>> futures = Stream.of(runnables).map(threadPool::submit).collect(Collectors.toList());
 		AtomicBoolean allTasksCompleted = new AtomicBoolean(false);
-		AsyncTask.submitTask(() -> {
+		this.submitTask(() -> {
 			for (Future<?> future : futures) {
 				try {
 					future.get();
@@ -99,7 +172,7 @@ public final class AsyncTask {
 			allTasksCompleted.set(true);
 		}, futures, "getting");
 
-		AsyncTask.submitTask(() -> {
+		this.submitTask(() -> {
 			while (!allTasksCompleted.get()) {
 				if (!cancelConditionSupplier.get()) {
 					try {
@@ -116,14 +189,8 @@ public final class AsyncTask {
 			}
 		}, futures, "cancelling");
 
-		AsyncTask.waitForTask(futures, "getting");
-		AsyncTask.waitForTask(futures, "cancelling");
-		threadPool.shutdownNow();
-		try {
-			threadPool.awaitTermination(5, TimeUnit.SECONDS);
-		} catch (InterruptedException e) {
-			logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
-		}
+		this.waitForTask(futures, "getting");
+		this.waitForTask(futures, "cancelling");
 	}
 
 	/**
@@ -133,14 +200,14 @@ public final class AsyncTask {
 	 * @param runnables
 	 *            the runnables
 	 */
-	static public void submitTasksAndWait(Runnable... runnables) {
+	public void submitTasksAndWait(Runnable... runnables) {
 		List<Callable<Object>> tasks = Stream.of(runnables).map(runnable -> (Callable<Object>) () -> {
 			runnable.run();
 			return (Object) null;
 		}).collect(Collectors.toList());
 
 		try {
-			Async.getThreadPool().invokeAll(tasks).parallelStream().forEach(future -> {
+			getThreadPool().invokeAll(tasks).parallelStream().forEach(future -> {
 				try {
 					future.get();
 				} catch (InterruptedException | ExecutionException e) {
@@ -163,10 +230,10 @@ public final class AsyncTask {
 	 * @param runnables
 	 *            the runnables
 	 */
-	static public void submitTasks(Object[] keys, Runnable... runnables) {
+	public void submitTasks(Object[] keys, Runnable... runnables) {
 		for (int i = 0; i < runnables.length; i++) {
 			Runnable runnable = runnables[i];
-			Object[] indexedKey = Async.getIndexedKey(i, keys);
+			Object[] indexedKey = AsyncContext.getIndexedKey(i, keys);
 			submitTask(runnable, indexedKey);
 		}
 	}
@@ -183,14 +250,15 @@ public final class AsyncTask {
 	 *            the keys
 	 * @return true, if successful
 	 */
-	static public boolean submitTask(Runnable runnable, Object... keys) {
+	public boolean submitTask(Runnable runnable, Object... keys) {
 		ObjectsKey key = ObjectsKey.of(keys);
-		if (!Async.futureSuppliers.containsKey(key)) {
-			Supplier<Void> safeSupplier = Async.safeSupplier(Async.getThreadPool().submit(() -> {
+		AsyncContext context = getAsyncContect();
+		if (!context.getFutureSuppliers().containsKey(key)) {
+			Supplier<Void> safeSupplier = AsyncContext.safeSupplier(getThreadPool().submit(() -> {
 				runnable.run();
 				return null;
 			}));
-			return Async.storeSupplier(key, safeSupplier, false);
+			return context.storeSupplier(key, safeSupplier, false);
 		}
 		return false;
 	}
@@ -204,11 +272,17 @@ public final class AsyncTask {
 	 * @param keys
 	 *            the keys
 	 */
-	static public void waitForMultipleTasks(Object... keys) {
-		for (int i = 0; Async.originalKeys.containsKey(ObjectsKey.of(Async.getIndexedKey(i, keys))); i++) {
-			Object[] indexedKey = Async.getIndexedKey(i, keys);
-			waitForTask(indexedKey);
-		}
+	public void waitForMultipleTasks(Object... keys) {
+		getAsyncContect().waitForMultipleTasks(keys);
+	}
+
+	/**
+	 * Gets the async contect.
+	 *
+	 * @return the async contect
+	 */
+	private AsyncContext getAsyncContect() {
+		return asyncContext;
 	}
 
 	/**
@@ -220,24 +294,27 @@ public final class AsyncTask {
 	 * @param keys
 	 *            the keys
 	 */
-	static public void waitForTask(Object... keys) {
-		ObjectsKey objectsKey = ObjectsKey.of(keys);
-		if (Async.originalKeys.containsKey(objectsKey)) {
-			synchronized (Async.originalKeys.get(objectsKey)) {
-				if (Async.multipleAccessedValues.containsKey(objectsKey)) {
-					return;
-				}
-				if (Async.futureSuppliers.containsKey(objectsKey)) {
-					Async.futureSuppliers.get(objectsKey).get();
-					Async.futureSuppliers.remove(objectsKey);
+	public void waitForTask(Object... keys) {
+		getAsyncContect().waitForTask(keys);
+	}
 
-					if (Async.multipleAccessedKeys.containsKey(objectsKey)) {
-						Async.multipleAccessedValues.put(objectsKey, objectsKey);
-					} else {
-						Async.originalKeys.remove(objectsKey);
-					}
-				}
-			}
+	/* (non-Javadoc)
+	 * @see java.lang.AutoCloseable#close()
+	 */
+	@Override
+	public synchronized void close() {
+		if(!closed) {
+			executor.close();
+			closed = true;
+		}
+	}
+	
+	/**
+	 * Assert not closed.
+	 */
+	private void assertNotClosed() {
+		if (closed) {
+			throw new RuntimeException(new IllegalStateException("Already closed"));
 		}
 	}
 

@@ -21,6 +21,7 @@ package org.vishag.async;
 
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -29,14 +30,69 @@ import java.util.stream.Stream;
  * The AsyncSupplier Helper class with methods for submitting Suppliers for
  * asynchronous invocation and obtaining their results asynchronously.
  * 
+ * <br>
+ * <br>
+ * Note: The default thread pool used in the default instance
+ * ({@link AsyncSupplier#getDefault()}) is ForkJoinPool. A I/O intensive or
+ * blocking task should prevent using the default instance, instead pass its own
+ * thread pool executor (using {@link AsyncSupplier#of(ExecutorService)} or
+ * {@link AsyncSupplier#of(ExecutorService, AsyncContext)}).
+ * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
-public final class AsyncSupplier {
+public final class AsyncSupplier implements AutoCloseable{
+	
+	/** The default instance. */
+	private static AsyncSupplier DEFAULT_INSTANCE = new AsyncSupplier(Executor.getDefault(), AsyncContext.getDefault());
+	
+	/** The executor. */
+	private final Executor executor;
+	
+	/** The closed flag. */
+	private volatile boolean closed;
+
+	/** The async context. */
+	private AsyncContext asyncContext;
 
 	/**
-	 * Prevent instantiation outside the class
+	 * Prevent instantiation outside the class.
+	 *
+	 * @param executor the executor
+	 * @param asyncContext the async context
 	 */
-	private AsyncSupplier() {
+	private AsyncSupplier(Executor executor, AsyncContext asyncContext) {
+		this.executor = executor;
+		this.asyncContext = asyncContext;
+	}
+	
+	/**
+	 * Gets the default instance of AsyncSupplier.
+	 *
+	 * @return the default
+	 */
+	public static AsyncSupplier getDefault() {
+		return DEFAULT_INSTANCE;
+	}
+	
+	/**
+	 * Get a new AsyncSupplier instance made of the given executor service.
+	 *
+	 * @param executorService the executor service
+	 * @return the async supplier
+	 */
+	public static AsyncSupplier of(ExecutorService executorService) {
+		return of(executorService, AsyncContext.getDefault());
+	}
+	
+	/**
+	 * Get a new AsyncSupplier instance made of the given executor service and async context.
+	 *
+	 * @param executorService the executor service
+	 * @param context the context
+	 * @return the async supplier
+	 */
+	public static AsyncSupplier of(ExecutorService executorService, AsyncContext context) {
+		return new AsyncSupplier(Executor.ofExecutorService(executorService), context);
 	}
 
 	/**
@@ -52,8 +108,8 @@ public final class AsyncSupplier {
 	 *            the supplier
 	 * @return the supplier
 	 */
-	static public <T> Supplier<T> submitSupplier(Supplier<T> supplier) {
-		return Async.safeSupplier(Async.getThreadPool().submit(() -> supplier.get()));
+	public <T> Supplier<T> submitSupplier(Supplier<T> supplier) {
+		return AsyncContext.safeSupplier(getThreadPool().submit(() -> supplier.get()));
 	}
 
 	/**
@@ -69,7 +125,7 @@ public final class AsyncSupplier {
 	 * @return the supplier[]
 	 */
 	@SuppressWarnings("unchecked")
-	static public <T> Supplier<T>[] submitSuppliers(Supplier<T>... suppliers) {
+	public <T> Supplier<T>[] submitSuppliers(Supplier<T>... suppliers) {
 		return Stream.of(suppliers).map(supplier -> submitSupplier(supplier)).toArray(size -> new Supplier[size]);
 	}
 
@@ -93,7 +149,7 @@ public final class AsyncSupplier {
 	 *            the keys
 	 * @return true, if successful
 	 */
-	static public <T> boolean submitSupplierForMultipleAccess(Supplier<T> supplier, Object... keys) {
+	public <T> boolean submitSupplierForMultipleAccess(Supplier<T> supplier, Object... keys) {
 		return doSubmitSupplier(supplier, true, keys);
 	}
 	
@@ -114,7 +170,7 @@ public final class AsyncSupplier {
 	 *            the keys
 	 * @return true, if successful
 	 */
-	static public <T> boolean submitValue(T value, Object... keys) {
+	public <T> boolean submitValue(T value, Object... keys) {
 		Supplier<T> supplier = () -> value;
 		return submitSupplierForMultipleAccess(supplier, keys);
 	}
@@ -140,7 +196,7 @@ public final class AsyncSupplier {
 	 *            the keys
 	 * @return true, if successful
 	 */
-	static public <T> boolean submitSupplierForSingleAccess(Supplier<T> supplier, Object... keys) {
+	public <T> boolean submitSupplierForSingleAccess(Supplier<T> supplier, Object... keys) {
 		return doSubmitSupplier(supplier, false, keys);
 	}
 	
@@ -163,7 +219,7 @@ public final class AsyncSupplier {
 	 *            the keys
 	 * @return true, if successful
 	 */
-	static public <T> boolean submitSupplierWithDropExistingForMultipleAccess(Supplier<T> supplier, Object... keys) {
+	public <T> boolean submitSupplierWithDropExistingForMultipleAccess(Supplier<T> supplier, Object... keys) {
 		dropSubmittedSupplier(keys);
 		return submitSupplierForMultipleAccess(supplier, keys);
 	}
@@ -186,7 +242,7 @@ public final class AsyncSupplier {
 	 *            the keys
 	 * @return true, if successful
 	 */
-	static public <T> boolean submitValueWithDropExisting(T value, Object... keys) {
+	public <T> boolean submitValueWithDropExisting(T value, Object... keys) {
 		Supplier<T> supplier = () -> value;
 		return submitSupplierWithDropExistingForMultipleAccess(supplier, keys);
 	}
@@ -211,7 +267,7 @@ public final class AsyncSupplier {
 	 *            the keys
 	 * @return true, if successful
 	 */
-	static public <T> boolean submitSupplierWithDropExistingForSingleAccess(Supplier<T> supplier, Object... keys) {
+	public <T> boolean submitSupplierWithDropExistingForSingleAccess(Supplier<T> supplier, Object... keys) {
 		dropSubmittedSupplier(keys);
 		return submitSupplierForSingleAccess(supplier, keys);
 	}
@@ -238,11 +294,11 @@ public final class AsyncSupplier {
 	 *            the keys
 	 * @return true, if successful
 	 */
-	static public <T> boolean submitSuppliersForSingleAccess(Supplier<T>[] suppliers, Object... keys) {
+	public <T> boolean submitSuppliersForSingleAccess(Supplier<T>[] suppliers, Object... keys) {
 		boolean result = true;
 		for (int i = 0; i < suppliers.length; i++) {
 			Supplier<T> supplier = suppliers[i];
-			Object[] indexedKey = Async.getIndexedKey(i, keys);
+			Object[] indexedKey = AsyncContext.getIndexedKey(i, keys);
 			result &= doSubmitSupplier(supplier, false, indexedKey);
 		}
 		return result;
@@ -270,11 +326,11 @@ public final class AsyncSupplier {
 	 *            the keys
 	 * @return true, if successful
 	 */
-	static public <T> boolean submitSuppliersForMultipleAccess(Supplier<T>[] suppliers, Object... keys) {
+	public <T> boolean submitSuppliersForMultipleAccess(Supplier<T>[] suppliers, Object... keys) {
 		boolean result = true;
 		for (int i = 0; i < suppliers.length; i++) {
 			Supplier<T> supplier = suppliers[i];
-			Object[] indexedKey = Async.getIndexedKey(i, keys);
+			Object[] indexedKey = AsyncContext.getIndexedKey(i, keys);
 			result &= doSubmitSupplier(supplier, true, indexedKey);
 		}
 		return result;
@@ -302,7 +358,7 @@ public final class AsyncSupplier {
 	 *            the keys
 	 * @return true, if successful
 	 */
-	static public <T> boolean submitSuppliersWithDropExistingForSingleAccess(Supplier<T>[] suppliers, Object... keys) {
+	public <T> boolean submitSuppliersWithDropExistingForSingleAccess(Supplier<T>[] suppliers, Object... keys) {
 		dropSubmittedSuppliers(keys);
 		return submitSuppliersForSingleAccess(suppliers, keys);
 	}
@@ -329,7 +385,7 @@ public final class AsyncSupplier {
 	 *            the keys
 	 * @return true, if successful
 	 */
-	static public <T> boolean submitSuppliersWithDropExistingForMultipleAccess(Supplier<T>[] suppliers, Object... keys) {
+	public <T> boolean submitSuppliersWithDropExistingForMultipleAccess(Supplier<T>[] suppliers, Object... keys) {
 		dropSubmittedSuppliers(keys);
 		return submitSuppliersForMultipleAccess(suppliers, keys);
 	}
@@ -347,13 +403,158 @@ public final class AsyncSupplier {
 	 *            the keys
 	 * @return true, if successful
 	 */
-	static private <T> boolean doSubmitSupplier(Supplier<T> supplier, boolean multipleAccess, Object... keys) {
+	private <T> boolean doSubmitSupplier(Supplier<T> supplier, boolean multipleAccess, Object... keys) {
 		ObjectsKey key = ObjectsKey.of(keys);
-		if (!Async.futureSuppliers.containsKey(key)) {
-			Supplier<T> safeSupplier = Async.safeSupplier(Async.getThreadPool().submit(() -> supplier.get()));
-			return Async.storeSupplier(key, safeSupplier, multipleAccess);
+		AsyncContext async = getAsyncContext();
+		if (!async.getFutureSuppliers().containsKey(key)) {
+			Supplier<T> safeSupplier = AsyncContext.safeSupplier(getThreadPool().submit(() -> supplier.get()));
+			return async.storeSupplier(key, safeSupplier, multipleAccess);
 		}
 		return false;
+	}
+
+	/**
+	 * Gets the thread pool.
+	 *
+	 * @return the thread pool
+	 */
+	private ExecutorService getThreadPool() {
+		assertNotClosed();
+		return executor.getThreadPool();
+	}
+
+	/**
+	 * Drops a value submitted for the keys by with one of the methods
+	 * {@link AsyncSupplier#submitValue(Object, Object...)},
+	 * or
+	 * {@link AsyncSupplier#submitValueWithDropExisting(Object, Object...)}
+	 * <br>
+	 * Once drop the submitted supplier will no longer be accessible by
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)}.
+	 * 
+	 * @param keys
+	 *            the keys
+	 */
+	public void dropValue(Object... keys) {
+		dropSubmittedSupplier(keys);
+	}
+	
+	/**
+	 * Drops a supplier submitted for the keys by with one of the methods
+	 * {@link AsyncSupplier#submitSupplierForMultipleAccess(Supplier, Object...)},
+	 * or {@link AsyncSupplier#submitSupplierForSingleAccess(Supplier, Object...)},
+	 * or
+	 * {@link AsyncSupplier#submitSupplierWithDropExistingForMultipleAccess(Supplier, Object...)},
+	 * or
+	 * {@link AsyncSupplier#submitSupplierWithDropExistingForSingleAccess(Supplier, Object...)}
+	 * <br>
+	 * Once drop the submitted supplier will no longer be accessible by
+	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)}.
+	 * 
+	 * @param keys
+	 *            the keys
+	 */
+	public void dropSubmittedSupplier(Object... keys) {
+		try (ObjectsKey objectsKey = ObjectsKey.of(keys);){
+			AsyncContext async = getAsyncContext();
+			if (async.getOriginalKeys().containsKey(objectsKey)) {
+				synchronized (async.getOriginalKeys().get(objectsKey)) {
+					if (async.getMultipleAccessedValues().containsKey(objectsKey)) {
+						async.getMultipleAccessedValues().remove(objectsKey);
+					}
+	
+					if (async.getFutureSuppliers().containsKey(objectsKey)) {
+						async.getFutureSuppliers().remove(objectsKey);
+	
+						if (async.getMultipleAccessedKeys().containsKey(objectsKey)) {
+							async.getMultipleAccessedKeys().remove(objectsKey);
+						}
+						ObjectsKey originalKey = async.getOriginalKeys().remove(objectsKey);
+						if(originalKey != null) {
+							originalKey.close();
+						}
+					}
+				}
+			}
+		}
+	}
+
+	
+	/**
+	 * Drops the suppliers submitted for the keys by with one of the methods
+	 * {@link AsyncSupplier#submitSuppliersForMultipleAccess(Supplier[], Object...)},
+	 * or {@link AsyncSupplier#submitSuppliersForSingleAccess(Supplier[], Object...)},
+	 * or
+	 * {@link AsyncSupplier#submitSuppliersWithDropExistingForMultipleAccess(Supplier[], Object...)},
+	 * or
+	 * {@link AsyncSupplier#submitSuppliersWithDropExistingForSingleAccess(Supplier[], Object...)}
+	 * <br>
+	 * Once drop the submitted suppliers will no longer be accessible by
+	 * {@link AsyncSupplier#waitAndGetFromSuppliers(Class, Object...)}.
+	 * 
+	 * @param keys
+	 *            the keys
+	 */
+	public void dropSubmittedSuppliers(Object... keys) {
+		for (int i = 0; getAsyncContext().getOriginalKeys().containsKey(ObjectsKey.of(AsyncContext.getIndexedKey(i, keys))); i++) {
+			Object[] indexedKey = AsyncContext.getIndexedKey(i, keys);
+			dropSubmittedSupplier(indexedKey);
+		}
+	}
+
+	/**
+	 * Submits a supplier asynchronously and gets the value as Optional. If any
+	 * exception occurs during the execution of supplier or due to thread
+	 * interruption it will return empty result.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param supplier
+	 *            the supplier
+	 * @return the optional
+	 */
+	public <T> Optional<T> submitAndGetSupplier(Supplier<T> supplier) {
+		Future<T> task = getThreadPool().submit(() -> supplier.get());
+		return getAsyncContext().safeGet(task);
+	}
+
+	/**
+	 * Submit callable.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param callable
+	 *            the callable
+	 * @return the supplier
+	 */
+	public <T> Supplier<T> submitCallable(Callable<T> callable) {
+		return AsyncContext.safeSupplier(getThreadPool().submit(callable));
+	}
+
+	/**
+	 * Submits and callable and waits until it finishes and then returns the
+	 * Optional of result.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param callable
+	 *            the callable
+	 * @return the optional
+	 */
+	public synchronized <T> Optional<T> submitAndGetCallable(Callable<T> callable) {
+		Future<T> task = getThreadPool().submit(callable);
+		return getAsyncContext().safeGet(task);
+	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.AutoCloseable#close()
+	 */
+	@Override
+	public synchronized void close() {
+		if(!closed) {
+			executor.close();
+			closed = true;
+		}
 	}
 
 	/**
@@ -375,99 +576,10 @@ public final class AsyncSupplier {
 	 * @param keys
 	 *            the keys
 	 * @return the optional
-	 */
-	static public <T> Optional<T> waitAndGetFromSupplier(Class<T> clazz, Object... keys) {
-		ObjectsKey objectsKey = ObjectsKey.of(keys);
-		if (Async.originalKeys.containsKey(objectsKey)) {
-			synchronized (Async.originalKeys.get(objectsKey)) {
-				if (Async.multipleAccessedValues.containsKey(objectsKey)) {
-					return Async.getCastedValue(clazz, () -> Async.multipleAccessedValues.get(objectsKey));
-				}
-
-				if (Async.futureSuppliers.containsKey(objectsKey)) {
-					Optional<T> value = Async.getCastedValue(clazz, () -> Async.futureSuppliers.get(objectsKey).get());
-					Async.futureSuppliers.remove(objectsKey);
-
-					if (Async.multipleAccessedKeys.containsKey(objectsKey)) {
-						Async.multipleAccessedValues.put(objectsKey, value.orElse(null));
-					} else {
-						Async.originalKeys.remove(objectsKey);
-					}
-					return value;
-				}
-			}
-		}
-		return Optional.empty();
-	}
-	
-	/**
-	 * Waits and gets the value submitted asynchronously (using
-	 * {@link AsyncSupplier#submitValue(Object, Object...)}) or
-	 * {@link AsyncSupplier#submitValueWithDropExisting(Object, Object...)}) as a
-	 * {@link Optional} based on the keys. If no supplier is submitted already with
-	 * the keys provided, the result will be an empty {@link Optional}.
-	 *
-	 * @param <T>
-	 *            the generic type
-	 * @param clazz
-	 *            the clazz
-	 * @param keys
-	 *            the keys
-	 * @return the optional
-	 */
-	static public <T> Optional<T> waitAndGetValue(Class<T> clazz, Object... keys) {
-		return waitAndGetFromSupplier(clazz, keys);
-	}
-	
-	/**
-	 * Drops a value submitted for the keys by with one of the methods
-	 * {@link AsyncSupplier#submitValue(Object, Object...)},
-	 * or
-	 * {@link AsyncSupplier#submitValueWithDropExisting(Object, Object...)}
-	 * <br>
-	 * Once drop the submitted supplier will no longer be accessible by
-	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)}.
 	 * 
-	 * @param keys
-	 *            the keys
 	 */
-	static public void dropValue(Object... keys) {
-		dropSubmittedSupplier(keys);
-	}
-	
-	/**
-	 * Drops a supplier submitted for the keys by with one of the methods
-	 * {@link AsyncSupplier#submitSupplierForMultipleAccess(Supplier, Object...)},
-	 * or {@link AsyncSupplier#submitSupplierForSingleAccess(Supplier, Object...)},
-	 * or
-	 * {@link AsyncSupplier#submitSupplierWithDropExistingForMultipleAccess(Supplier, Object...)},
-	 * or
-	 * {@link AsyncSupplier#submitSupplierWithDropExistingForSingleAccess(Supplier, Object...)}
-	 * <br>
-	 * Once drop the submitted supplier will no longer be accessible by
-	 * {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)}.
-	 * 
-	 * @param keys
-	 *            the keys
-	 */
-	static public void dropSubmittedSupplier(Object... keys) {
-		ObjectsKey objectsKey = ObjectsKey.of(keys);
-		if (Async.originalKeys.containsKey(objectsKey)) {
-			synchronized (Async.originalKeys.get(objectsKey)) {
-				if (Async.multipleAccessedValues.containsKey(objectsKey)) {
-					Async.multipleAccessedValues.remove(objectsKey);
-				}
-
-				if (Async.futureSuppliers.containsKey(objectsKey)) {
-					Async.futureSuppliers.remove(objectsKey);
-
-					if (Async.multipleAccessedKeys.containsKey(objectsKey)) {
-						Async.multipleAccessedKeys.remove(objectsKey);
-					}
-					Async.originalKeys.remove(objectsKey);
-				}
-			}
-		}
+	public <T> Optional<T> waitAndGetFromSupplier(Class<T> clazz, Object... keys) {
+		return getAsyncContext().waitAndGetFromSupplier(clazz, keys);
 	}
 
 	/**
@@ -490,79 +602,45 @@ public final class AsyncSupplier {
 	 *            the keys
 	 * @return the stream
 	 */
-	static public <T> Stream<T> waitAndGetFromSuppliers(Class<T> clazz, Object... keys) {
-		Stream.Builder<Optional<T>> builder = Stream.builder();
-		for (int i = 0; Async.originalKeys.containsKey(ObjectsKey.of(Async.getIndexedKey(i, keys))); i++) {
-			Object[] indexedKey = Async.getIndexedKey(i, keys);
-			builder.accept(waitAndGetFromSupplier(clazz, indexedKey));
-		}
-		return builder.build().filter(Optional::isPresent).map(Optional::get);
+	public <T> Stream<T> waitAndGetFromSuppliers(Class<T> clazz, Object... keys) {
+		return getAsyncContext().waitAndGetFromSuppliers(clazz, keys);
+	}
+
+	/**
+	 * Waits and gets the value submitted asynchronously (using
+	 * {@link AsyncSupplier#submitValue(Object, Object...)}) or
+	 * {@link AsyncSupplier#submitValueWithDropExisting(Object, Object...)}) as a
+	 * {@link Optional} based on the keys. If no supplier is submitted already with
+	 * the keys provided, the result will be an empty {@link Optional}.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param clazz
+	 *            the clazz
+	 * @param keys
+	 *            the keys
+	 * @return the optional
+	 */
+	public <T> Optional<T> waitAndGetValue(Class<T> clazz, Object... keys) {
+		return getAsyncContext().waitAndGetValue(clazz, keys);
+	}
+
+	/**
+	 * Gets the async context.
+	 *
+	 * @return the async context
+	 */
+	private AsyncContext getAsyncContext() {
+		return asyncContext;
 	}
 	
 	/**
-	 * Drops the suppliers submitted for the keys by with one of the methods
-	 * {@link AsyncSupplier#submitSuppliersForMultipleAccess(Supplier[], Object...)},
-	 * or {@link AsyncSupplier#submitSuppliersForSingleAccess(Supplier[], Object...)},
-	 * or
-	 * {@link AsyncSupplier#submitSuppliersWithDropExistingForMultipleAccess(Supplier[], Object...)},
-	 * or
-	 * {@link AsyncSupplier#submitSuppliersWithDropExistingForSingleAccess(Supplier[], Object...)}
-	 * <br>
-	 * Once drop the submitted suppliers will no longer be accessible by
-	 * {@link AsyncSupplier#waitAndGetFromSuppliers(Class, Object...)}.
-	 * 
-	 * @param keys
-	 *            the keys
+	 * Assert not closed.
 	 */
-	static public void dropSubmittedSuppliers(Object... keys) {
-		for (int i = 0; Async.originalKeys.containsKey(ObjectsKey.of(Async.getIndexedKey(i, keys))); i++) {
-			Object[] indexedKey = Async.getIndexedKey(i, keys);
-			dropSubmittedSupplier(indexedKey);
+	private void assertNotClosed() {
+		if (closed) {
+			throw new RuntimeException(new IllegalStateException("Already closed"));
 		}
-	}
-
-	/**
-	 * Submits a supplier asynchronously and gets the value as Optional. If any
-	 * exception occurs during the execution of supplier or due to thread
-	 * interruption it will return empty result.
-	 *
-	 * @param <T>
-	 *            the generic type
-	 * @param supplier
-	 *            the supplier
-	 * @return the optional
-	 */
-	static public <T> Optional<T> submitAndGetSupplier(Supplier<T> supplier) {
-		Future<T> task = Async.getThreadPool().submit(() -> supplier.get());
-		return Async.safeGet(task);
-	}
-
-	/**
-	 * Submit callable.
-	 *
-	 * @param <T>
-	 *            the generic type
-	 * @param callable
-	 *            the callable
-	 * @return the supplier
-	 */
-	static public <T> Supplier<T> submitCallable(Callable<T> callable) {
-		return Async.safeSupplier(Async.getThreadPool().submit(callable));
-	}
-
-	/**
-	 * Submits and callable and waits until it finishes and then returns the
-	 * Optional of result.
-	 *
-	 * @param <T>
-	 *            the generic type
-	 * @param callable
-	 *            the callable
-	 * @return the optional
-	 */
-	static public synchronized <T> Optional<T> submitAndGetCallable(Callable<T> callable) {
-		Future<T> task = Async.getThreadPool().submit(callable);
-		return Async.safeGet(task);
 	}
 
 }

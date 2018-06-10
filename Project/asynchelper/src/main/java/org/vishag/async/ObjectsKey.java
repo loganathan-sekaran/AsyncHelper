@@ -19,7 +19,9 @@
 
 package org.vishag.async;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,10 +31,13 @@ import java.util.List;
  * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
-class ObjectsKey {
+class ObjectsKey implements AutoCloseable{
 
 	/** The keys. */
 	private List<Object> keys;
+	
+	/** The closed. */
+	private volatile boolean closed;
 
 	/**
 	 * Instantiates a new objects key.
@@ -41,8 +46,7 @@ class ObjectsKey {
 	 *            the keys
 	 */
 	private ObjectsKey(Object[] keys) {
-		this.keys = Arrays.asList(keys);
-
+		this.keys = Collections.synchronizedList(new ArrayList<>(Arrays.asList(keys)));
 	}
 
 	/**
@@ -68,6 +72,7 @@ class ObjectsKey {
 	 */
 	@Override
 	public int hashCode() {
+		assertNotClosed();
 		final int prime = 31;
 		int result = 1;
 		for (Object obj : keys) {
@@ -83,6 +88,7 @@ class ObjectsKey {
 	 */
 	@Override
 	public boolean equals(Object obj) {
+		assertNotClosed();
 		if (this == obj)
 			return true;
 		if (obj == null)
@@ -102,6 +108,26 @@ class ObjectsKey {
 	@Override
 	public String toString() {
 		return "ObjectsKey [keys=" + keys + "]";
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.AutoCloseable#close()
+	 */
+	@Override
+	public synchronized void close() {
+		if(!closed) {
+			keys.clear();
+			closed = true;
+		}
+	}
+	
+	/**
+	 * Assert not closed.
+	 */
+	private void assertNotClosed() {
+		if (closed) {
+			throw new RuntimeException(new IllegalStateException("Already closed"));
+		}
 	}
 
 }

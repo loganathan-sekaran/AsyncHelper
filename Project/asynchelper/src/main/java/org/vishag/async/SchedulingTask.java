@@ -21,7 +21,9 @@ package org.vishag.async;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -31,19 +33,76 @@ import java.util.logging.Logger;
  * The SchedulingTask Helper class with methods for scheduling {@link Runnable}
  * to invoke them as asynchronous tasks.
  * 
+ * <br>
+ * <br>
+ * Note: In most of the cases default instance obtained with
+ * ({@link SchedulingTask#getDefault()}) is sufficient, which internally creates
+ * a {@link ScheduledThreadPoolExecutor} and uses it. But it is possible to use
+ * {@link SchedulingTask#of(ScheduledExecutorService)}) or
+ * {@link SchedulingTask#of(ScheduledExecutorService, AsyncContext)} where an
+ * instance of {@code ScheduledThreadPoolExecutor} can be passed explicitly if
+ * required.
+ * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
-public final class SchedulingTask {
+public final class SchedulingTask implements AutoCloseable{
 
 	/**
 	 * {@code Logger} for this class.
 	 */
 	private static final Logger logger = Logger.getLogger(SchedulingTask.class.getName());
+	
+	/** The scheduler. */
+	private Scheduler scheduler;
+	
+	/** The closed flag. */
+	private volatile boolean closed;
+
+	/** The async context. */
+	private AsyncContext asyncContext;
+	
+	/** The default instance of SchedulingTask. */
+	private static SchedulingTask DEFAULT_INSTANCE = new SchedulingTask(Scheduler.getDefault(), AsyncContext.getDefault());
 
 	/**
-	 * Instantiates a new schedule.
+	 * Instantiates a new SchedulinTask.
+	 *
+	 * @param scheduler the scheduler
+	 * @param asyncContext the async context
 	 */
-	private SchedulingTask() {
+	private SchedulingTask(Scheduler scheduler, AsyncContext asyncContext) {
+		this.scheduler = scheduler;
+		this.asyncContext = asyncContext;
+	}
+	
+	/**
+	 * Gets the default instance of SchedulingTask.
+	 *
+	 * @return the default
+	 */
+	public static SchedulingTask getDefault() {
+		return DEFAULT_INSTANCE;
+	}
+	
+	/**
+	 * Gets a new instance of SchedulingTask with the given scheduled executor service.
+	 *
+	 * @param scheduledExecutorService the scheduled executor service
+	 * @return the scheduling task
+	 */
+	public static SchedulingTask of(ScheduledExecutorService scheduledExecutorService) {
+		return of(scheduledExecutorService, AsyncContext.getDefault());
+	}
+	
+	/**
+	 * Gets a new instance of SchedulingTask with the given scheduled executor service and async context.
+	 *
+	 * @param scheduledExecutorService the scheduled executor service
+	 * @param asyncContext the async context
+	 * @return the scheduling task
+	 */
+	public static SchedulingTask of(ScheduledExecutorService scheduledExecutorService, AsyncContext asyncContext) {
+		return new SchedulingTask(Scheduler.ofScheduledExecutorService(scheduledExecutorService), asyncContext);
 	}
 
 	/**
@@ -73,7 +132,7 @@ public final class SchedulingTask {
 	 * @param runnables
 	 *            the tasks to be scheduled sequentially
 	 */
-	static public void scheduleTasks(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+	public void scheduleTasks(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Runnable... runnables) {
 		doScheduleTasks(initialDelay, delay, unit, waitForPreviousTask, runnables);
 	}
@@ -83,8 +142,8 @@ public final class SchedulingTask {
 	 * <code>initialDelay</code>, <code>delay</code> and
 	 * <code>waitForPreviousTask</code> arguments), and this scheduling tasks
 	 * will be rotated until a flag is notified using
-	 * {@link Async#notifyFlag(String...)} or
-	 * {@link Async#notifyAllFlag(String...)} invocation with the same flag, in
+	 * {@link AsyncContext#notifyFlag(String...)} or
+	 * {@link AsyncContext#notifyAllFlag(String...)} invocation with the same flag, in
 	 * same thread or different thread.
 	 *
 	 * @param initialDelay
@@ -108,14 +167,14 @@ public final class SchedulingTask {
 	 *            execution).
 	 * @param flag
 	 *            the flag with which the tasks will be rotated for scheduling,
-	 *            until notified using {@link Async#notifyFlag(String...)} or
-	 *            {@link Async#notifyAllFlag(String...)}
+	 *            until notified using {@link AsyncContext#notifyFlag(String...)} or
+	 *            {@link AsyncContext#notifyAllFlag(String...)}
 	 * @param runnables
 	 *            the tasks to be scheduled sequentially and rotated until
-	 *            notified using {@link Async#notifyFlag(String...)} or
-	 *            {@link Async#notifyAllFlag(String...)}
+	 *            notified using {@link AsyncContext#notifyFlag(String...)} or
+	 *            {@link AsyncContext#notifyAllFlag(String...)}
 	 */
-	static public void scheduleTasksUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+	public void scheduleTasksUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			String flag, Runnable... runnables) {
 		doScheduleTasksUntilFlag(initialDelay, delay, unit, waitForPreviousTask, runnables, flag);
 	}
@@ -125,8 +184,8 @@ public final class SchedulingTask {
 	 * <code>initialDelay</code>, <code>delay</code> and
 	 * <code>waitForPreviousTask</code> arguments), and this scheduling tasks
 	 * will be repeated until a flag is notified using
-	 * {@link Async#notifyFlag(String...)} or
-	 * {@link Async#notifyAllFlag(String...)} invocation with the same flag, in
+	 * {@link AsyncContext#notifyFlag(String...)} or
+	 * {@link AsyncContext#notifyAllFlag(String...)} invocation with the same flag, in
 	 * same thread or different thread.
 	 *
 	 * @param initialDelay
@@ -150,14 +209,14 @@ public final class SchedulingTask {
 	 *            execution).
 	 * @param flag
 	 *            the flag with which the tasks will be rotated for scheduling,
-	 *            until notified using {@link Async#notifyFlag(String...)} or
-	 *            {@link Async#notifyAllFlag(String...)}
+	 *            until notified using {@link AsyncContext#notifyFlag(String...)} or
+	 *            {@link AsyncContext#notifyAllFlag(String...)}
 	 * @param runnable
 	 *            the task to be scheduled repeatedly until notified using
-	 *            {@link Async#notifyFlag(String...)} or
-	 *            {@link Async#notifyAllFlag(String...)}
+	 *            {@link AsyncContext#notifyFlag(String...)} or
+	 *            {@link AsyncContext#notifyAllFlag(String...)}
 	 */
-	static public void scheduleTaskUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+	public void scheduleTaskUntilFlag(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			String flag, Runnable runnable) {
 		scheduleTasksUntilFlag(initialDelay, delay, unit, waitForPreviousTask, flag, runnable);
 	}
@@ -167,8 +226,8 @@ public final class SchedulingTask {
 	 * <code>initialDelay</code>, <code>delay</code> and
 	 * <code>waitForPreviousTask</code> arguments), and this scheduling tasks
 	 * will be rotated until a flag is notified using
-	 * {@link Async#notifyFlag(String...)} or
-	 * {@link Async#notifyAllFlag(String...)} invocation with the same flag, in
+	 * {@link AsyncContext#notifyFlag(String...)} or
+	 * {@link AsyncContext#notifyAllFlag(String...)} invocation with the same flag, in
 	 * same thread or different thread. This will wait until the completion of
 	 * the execution of the scheduled tasks code.
 	 *
@@ -194,7 +253,7 @@ public final class SchedulingTask {
 	 * @param runnables
 	 *            the tasks to be scheduled sequentially
 	 */
-	static public void scheduleTasksAndWait(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+	public void scheduleTasksAndWait(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Runnable... runnables) {
 		try {
 			doScheduleTasks(initialDelay, delay, unit, waitForPreviousTask, runnables).get();
@@ -218,9 +277,9 @@ public final class SchedulingTask {
 	 *            the runnables
 	 * @return the scheduled future
 	 */
-	static private ScheduledFuture<?> doScheduleTasks(int initialDelay, int delay, TimeUnit unit,
+	private ScheduledFuture<?> doScheduleTasks(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, Runnable... runnables) {
-		Async.SchedulingFunction<Runnable, Void> schedulingRunnables = new Async.SchedulingFunction<Runnable, Void>() {
+		Scheduler.SchedulingFunction<Runnable, Void> schedulingRunnables = new Scheduler.SchedulingFunction<Runnable, Void>() {
 			private AtomicInteger index = new AtomicInteger(0);
 
 			@Override
@@ -245,7 +304,7 @@ public final class SchedulingTask {
 			}
 
 		};
-		return Async.doScheduleFunction(initialDelay, delay, unit, waitForPreviousTask, schedulingRunnables);
+		return getScheduler().doScheduleFunction(initialDelay, delay, unit, waitForPreviousTask, schedulingRunnables);
 	}
 
 	/**
@@ -265,10 +324,10 @@ public final class SchedulingTask {
 	 *            the flag
 	 * @return the scheduled future
 	 */
-	private static ScheduledFuture<?> doScheduleTasksUntilFlag(int initialDelay, int delay, TimeUnit unit,
+	private ScheduledFuture<?> doScheduleTasksUntilFlag(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, Runnable[] runnables, String flag) {
 		AtomicBoolean canCancel = new AtomicBoolean(false);
-		Async.SchedulingFunction<Runnable, Void> schedulingRunnables = new Async.SchedulingFunction<Runnable, Void>() {
+		Scheduler.SchedulingFunction<Runnable, Void> schedulingRunnables = new Scheduler.SchedulingFunction<Runnable, Void>() {
 			private AtomicInteger index = new AtomicInteger(0);
 
 			@Override
@@ -298,16 +357,25 @@ public final class SchedulingTask {
 
 		};
 
-		AsyncTask.submitTask(() -> {
+		AsyncTask.submitTaskInNewThread(() -> {
 			try {
-				Async.waitForFlag(flag);
+				getAsyncContext().waitForFlag(flag);
 			} catch (InterruptedException e) {
 				logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
 			}
 			canCancel.set(true);
 		});
 
-		return Async.doScheduleFunction(initialDelay, delay, unit, waitForPreviousTask, schedulingRunnables);
+		return getScheduler().doScheduleFunction(initialDelay, delay, unit, waitForPreviousTask, schedulingRunnables);
+	}
+
+	/**
+	 * Gets the async context.
+	 *
+	 * @return the async context
+	 */
+	private AsyncContext getAsyncContext() {
+		return asyncContext;
 	}
 
 	/**
@@ -316,33 +384,27 @@ public final class SchedulingTask {
 	 * <code>waitForPreviousTask</code> and <code>times</code> arguments) and
 	 * gets an array of result tasks handles.
 	 *
-	 * @param initialDelay
-	 *            the initial delay for the first task invocation
-	 * @param delay
-	 *            if<code>waitForPreviousTask</code> argument is
+	 * @param initialDelay            the initial delay for the first task invocation
+	 * @param delay            if<code>waitForPreviousTask</code> argument is
 	 *            <code>true</code> this is the delay between the completion of
 	 *            the predecessor task code execution and its succeeding task
 	 *            code start. Otherwise, the delay will be periodic from the
 	 *            start of the initial task (not related to the completion of
 	 *            the tasks' code execution).
-	 * @param unit
-	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
+	 * @param unit            the {@link TimeUnit} for which the <code>initialDelay</code>
 	 *            and <code>delay</code> arguments are to be used.
-	 * @param waitForPreviousTask
-	 *            Set it to <code>true</code> argument is.... <code>true</code>
+	 * @param waitForPreviousTask            Set it to <code>true</code> argument is.... <code>true</code>
 	 *            this is the delay between the completion of the predecessor
 	 *            task code execution and its succeeding task code start.
 	 *            Otherwise, the delay will be periodic from the start of the
 	 *            initial task (not related to the completion of the tasks' code
 	 *            execution).
-	 * @param times
-	 *            the number of times the scheduling should be done for the task
-	 * @param runnable
-	 *            the task to be scheduled
+	 * @param runnable            the task to be scheduled
+	 * @param times            the number of times the scheduling should be done for the task
 	 */
-	static public void scheduleTask(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+	public void scheduleTask(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Runnable runnable, int times) {
-		scheduleTasks(initialDelay, delay, unit, waitForPreviousTask, Async.arrayOfTimes(runnable, times));
+		scheduleTasks(initialDelay, delay, unit, waitForPreviousTask, AsyncContext.arrayOfTimes(runnable, times));
 	}
 
 	/**
@@ -352,33 +414,27 @@ public final class SchedulingTask {
 	 * gets an array of result tasks handles. This will wait until the
 	 * completion of the execution of the scheduled tasks code.
 	 *
-	 * @param initialDelay
-	 *            the initial delay for the first task invocation
-	 * @param delay
-	 *            if<code>waitForPreviousTask</code> argument is
+	 * @param initialDelay            the initial delay for the first task invocation
+	 * @param delay            if<code>waitForPreviousTask</code> argument is
 	 *            <code>true</code> this is the delay between the completion of
 	 *            the predecessor task code execution and its succeeding task
 	 *            code start. Otherwise, the delay will be periodic from the
 	 *            start of the initial task (not related to the completion of
 	 *            the tasks' code execution).
-	 * @param unit
-	 *            the {@link TimeUnit} for which the <code>initialDelay</code>
+	 * @param unit            the {@link TimeUnit} for which the <code>initialDelay</code>
 	 *            and <code>delay</code> arguments are to be used.
-	 * @param waitForPreviousTask
-	 *            Set it to <code>true</code> argument is.... <code>true</code>
+	 * @param waitForPreviousTask            Set it to <code>true</code> argument is.... <code>true</code>
 	 *            this is the delay between the completion of the predecessor
 	 *            task code execution and its succeeding task code start.
 	 *            Otherwise, the delay will be periodic from the start of the
 	 *            initial task (not related to the completion of the tasks' code
 	 *            execution).
-	 * @param times
-	 *            the number of times the scheduling should be done for the task
-	 * @param runnable
-	 *            the task to be scheduled
+	 * @param runnable            the task to be scheduled
+	 * @param times            the number of times the scheduling should be done for the task
 	 */
-	static public void scheduleTaskAndWait(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
+	public void scheduleTaskAndWait(int initialDelay, int delay, TimeUnit unit, boolean waitForPreviousTask,
 			Runnable runnable, int times) {
-		scheduleTasksAndWait(initialDelay, delay, unit, waitForPreviousTask, Async.arrayOfTimes(runnable, times));
+		scheduleTasksAndWait(initialDelay, delay, unit, waitForPreviousTask, AsyncContext.arrayOfTimes(runnable, times));
 	}
 
 	/**
@@ -393,7 +449,7 @@ public final class SchedulingTask {
 	 * @param runnable
 	 *            the task to be scheduled
 	 */
-	static public void scheduleTask(int initialDelay, TimeUnit unit, Runnable runnable) {
+	public void scheduleTask(int initialDelay, TimeUnit unit, Runnable runnable) {
 		scheduleTask(initialDelay, 1, unit, false, runnable, 1);
 	}
 
@@ -410,8 +466,60 @@ public final class SchedulingTask {
 	 * @param runnable
 	 *            the task to be scheduled
 	 */
-	static public void scheduleTaskAndWait(int initialDelay, TimeUnit unit, Runnable runnable) {
+	public void scheduleTaskAndWait(int initialDelay, TimeUnit unit, Runnable runnable) {
 		scheduleTaskAndWait(initialDelay, 1, unit, false, runnable, 1);
+	}
+	
+	/**
+	 * Notify all threads which are waiting for a flag with the invocation of
+	 * {@link AsyncContext#waitForFlag(String...)}
+	 *
+	 * @param flag
+	 *            the flag
+	 */
+	public void notifyAllFlag(String... flag) {
+		getAsyncContext().notifyAllFlag(flag);
+	}
+
+	/**
+	 * Notify a thread that is waiting for a flag with the invocation of
+	 * {@link AsyncContext#waitForFlag(String...)}
+	 *
+	 * @param flag
+	 *            the flag
+	 */
+	public void notifyFlag(String... flag) {
+		getAsyncContext().notifyFlag(flag);
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.AutoCloseable#close()
+	 */
+	@Override
+	public synchronized void close() {
+		if(!closed) {
+			scheduler.close();
+			closed = true;
+		}
+	}
+
+	/**
+	 * Gets the scheduler.
+	 *
+	 * @return the scheduler
+	 */
+	public Scheduler getScheduler() {
+		assertNotClosed();
+		return scheduler;
+	}
+	
+	/**
+	 * Assert not closed.
+	 */
+	private void assertNotClosed() {
+		if (closed) {
+			throw new RuntimeException(new IllegalStateException("Already closed"));
+		}
 	}
 
 }

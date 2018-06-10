@@ -77,5 +77,32 @@ public class ObjectsKeyTest {
 		assertNotEquals(ObjectsKey.of("111", Integer.class), ObjectsKey.of("111"));
 		assertNotEquals(ObjectsKey.of("111"), ObjectsKey.of("111", String.class));
 	}
+	
+	/**
+	 * Test close.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testClose() throws Exception {
+		ObjectsKey key = ObjectsKey.of("123");
+		assert(key.equals(ObjectsKey.of("123")));
+		key.close();
+		key.close();
+		assert(true);
+	}
+	
+	/**
+	 * Test close with exception.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test (expected=Exception.class)
+	public void testCloseWithException() throws Exception {
+		ObjectsKey key = ObjectsKey.of("1234");
+		assert(key.equals(ObjectsKey.of("1234")));
+		key.close();
+		key.equals(ObjectsKey.of("1234"));
+	}
 
 }

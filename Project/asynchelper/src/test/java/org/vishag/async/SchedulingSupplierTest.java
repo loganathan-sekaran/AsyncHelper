@@ -22,8 +22,11 @@ package org.vishag.async;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -33,17 +36,52 @@ import java.util.stream.Stream;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 /**
  * The class SchedulingSupplierTest.
  * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
+@RunWith(Parameterized.class)
 public final class SchedulingSupplierTest {
 
 	/** The watcher. */
 	@Rule
 	public TestRule watcher = new TestWatcherAndLogger();
+	
+	/** The scheduling supplier. */
+	private SchedulingSupplier schedulingSupplier;
+	
+	/**
+	 * Inputs.
+	 *
+	 * @return the collection
+	 */
+	@Parameters
+	public static Collection<Object[]> inputs() {
+		return Arrays.asList(new Object[][] {
+				{SchedulingSupplier.getDefault()},
+				{SchedulingSupplier.of(Executors
+						.newScheduledThreadPool(10))	},
+				{SchedulingSupplier.of(Executors
+						.newScheduledThreadPool(10), AsyncContext.newInstance())	}
+			});
+	}
+	
+	 /**
+ 	 * Instantiates a new scheduling supplier test.
+ 	 *
+ 	 * @param schedulingSupplier the scheduling supplier
+ 	 * @throws Exception the exception
+ 	 */
+ 	public SchedulingSupplierTest(SchedulingSupplier schedulingSupplier) throws Exception {
+		 this.schedulingSupplier = schedulingSupplier;
+	 }
+	
+	
 
 	/**
 	 * Test schedule multiple supplier for single access.
@@ -54,7 +92,7 @@ public final class SchedulingSupplierTest {
 	@Test
 	public void testScheduleMultipleSupplierForSingleAccess() throws InterruptedException {
 		AtomicInteger count = new AtomicInteger(0);
-		boolean suppliers = SchedulingSupplier.scheduleSupplierForSingleAccess(10, 100, TimeUnit.MILLISECONDS, true,
+		boolean suppliers = schedulingSupplier.scheduleSupplierForSingleAccess(10, 100, TimeUnit.MILLISECONDS, true,
 				() -> {
 					int index = count.getAndIncrement();
 					return (index + 1) * 10;
@@ -62,7 +100,7 @@ public final class SchedulingSupplierTest {
 
 		assertTrue(suppliers);
 
-		List<Integer> retVals = AsyncSupplier
+		List<Integer> retVals = schedulingSupplier
 				.waitAndGetFromSuppliers(Integer.class, "Scheduled", "Multiple", "Suppliers", "key")
 				.collect(Collectors.toList());
 		assertEquals(retVals.size(), 3);
@@ -80,14 +118,14 @@ public final class SchedulingSupplierTest {
 	@Test
 	public void testScheduleSingleSupplierUntilFlag() throws InterruptedException {
 		int[] retVal = new int[1];
-		SchedulingSupplier.scheduleSupplierUntilFlag(10, 100, TimeUnit.MILLISECONDS, true,
+		schedulingSupplier.scheduleSupplierUntilFlag(10, 100, TimeUnit.MILLISECONDS, true,
 				"TestSingleSuppliersUntilFlag", () -> {
 					return retVal[0]++;
 				});
 
 		Thread.sleep(1000);
 
-		List<Integer> result = Async.notifyAndGetForFlag(Integer.class, "TestSingleSuppliersUntilFlag")
+		List<Integer> result = schedulingSupplier.notifyAndGetForFlag(Integer.class, "TestSingleSuppliersUntilFlag")
 				.collect(Collectors.toList());
 		assertTrue(result.size() > 0);
 		for (int i = 0; i < result.size(); i++) {
@@ -106,7 +144,7 @@ public final class SchedulingSupplierTest {
 	@Test
 	public void testScheduleSupplier() throws InterruptedException {
 		AtomicInteger count = new AtomicInteger(0);
-		Supplier<Integer>[] scheduleSuppliers = SchedulingSupplier.scheduleSupplier(10, 100, TimeUnit.MILLISECONDS,
+		Supplier<Integer>[] scheduleSuppliers = schedulingSupplier.scheduleSupplier(10, 100, TimeUnit.MILLISECONDS,
 				true, () -> {
 					TestUtil.printTime();
 					int index = count.getAndIncrement();
@@ -127,7 +165,7 @@ public final class SchedulingSupplierTest {
 	@Test
 	public void testScheduleSupplierAndWait() throws InterruptedException {
 		AtomicInteger count = new AtomicInteger(0);
-		List<Integer> retVals = SchedulingSupplier.scheduleSupplierAndWait(0, 100, TimeUnit.MILLISECONDS, true, () -> {
+		List<Integer> retVals = schedulingSupplier.scheduleSupplierAndWait(0, 100, TimeUnit.MILLISECONDS, true, () -> {
 			TestUtil.printTime();
 			int index = count.getAndIncrement();
 			return (index + 1) * 10;
@@ -145,7 +183,7 @@ public final class SchedulingSupplierTest {
 	 */
 	@Test
 	public void testScheduleSupplierAndWaitSingleTime() throws InterruptedException {
-		Optional<Integer> retVal = SchedulingSupplier.scheduleSupplierAndWait(0, TimeUnit.SECONDS, () -> {
+		Optional<Integer> retVal = schedulingSupplier.scheduleSupplierAndWait(0, TimeUnit.SECONDS, () -> {
 			return 10;
 		});
 		assertEquals((int) retVal.get(), 10);
@@ -159,13 +197,13 @@ public final class SchedulingSupplierTest {
 	 */
 	@Test
 	public void testScheduleSupplierForSingleAccessSingleTime() throws InterruptedException {
-		boolean suppliers = SchedulingSupplier.scheduleSupplierForSingleAccess(10, TimeUnit.MILLISECONDS, () -> {
+		boolean suppliers = schedulingSupplier.scheduleSupplierForSingleAccess(10, TimeUnit.MILLISECONDS, () -> {
 			return 10;
 		}, "Scheduled", "Single", "Supplier", "key");
 
 		assertTrue(suppliers);
 
-		Optional<Integer> result = AsyncSupplier.waitAndGetFromSupplier(Integer.class, "Scheduled", "Single",
+		Optional<Integer> result = schedulingSupplier.waitAndGetFromSupplier(Integer.class, "Scheduled", "Single",
 				"Supplier", "key");
 		assertTrue(result.isPresent());
 		assertEquals((int) result.get(), 10);
@@ -181,7 +219,7 @@ public final class SchedulingSupplierTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testScheduleSuppliers() throws InterruptedException {
-		Supplier<Integer>[] scheduleSuppliers = SchedulingSupplier.scheduleSuppliers(10, 100, TimeUnit.MILLISECONDS,
+		Supplier<Integer>[] scheduleSuppliers = schedulingSupplier.scheduleSuppliers(10, 100, TimeUnit.MILLISECONDS,
 				true, () -> {
 					return 10;
 				}, () -> {
@@ -208,7 +246,7 @@ public final class SchedulingSupplierTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testScheduleSuppliersAndWait() throws InterruptedException {
-		List<Integer> retVals = SchedulingSupplier.scheduleSuppliersAndWait(0, 3, TimeUnit.SECONDS, true, () -> {
+		List<Integer> retVals = schedulingSupplier.scheduleSuppliersAndWait(0, 3, TimeUnit.SECONDS, true, () -> {
 			return 10;
 		}, () -> {
 			return 20;
@@ -234,7 +272,7 @@ public final class SchedulingSupplierTest {
 	@Test
 	public void testScheduleSuppliersForSingleAccess() throws InterruptedException {
 		@SuppressWarnings("unchecked")
-		boolean suppliers = SchedulingSupplier.scheduleSuppliersForSingleAccess(10, 100, TimeUnit.MILLISECONDS, true,
+		boolean suppliers = schedulingSupplier.scheduleSuppliersForSingleAccess(10, 100, TimeUnit.MILLISECONDS, true,
 				new Supplier[] { () -> {
 					return 10;
 				}, () -> {
@@ -249,7 +287,7 @@ public final class SchedulingSupplierTest {
 
 		assertTrue(suppliers);
 
-		List<Integer> retVals = AsyncSupplier
+		List<Integer> retVals = schedulingSupplier
 				.waitAndGetFromSuppliers(Integer.class, "Scheduled", "Multiple", "Suppliers", "key")
 				.collect(Collectors.toList());
 		assertEquals(retVals.size(), 5);
@@ -266,7 +304,7 @@ public final class SchedulingSupplierTest {
 	 */
 	@Test
 	public void testScheduleSupplierSingleTime() throws InterruptedException {
-		Supplier<Integer> scheduleSupplier = SchedulingSupplier.scheduleSupplier(10, TimeUnit.MILLISECONDS, () -> {
+		Supplier<Integer> scheduleSupplier = schedulingSupplier.scheduleSupplier(10, TimeUnit.MILLISECONDS, () -> {
 			return 10;
 		});
 
@@ -279,9 +317,10 @@ public final class SchedulingSupplierTest {
 	 * @throws InterruptedException
 	 *             the interrupted exception
 	 */
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testScheduleSuppliersUntilFlag() throws InterruptedException {
-		SchedulingSupplier.scheduleSuppliersUntilFlag(10, 100, TimeUnit.MILLISECONDS, true, "TestSuppliersUntilFlag",
+		schedulingSupplier.scheduleSuppliersUntilFlag(10, 100, TimeUnit.MILLISECONDS, true, "TestSuppliersUntilFlag",
 				() -> {
 					return 0;
 				}, () -> {
@@ -296,7 +335,7 @@ public final class SchedulingSupplierTest {
 
 		Thread.sleep(1000);
 
-		List<Integer> result = Async.notifyAndGetForFlag(Integer.class, "TestSuppliersUntilFlag")
+		List<Integer> result = schedulingSupplier.notifyAndGetForFlag(Integer.class, "TestSuppliersUntilFlag")
 				.collect(Collectors.toList());
 		assertTrue(result.size() > 0);
 		int val = 0;
@@ -310,5 +349,34 @@ public final class SchedulingSupplierTest {
 		}
 		TestUtil.print("" + result);
 
+	}
+	
+	/**
+	 * Test close.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testClose() throws Exception {
+		SchedulingSupplier schedulingSupplier = SchedulingSupplier.of(Executors.newScheduledThreadPool(5));
+		Optional<String> resultSupplier = schedulingSupplier.scheduleSupplierAndWait(1, TimeUnit.MILLISECONDS, () -> "Test");
+		schedulingSupplier.close();
+		assertEquals(resultSupplier.get(), "Test");
+		schedulingSupplier.close();
+	}
+	
+	/**
+	 * Test close with exception.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test (expected=Exception.class)
+	public void testCloseWithException() throws Exception {
+		SchedulingSupplier schedulingSupplier = SchedulingSupplier.of(Executors.newScheduledThreadPool(5));
+		Optional<String> resultSupplier = schedulingSupplier.scheduleSupplierAndWait(1, TimeUnit.MILLISECONDS, () -> "Test1");
+		schedulingSupplier.close();
+		assertEquals(resultSupplier.get(), "Test1");
+		
+		schedulingSupplier.scheduleSupplierAndWait(1, TimeUnit.MILLISECONDS, () -> "Test1");
 	}
 }

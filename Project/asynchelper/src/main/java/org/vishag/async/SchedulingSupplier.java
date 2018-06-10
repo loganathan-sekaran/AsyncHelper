@@ -21,7 +21,9 @@ package org.vishag.async;
 
 import java.util.LinkedList;
 import java.util.Optional;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,14 +35,77 @@ import java.util.stream.Stream;
  * The SchedulingSupplier Helper class with methods for scheduling Suppliers and
  * obtaining their results asynchronously.
  * 
+ * <br>
+ * <br>
+ * Note: In most of the cases default instance obtained with
+ * ({@link SchedulingSupplier#getDefault()}) is sufficient, which internally
+ * creates a {@link ScheduledThreadPoolExecutor} and uses it. But it is possible
+ * to use {@link SchedulingSupplier#of(ScheduledExecutorService)}) or
+ * {@link SchedulingSupplier#of(ScheduledExecutorService, AsyncContext)} where
+ * an instance of {@code ScheduledThreadPoolExecutor} can be passed explicitly
+ * if required.
+ * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
-public final class SchedulingSupplier {
+public final class SchedulingSupplier implements AutoCloseable{
 
 	/**
 	 * {@code Logger} for this class.
 	 */
 	private static final Logger logger = Logger.getLogger(SchedulingSupplier.class.getName());
+	
+	/** The scheduler. */
+	private Scheduler scheduler;
+	
+	/** The closed flag. */
+	private volatile boolean closed;
+
+	/** The async context. */
+	private AsyncContext asyncContext;
+	
+	/** The default instance of SchedulingSupplier. */
+	private static SchedulingSupplier DEFAULT_INSTANCE = new SchedulingSupplier(Scheduler.getDefault(), AsyncContext.getDefault());
+	
+	/**
+	 * Instantiates a new scheduling supplier.
+	 *
+	 * @param scheduler the scheduler
+	 * @param asyncContext the async context
+	 */
+	private SchedulingSupplier(Scheduler scheduler, AsyncContext asyncContext) {
+		this.scheduler = scheduler;
+		this.asyncContext = asyncContext;
+	}
+	
+	/**
+	 * Gets the default instance of SchedulingSupplier.
+	 *
+	 * @return the default
+	 */
+	public static SchedulingSupplier getDefault() {
+		return DEFAULT_INSTANCE;
+	}
+	
+	/**
+	 * Gets a new instance of SchedulingSupplier made of the given scheduled executor service.
+	 *
+	 * @param scheduledExecutorService the scheduled executor service
+	 * @return the scheduling supplier
+	 */
+	public static SchedulingSupplier of(ScheduledExecutorService scheduledExecutorService) {
+		return of(scheduledExecutorService, AsyncContext.getDefault());
+	}
+	
+	/**
+	 * Gets a new instance of SchedulingSupplier made of the given scheduled executor service and async context.
+	 *
+	 * @param scheduledExecutorService the scheduled executor service
+	 * @param asyncContext the async context
+	 * @return the scheduling supplier
+	 */
+	public static SchedulingSupplier of(ScheduledExecutorService scheduledExecutorService, AsyncContext asyncContext) {
+		return new SchedulingSupplier(Scheduler.ofScheduledExecutorService(scheduledExecutorService), asyncContext);
+	}
 
 	/**
 	 * Schedules multiple suppliers to be invoked sequentially (as per the
@@ -77,7 +142,7 @@ public final class SchedulingSupplier {
 	 *         {@link Supplier#get()}, which may wait until the completion of
 	 *         Supplier code execution.
 	 */
-	static public <T> Supplier<T>[] scheduleSuppliers(int initialDelay, int delay, TimeUnit unit,
+	public <T> Supplier<T>[] scheduleSuppliers(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, @SuppressWarnings("unchecked") Supplier<T>... suppliers) {
 		return doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, suppliers);
 	}
@@ -87,7 +152,7 @@ public final class SchedulingSupplier {
 	 * <code>initialDelay</code>, <code>delay</code> and
 	 * <code>waitForPreviousTask</code> arguments), and this scheduling
 	 * suppliers will be rotated until a flag is notified using
-	 * {@link Async#notifyAndGetForFlag(Class, String...)} invocation with the
+	 * {@link AsyncContext#notifyAndGetForFlag(Class, String...)} invocation with the
 	 * same flag, in same thread or different thread, which will also return a
 	 * stream of results.
 	 *
@@ -115,15 +180,14 @@ public final class SchedulingSupplier {
 	 * @param flag
 	 *            the flag with which the suppliers will be rotated for
 	 *            scheduling, until notified using
-	 *            {@link Async#notifyAndGetForFlag(Class, String...)}
+	 *            {@link AsyncContext#notifyAndGetForFlag(Class, String...)}
 	 * @param suppliers
 	 *            the suppliers to be scheduled sequentially and rotated until
 	 *            notified using
-	 *            {@link Async#notifyAndGetForFlag(Class, String...)}
+	 *            {@link AsyncContext#notifyAndGetForFlag(Class, String...)}
 	 */
-	@SafeVarargs
-	static public <T> void scheduleSuppliersUntilFlag(int initialDelay, int delay, TimeUnit unit,
-			boolean waitForPreviousTask, String flag, Supplier<T>... suppliers) {
+	public <T> void scheduleSuppliersUntilFlag(int initialDelay, int delay, TimeUnit unit,
+			boolean waitForPreviousTask, String flag, @SuppressWarnings("unchecked") Supplier<T>... suppliers) {
 		doScheduleSupplierUntilFlag(initialDelay, delay, unit, waitForPreviousTask, suppliers, flag);
 	}
 
@@ -132,7 +196,7 @@ public final class SchedulingSupplier {
 	 * <code>initialDelay</code>, <code>delay</code> and
 	 * <code>waitForPreviousTask</code> arguments), and this scheduling supplier
 	 * will be repeatedly until a flag is notified using
-	 * {@link Async#notifyAndGetForFlag(Class, String...)} invocation with the
+	 * {@link AsyncContext#notifyAndGetForFlag(Class, String...)} invocation with the
 	 * same flag, in same thread or different thread, which will also return a
 	 * stream of results.
 	 *
@@ -160,13 +224,14 @@ public final class SchedulingSupplier {
 	 * @param flag
 	 *            the flag with which the suppliers will be rotated for
 	 *            scheduling, until notified using
-	 *            {@link Async#notifyAndGetForFlag(Class, String...)}
+	 *            {@link AsyncContext#notifyAndGetForFlag(Class, String...)}
 	 * @param supplier
 	 *            the single supplier to be scheduled sequentially and rotated
 	 *            until notified using
-	 *            {@link Async#notifyAndGetForFlag(Class, String...)}
+	 *            {@link AsyncContext#notifyAndGetForFlag(Class, String...)}
 	 */
-	static public <T> void scheduleSupplierUntilFlag(int initialDelay, int delay, TimeUnit unit,
+	@SuppressWarnings("unchecked")
+	public <T> void scheduleSupplierUntilFlag(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, String flag, Supplier<T> supplier) {
 		scheduleSuppliersUntilFlag(initialDelay, delay, unit, waitForPreviousTask, flag, supplier);
 	}
@@ -203,7 +268,7 @@ public final class SchedulingSupplier {
 	 *            the suppliers to be scheduled sequentially
 	 * @return the {@link Stream} of results
 	 */
-	static public <T> Stream<T> scheduleSuppliersAndWait(int initialDelay, int delay, TimeUnit unit,
+	public <T> Stream<T> scheduleSuppliersAndWait(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, @SuppressWarnings("unchecked") Supplier<T>... suppliers) {
 		Supplier<T>[] scheduleSupplier = doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, suppliers);
 		return Stream.of(scheduleSupplier).map(Supplier::get);
@@ -253,18 +318,18 @@ public final class SchedulingSupplier {
 	 *            {@link AsyncSupplier#waitAndGetFromSuppliers(Class, Object...)}.
 	 * @return true, if scheduling the supplier is successful
 	 */
-	static public <T> boolean scheduleSuppliersForSingleAccess(int initialDelay, int delay, TimeUnit unit,
+	public <T> boolean scheduleSuppliersForSingleAccess(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, Supplier<T>[] suppliers, Object... keys) {
 		Supplier<T>[] resultSuppliers = doScheduleSupplier(initialDelay, delay, unit, waitForPreviousTask, suppliers);
 		boolean result = true;
 		if (resultSuppliers.length == 1) {
 			Supplier<T> resSupplier = resultSuppliers[0];
-			result &= Async.storeSupplier(ObjectsKey.of(keys), resSupplier, false);
+			result &= getAsyncContext().storeSupplier(ObjectsKey.of(keys), resSupplier, false);
 		} else {
 			for (int i = 0; i < resultSuppliers.length; i++) {
 				Supplier<T> resSupplier = resultSuppliers[i];
-				Object[] indexedKey = Async.getIndexedKey(i, keys);
-				result &= Async.storeSupplier(ObjectsKey.of(indexedKey), resSupplier, false);
+				Object[] indexedKey = AsyncContext.getIndexedKey(i, keys);
+				result &= getAsyncContext().storeSupplier(ObjectsKey.of(indexedKey), resSupplier, false);
 			}
 		}
 		return result;
@@ -287,11 +352,11 @@ public final class SchedulingSupplier {
 	 *            the suppliers
 	 * @return the supplier[]
 	 */
-	static private <T> Supplier<T>[] doScheduleSupplier(int initialDelay, int delay, TimeUnit unit,
+	private <T> Supplier<T>[] doScheduleSupplier(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, @SuppressWarnings("unchecked") Supplier<T>... suppliers) {
 		@SuppressWarnings("unchecked")
 		Supplier<T>[] resultSuppliers = new Supplier[suppliers.length];
-		Async.SchedulingFunction<Supplier<T>, T> schedulingSuppliers = new Async.SchedulingFunction<Supplier<T>, T>() {
+		Scheduler.SchedulingFunction<Supplier<T>, T> schedulingSuppliers = new Scheduler.SchedulingFunction<Supplier<T>, T>() {
 			private AtomicInteger index = new AtomicInteger(0);
 
 			@Override
@@ -318,7 +383,7 @@ public final class SchedulingSupplier {
 			}
 
 		};
-		Async.doScheduleFunction(initialDelay, delay, unit, waitForPreviousTask, schedulingSuppliers);
+		getScheduler().doScheduleFunction(initialDelay, delay, unit, waitForPreviousTask, schedulingSuppliers);
 
 		@SuppressWarnings("unchecked")
 		Supplier<T>[] blockingResultSupplier = new Supplier[suppliers.length];
@@ -365,11 +430,11 @@ public final class SchedulingSupplier {
 	 *            the flag
 	 * @return the scheduled future
 	 */
-	private static <T> ScheduledFuture<?> doScheduleSupplierUntilFlag(int initialDelay, int delay, TimeUnit unit,
+	private <T> ScheduledFuture<?> doScheduleSupplierUntilFlag(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, Supplier<T>[] suppliers, String flag) {
 		AtomicBoolean canCancel = new AtomicBoolean(false);
 		LinkedList<Supplier<T>> resultSuppliers = new LinkedList<Supplier<T>>();
-		Async.SchedulingFunction<Supplier<T>, T> schedulingSuppliers = new Async.SchedulingFunction<Supplier<T>, T>() {
+		Scheduler.SchedulingFunction<Supplier<T>, T> schedulingSuppliers = new Scheduler.SchedulingFunction<Supplier<T>, T>() {
 			private AtomicInteger index = new AtomicInteger(0);
 
 			@Override
@@ -396,14 +461,14 @@ public final class SchedulingSupplier {
 				synchronized (resultSuppliers) {
 					Supplier<T> resSupplier = () -> t;
 					resultSuppliers.add(resSupplier);
-					Object[] indexedKey = Async.getIndexedKey(resultSuppliers.size() - 1, flag);
-					Async.storeSupplier(ObjectsKey.of(indexedKey), resSupplier, false);
+					Object[] indexedKey = AsyncContext.getIndexedKey(resultSuppliers.size() - 1, flag);
+					getAsyncContext().storeSupplier(ObjectsKey.of(indexedKey), resSupplier, false);
 				}
 			}
 
 		};
 
-		return Async.doScheduleFunction(initialDelay, delay, unit, waitForPreviousTask, schedulingSuppliers);
+		return getScheduler().doScheduleFunction(initialDelay, delay, unit, waitForPreviousTask, schedulingSuppliers);
 
 	}
 
@@ -446,9 +511,9 @@ public final class SchedulingSupplier {
 	 *         {@link Supplier#get()}, which may wait until the completion of
 	 *         Supplier code execution.
 	 */
-	static public <T> Supplier<T>[] scheduleSupplier(int initialDelay, int delay, TimeUnit unit,
+	public <T> Supplier<T>[] scheduleSupplier(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, Supplier<T> supplier, int times) {
-		return scheduleSuppliers(initialDelay, delay, unit, waitForPreviousTask, Async.arrayOfTimes(supplier, times));
+		return scheduleSuppliers(initialDelay, delay, unit, waitForPreviousTask, AsyncContext.arrayOfTimes(supplier, times));
 	}
 
 	/**
@@ -486,10 +551,10 @@ public final class SchedulingSupplier {
 	 *            supplier
 	 * @return the {@link Stream} of results
 	 */
-	static public <T> Stream<T> scheduleSupplierAndWait(int initialDelay, int delay, TimeUnit unit,
+	public <T> Stream<T> scheduleSupplierAndWait(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, Supplier<T> supplier, int times) {
 		return scheduleSuppliersAndWait(initialDelay, delay, unit, waitForPreviousTask,
-				Async.arrayOfTimes(supplier, times));
+				AsyncContext.arrayOfTimes(supplier, times));
 	}
 
 	/**
@@ -539,10 +604,10 @@ public final class SchedulingSupplier {
 	 *            {@link AsyncSupplier#waitAndGetFromSuppliers(Class, Object...)}.
 	 * @return true, if scheduling the supplier is successful
 	 */
-	static public <T> boolean scheduleSupplierForSingleAccess(int initialDelay, int delay, TimeUnit unit,
+	public <T> boolean scheduleSupplierForSingleAccess(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, Supplier<T> supplier, int times, Object... keys) {
 		return scheduleSuppliersForSingleAccess(initialDelay, delay, unit, waitForPreviousTask,
-				Async.arrayOfTimes(supplier, times), keys);
+				AsyncContext.arrayOfTimes(supplier, times), keys);
 	}
 
 	/**
@@ -565,7 +630,7 @@ public final class SchedulingSupplier {
 	 *         {@link Supplier#get()}, which may wait until the completion of
 	 *         Supplier code execution.
 	 */
-	static public <T> Supplier<T> scheduleSupplier(int initialDelay, TimeUnit unit, Supplier<T> supplier) {
+	public <T> Supplier<T> scheduleSupplier(int initialDelay, TimeUnit unit, Supplier<T> supplier) {
 		return scheduleSupplier(initialDelay, 1, unit, false, supplier, 1)[0];
 	}
 
@@ -587,7 +652,7 @@ public final class SchedulingSupplier {
 	 * @return the {@link Optional} of the result. This {@link Optional} may be
 	 *         empty based on the result or if the scheduling is not successful.
 	 */
-	static public <T> Optional<T> scheduleSupplierAndWait(int initialDelay, TimeUnit unit, Supplier<T> supplier) {
+	public <T> Optional<T> scheduleSupplierAndWait(int initialDelay, TimeUnit unit, Supplier<T> supplier) {
 		return scheduleSupplierAndWait(initialDelay, 1, unit, false, supplier, 1).findAny();
 	}
 
@@ -620,9 +685,138 @@ public final class SchedulingSupplier {
 	 *            {@link AsyncSupplier#waitAndGetFromSupplier(Class, Object...)}.
 	 * @return true, if scheduling the supplier is successful
 	 */
-	static public <T> boolean scheduleSupplierForSingleAccess(int initialDelay, TimeUnit unit, Supplier<T> supplier,
+	public <T> boolean scheduleSupplierForSingleAccess(int initialDelay, TimeUnit unit, Supplier<T> supplier,
 			Object... keys) {
 		return scheduleSupplierForSingleAccess(initialDelay, 1, unit, false, supplier, 1, keys);
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.AutoCloseable#close()
+	 */
+	@Override
+	public synchronized void close() {
+		if(!closed) {
+			scheduler.close();
+			closed = true;
+		}
+	}
+
+	/**
+	 * Waits and gets the result from a supplier submitted asynchronously
+	 * (using
+	 * {@link AsyncSupplier#submitSupplierForSingleAccess(Supplier, Object...)}) or
+	 * {@link AsyncSupplier#submitSupplierForMultipleAccess(Supplier, Object...)})
+	 * or
+	 * {@link AsyncSupplier#submitSupplierWithDropExistingForSingleAccess(Supplier, Object...)})
+	 * or
+	 * {@link AsyncSupplier#submitSupplierWithDropExistingForMultipleAccess(Supplier, Object...)})
+	 * as a {@link Optional} based on the keys. If no supplier is submitted already with the
+	 * keys provided, the result will be an empty {@link Optional}.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param clazz
+	 *            the clazz
+	 * @param keys
+	 *            the keys
+	 * @return the optional
+	 * 
+	 */
+	public <T> Optional<T> waitAndGetFromSupplier(Class<T> clazz, Object... keys) {
+		return getAsyncContext().waitAndGetFromSupplier(clazz, keys);
+	}
+
+	/**
+	 * Waits and gets the result from multiple suppliers submitted asynchronously
+	 * (using
+	 * {@link AsyncSupplier#submitSuppliersForSingleAccess(Supplier[], Object...)}) or
+	 * {@link AsyncSupplier#submitSuppliersForMultipleAccess(Supplier[], Object...)})
+	 * or
+	 * {@link AsyncSupplier#submitSuppliersWithDropExistingForSingleAccess(Supplier[], Object...)})
+	 * or
+	 * {@link AsyncSupplier#submitSuppliersWithDropExistingForMultipleAccess(Supplier[], Object...)})
+	 * as a {@link Stream} based on the keys. If no supplier is submitted already with the
+	 * keys provided, the result will be an empty {@link Stream}.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param clazz
+	 *            the clazz
+	 * @param keys
+	 *            the keys
+	 * @return the stream
+	 */
+	public <T> Stream<T> waitAndGetFromSuppliers(Class<T> clazz, Object... keys) {
+		return getAsyncContext().waitAndGetFromSuppliers(clazz, keys);
+	}
+
+	/**
+	 * Waits and gets the value submitted asynchronously (using
+	 * {@link AsyncSupplier#submitValue(Object, Object...)}) or
+	 * {@link AsyncSupplier#submitValueWithDropExisting(Object, Object...)}) as a
+	 * {@link Optional} based on the keys. If no supplier is submitted already with
+	 * the keys provided, the result will be an empty {@link Optional}.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param clazz
+	 *            the clazz
+	 * @param keys
+	 *            the keys
+	 * @return the optional
+	 */
+	public <T> Optional<T> waitAndGetValue(Class<T> clazz, Object... keys) {
+		return getAsyncContext().waitAndGetFromSupplier(clazz, keys);
+	}
+
+	/**
+	 * Gets the async context.
+	 *
+	 * @return the async context
+	 */
+	private AsyncContext getAsyncContext() {
+		return asyncContext;
+	}
+	
+	/**
+	 * Notifies the scheduler of one or more Supplier(s) which are cyclically
+	 * scheduled using either
+	 * {@link SchedulingSupplier#scheduleSuppliersUntilFlag(int, int, TimeUnit, boolean, String, Supplier...)}
+	 * or
+	 * {@link SchedulingSupplier#scheduleSupplierUntilFlag(int, int, TimeUnit, boolean, String, Supplier)}
+	 * with the flag passed, and obtains the Stream of results of the type
+	 * passed. <br>
+	 * If no Supplier is scheduled for the flag, returns an empty stream.
+	 * 
+	 * @param <T>
+	 *            the generic type
+	 * @param clazz
+	 *            the clazz
+	 * @param flag
+	 *            the flag
+	 * @return the list
+	 */
+	public <T> Stream<T> notifyAndGetForFlag(Class<T> clazz, String... flag) {
+		return getAsyncContext().notifyAndGetForFlag(clazz, flag);
+	}
+	
+	/**
+	 * Gets the scheduler.
+	 *
+	 * @return the scheduler
+	 */
+	public Scheduler getScheduler() {
+		assertNotClosed();
+		return scheduler;
+	}
+	
+	/**
+	 * Assert not closed.
+	 */
+	private void assertNotClosed() {
+		if (closed) {
+			throw new RuntimeException(new IllegalStateException("Already closed"));
+		}
 	}
 
 }

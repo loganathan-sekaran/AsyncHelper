@@ -21,6 +21,7 @@ package org.vishag.async;
 
 import static org.junit.Assert.assertEquals;
 
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -30,11 +31,27 @@ import org.junit.rules.TestRule;
  * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
-public class AsyncTest {
+public class AsyncContextTest {
 
+	/** The async task. */
+	private static AsyncTask asyncTask;
 	/** The watcher. */
 	@Rule
 	public TestRule watcher = new TestWatcherAndLogger();
+	
+	/** The async. */
+	private static AsyncContext async;
+	
+	 /**
+ 	 * Sets the up before class.
+ 	 *
+ 	 * @throws Exception the exception
+ 	 */
+ 	@BeforeClass
+	 public static void setUpBeforeClass() throws Exception {
+		 asyncTask = AsyncTask.getDefault();
+		 async = AsyncContext.getDefault();
+	 }
 
 	/**
 	 * Test wait and notify all for flag.
@@ -45,14 +62,14 @@ public class AsyncTest {
 	@Test
 	public void testWaitAndNotifyAllForFlag() throws InterruptedException {
 		int[] retVal = new int[2];
-		AsyncTask.submitTask(TestUtil.delayedRunnable(() -> {
+		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			retVal[0] = 10;
-			Async.notifyAllFlag("FLAG2");
+			async.notifyAllFlag("FLAG2");
 		}, 2000));
 
-		AsyncTask.submitTask(() -> {
+		asyncTask.submitTask(() -> {
 			try {
-				Async.waitForFlag("FLAG2");
+				async.waitForFlag("FLAG2");
 				retVal[1] = retVal[0] + 10;
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
@@ -60,10 +77,10 @@ public class AsyncTest {
 			}
 		}, "Task2");
 
-		Async.waitForFlag("FLAG2");
+		async.waitForFlag("FLAG2");
 		assertEquals(retVal[0], 10);
 
-		AsyncTask.waitForTask("Task2");
+		asyncTask.waitForTask("Task2");
 		assertEquals(retVal[1], 20);
 	}
 
@@ -76,11 +93,38 @@ public class AsyncTest {
 	@Test
 	public void testWaitAndNotifyForFlag() throws InterruptedException {
 		int[] retVal = new int[1];
-		AsyncTask.submitTask(TestUtil.delayedRunnable(() -> {
+		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			retVal[0] = 10;
-			Async.notifyFlag("FLAG1");
+			async.notifyFlag("FLAG1");
 		}, 2000));
-		Async.waitForFlag("FLAG1");
+		async.waitForFlag("FLAG1");
 		assertEquals(retVal[0], 10);
+	}
+	
+	/**
+	 * Test close.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testClose() throws Exception {
+		AsyncContext context = AsyncContext.newInstance();
+		context.getOriginalKeys();
+		context.close();
+		context.close();
+		assert(true);
+	}
+	
+	/**
+	 * Test close with exception.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test (expected=Exception.class)
+	public void testCloseWithException() throws Exception {
+		AsyncContext context = AsyncContext.newInstance();
+		context.getOriginalKeys();
+		context.close();
+		context.getOriginalKeys();
 	}
 }

@@ -22,23 +22,60 @@ package org.vishag.async;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 /**
  * The class SchedulingTaskTest.
  * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
+@RunWith(Parameterized.class)
 public class SchedulingTaskTest {
 
 	/** The watcher. */
 	@Rule
 	public TestRule watcher = new TestWatcherAndLogger();
+	
+	/** The scheduling task. */
+	private SchedulingTask schedulingTask;
+	
+	/**
+	 * Inputs.
+	 *
+	 * @return the collection
+	 */
+	@Parameters
+	public static Collection<Object[]> inputs() {
+		return Arrays.asList(new Object[][] {
+				{SchedulingTask.getDefault()},
+				{SchedulingTask.of(Executors
+						.newScheduledThreadPool(10))	},
+				{SchedulingTask.of(Executors
+						.newScheduledThreadPool(10), AsyncContext.newInstance())	}
+			});
+	}
+	
+	 /**
+ 	 * Instantiates a new scheduling task test.
+ 	 *
+ 	 * @param schedulingTask the scheduling task
+ 	 * @throws Exception the exception
+ 	 */
+ 	public SchedulingTaskTest(SchedulingTask schedulingTask) throws Exception {
+		 this.schedulingTask = schedulingTask;
+	 }
+	
 
 	/**
 	 * Test schedule task.
@@ -50,7 +87,7 @@ public class SchedulingTaskTest {
 	public void testScheduleTask() throws InterruptedException {
 		int[] retVal = new int[3];
 		AtomicInteger count = new AtomicInteger(0);
-		SchedulingTask.scheduleTask(10, 100, TimeUnit.MILLISECONDS, true, () -> {
+		schedulingTask.scheduleTask(10, 100, TimeUnit.MILLISECONDS, true, () -> {
 			int index = count.getAndIncrement();
 			retVal[index] = (index + 1) * 10;
 		}, 3);
@@ -68,7 +105,7 @@ public class SchedulingTaskTest {
 	@Test
 	public void testScheduleTasks() throws InterruptedException {
 		int[] retVal = new int[5];
-		SchedulingTask.scheduleTasks(10, 100, TimeUnit.MILLISECONDS, true, () -> {
+		schedulingTask.scheduleTasks(10, 100, TimeUnit.MILLISECONDS, true, () -> {
 			retVal[0] = 10;
 		}, () -> {
 			retVal[1] = 20;
@@ -94,7 +131,7 @@ public class SchedulingTaskTest {
 	public void testScheduleTaskSingleTime() throws InterruptedException {
 		int[] retVal = new int[] { 0, 20, 20 };
 		AtomicInteger count = new AtomicInteger(0);
-		SchedulingTask.scheduleTask(10, TimeUnit.MILLISECONDS, () -> {
+		schedulingTask.scheduleTask(10, TimeUnit.MILLISECONDS, () -> {
 			int index = count.getAndIncrement();
 			retVal[index] = (index + 1) * 10;
 		});
@@ -112,7 +149,7 @@ public class SchedulingTaskTest {
 	@Test
 	public void testScheduleTasksUntilFlag() throws InterruptedException {
 		int[] retVal = new int[5];
-		SchedulingTask.scheduleTasksUntilFlag(10, 100, TimeUnit.MILLISECONDS, true, "ScheduledMultipleTasksTest",
+		schedulingTask.scheduleTasksUntilFlag(10, 100, TimeUnit.MILLISECONDS, true, "ScheduledMultipleTasksTest",
 				() -> {
 					TestUtil.print("Task 0");
 					TestUtil.printTime();
@@ -136,7 +173,7 @@ public class SchedulingTaskTest {
 				});
 
 		Thread.sleep(1200);
-		Async.notifyFlag("ScheduledMultipleTasksTest");
+		schedulingTask.notifyFlag("ScheduledMultipleTasksTest");
 		assertTrue(retVal[0] > 1);
 		assertTrue(retVal[1] > 1);
 		assertTrue(retVal[2] > 1);
@@ -153,7 +190,7 @@ public class SchedulingTaskTest {
 	@Test
 	public void testScheduleTasksWait() throws InterruptedException {
 		int[] retVal = new int[5];
-		SchedulingTask.scheduleTasksAndWait(0, 100, TimeUnit.MILLISECONDS, true, () -> {
+		schedulingTask.scheduleTasksAndWait(0, 100, TimeUnit.MILLISECONDS, true, () -> {
 			TestUtil.printTime();
 			retVal[0] = 10;
 		}, () -> {
@@ -183,14 +220,14 @@ public class SchedulingTaskTest {
 	@Test
 	public void testScheduleTaskUntilFlag() throws InterruptedException {
 		int[] retVal = new int[5];
-		SchedulingTask.scheduleTaskUntilFlag(10, 100, TimeUnit.MILLISECONDS, true, "ScheduledSingleTasksTest", () -> {
+		schedulingTask.scheduleTaskUntilFlag(10, 100, TimeUnit.MILLISECONDS, true, "ScheduledSingleTasksTest", () -> {
 			TestUtil.print("Count " + retVal[0]);
 			TestUtil.printTime();
 			retVal[0] += 1;
 		});
 
 		Thread.sleep(1200);
-		Async.notifyFlag("ScheduledSingleTasksTest");
+		schedulingTask.notifyFlag("ScheduledSingleTasksTest");
 		assertTrue(retVal[0] > 5);
 	}
 
@@ -204,7 +241,7 @@ public class SchedulingTaskTest {
 	public void testScheduleTaskWait() throws InterruptedException {
 		int[] retVal = new int[3];
 		AtomicInteger count = new AtomicInteger(0);
-		SchedulingTask.scheduleTaskAndWait(0, 3, TimeUnit.SECONDS, true, () -> {
+		schedulingTask.scheduleTaskAndWait(0, 3, TimeUnit.SECONDS, true, () -> {
 			TestUtil.printTime();
 			int index = count.getAndIncrement();
 			retVal[index] = (index + 1) * 10;
@@ -224,13 +261,41 @@ public class SchedulingTaskTest {
 	public void testScheduleTaskWaitSingleTime() throws InterruptedException {
 		int[] retVal = new int[] { 0, 20, 20 };
 		AtomicInteger count = new AtomicInteger(0);
-		SchedulingTask.scheduleTaskAndWait(0, TimeUnit.SECONDS, () -> {
+		schedulingTask.scheduleTaskAndWait(0, TimeUnit.SECONDS, () -> {
 			TestUtil.printTime();
 			retVal[count.getAndIncrement()] = 10;
 		});
 
 		TestUtil.printTime();
 		assertArrayEquals(retVal, new int[] { 10, 20, 20 });
+	}
+	
+	/**
+	 * Test close.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testClose() throws Exception {
+		SchedulingTask schedulingTask = SchedulingTask.of(Executors.newScheduledThreadPool(5));
+		schedulingTask.scheduleTaskAndWait(1, TimeUnit.MILLISECONDS, () -> System.out.println("Test1"));
+		schedulingTask.scheduleTaskAndWait(1, TimeUnit.MILLISECONDS, () -> System.out.println("Test2"));
+		schedulingTask.close();
+		schedulingTask.close();
+		assert(true);
+	}
+	
+	/**
+	 * Test close with exception.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test (expected=Exception.class)
+	public void testCloseWithException() throws Exception {
+		SchedulingTask schedulingTask = SchedulingTask.of(Executors.newScheduledThreadPool(5));
+		schedulingTask.scheduleTaskAndWait(1, TimeUnit.MILLISECONDS, () -> System.out.println("Test1"));
+		schedulingTask.close();
+		schedulingTask.scheduleTaskAndWait(1, TimeUnit.MILLISECONDS, () -> System.out.println("Test2"));
 	}
 
 }

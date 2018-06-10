@@ -24,28 +24,57 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 /**
  * The class AsyncTaskTest.
  * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
+@RunWith(Parameterized.class)
 public class AsyncTaskTest {
 
 	/** The watcher. */
 	@Rule
 	public TestRule watcher = new TestWatcherAndLogger();
-
-	//
-	// @BeforeClass
-	// public static void setUpBeforeClass() throws Exception {
-	// }
-	//
+	
+	/** The async task. */
+	private AsyncTask asyncTask;
+	
+	/**
+	 * Inputs.
+	 *
+	 * @return the collection
+	 */
+	@Parameters
+	public static Collection<Object[]> inputs() {
+		return Arrays.asList(new Object[][] {
+				{AsyncTask.getDefault()},
+				{AsyncTask.of(Executors.newFixedThreadPool(10))	},
+				{AsyncTask.of(Executors.newFixedThreadPool(10), AsyncContext.newInstance())	},
+			});
+	}
+	
+	 /**
+ 	 * Instantiates a new async task test.
+ 	 *
+ 	 * @param asyncTask the async task
+ 	 * @throws Exception the exception
+ 	 */
+ 	public AsyncTaskTest(AsyncTask asyncTask) throws Exception {
+		 this.asyncTask = asyncTask;
+	 }
+	 
 	// @AfterClass
 	// public static void tearDownAfterClass() throws Exception {
 	// }
@@ -64,23 +93,23 @@ public class AsyncTaskTest {
 	@Test
 	public void testMultipleAsyncTasks() {
 		String[] val = new String[4];
-		AsyncTask.submitTask(TestUtil.delayedRunnable(() -> {
+		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[0] = "Value1";
 		}), "task1");
-		AsyncTask.submitTask(TestUtil.delayedRunnable(() -> {
+		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[1] = "Value2";
 		}, 1000), "task2");
-		AsyncTask.submitTask(TestUtil.delayedRunnable(() -> {
+		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[2] = "Value3";
 		}, 700), "task3");
-		AsyncTask.submitTask(TestUtil.delayedRunnable(() -> {
+		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[3] = "Value4";
 		}, 1000), "task4");
 
-		AsyncTask.waitForTask("task1");
-		AsyncTask.waitForTask("task2");
-		AsyncTask.waitForTask("task3");
-		AsyncTask.waitForTask("task4");
+		asyncTask.waitForTask("task1");
+		asyncTask.waitForTask("task2");
+		asyncTask.waitForTask("task3");
+		asyncTask.waitForTask("task4");
 
 		assertEquals(val[0], "Value1");
 		assertEquals(val[1], "Value2");
@@ -95,56 +124,56 @@ public class AsyncTaskTest {
 	@Test
 	public void testMultipleAsyncTasksMultipleTimes() {
 		String[] val = new String[4];
-		AsyncTask.submitTask(TestUtil.delayedRunnable(() -> {
+		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[0] = "Value1";
 		}), "task1");
-		AsyncTask.submitTask(TestUtil.delayedRunnable(() -> {
+		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[1] = "Value2";
 		}, 1000), "task2");
-		AsyncTask.submitTask(TestUtil.delayedRunnable(() -> {
+		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[2] = "Value3";
 		}, 700), "task3");
-		AsyncTask.submitTask(TestUtil.delayedRunnable(() -> {
+		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[3] = "Value4";
 		}, 1000), "task4");
 
-		AsyncTask.waitForTask("task1");
-		AsyncTask.waitForTask("task2");
-		AsyncTask.waitForTask("task3");
-		AsyncTask.waitForTask("task4");
+		asyncTask.waitForTask("task1");
+		asyncTask.waitForTask("task2");
+		asyncTask.waitForTask("task3");
+		asyncTask.waitForTask("task4");
 
 		assertEquals(val[0], "Value1");
 		assertEquals(val[1], "Value2");
 		assertEquals(val[2], "Value3");
 		assertEquals(val[3], "Value4");
 
-		AsyncTask.waitForTask("task1");
-		AsyncTask.waitForTask("task2");
-		AsyncTask.waitForTask("task3");
-		AsyncTask.waitForTask("task4");
+		asyncTask.waitForTask("task1");
+		asyncTask.waitForTask("task2");
+		asyncTask.waitForTask("task3");
+		asyncTask.waitForTask("task4");
 
 		assertEquals(val[0], "Value1");
 		assertEquals(val[1], "Value2");
 		assertEquals(val[2], "Value3");
 		assertEquals(val[3], "Value4");
 
-		AsyncTask.submitTask(TestUtil.delayedRunnable(() -> {
+		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[0] = "Value11";
 		}), "task1");
-		AsyncTask.submitTask(TestUtil.delayedRunnable(() -> {
+		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[1] = "Value22";
 		}, 1000), "task2");
-		AsyncTask.submitTask(TestUtil.delayedRunnable(() -> {
+		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[2] = "Value33";
 		}, 700), "task3");
-		AsyncTask.submitTask(TestUtil.delayedRunnable(() -> {
+		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[3] = "Value44";
 		}, 1000), "task4");
 
-		AsyncTask.waitForTask("task1");
-		AsyncTask.waitForTask("task2");
-		AsyncTask.waitForTask("task3");
-		AsyncTask.waitForTask("task4");
+		asyncTask.waitForTask("task1");
+		asyncTask.waitForTask("task2");
+		asyncTask.waitForTask("task3");
+		asyncTask.waitForTask("task4");
 
 		assertEquals(val[0], "Value11");
 		assertEquals(val[1], "Value22");
@@ -162,7 +191,7 @@ public class AsyncTaskTest {
 	@Test
 	public void testtask() throws InterruptedException {
 		int[] retVal = new int[1];
-		AsyncTask.submitTask(TestUtil.delayedRunnable(() -> {
+		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			retVal[0] = 10;
 		}, 100));
 
@@ -179,7 +208,7 @@ public class AsyncTaskTest {
 	@Test
 	public void testtasks() throws InterruptedException {
 		int[] retVal = new int[5];
-		AsyncTask.submitTasks(TestUtil.delayedRunnable(() -> {
+		asyncTask.submitTasks(TestUtil.delayedRunnable(() -> {
 			retVal[0] = 10;
 		}, 100), TestUtil.delayedRunnable(() -> {
 			retVal[1] = 20;
@@ -201,7 +230,7 @@ public class AsyncTaskTest {
 	@Test
 	public void testtasksAndWait() {
 		int[] retVal = new int[5];
-		AsyncTask.submitTasksAndWait(() -> {
+		asyncTask.submitTasksAndWait(() -> {
 			retVal[0] = 10;
 		}, () -> {
 			retVal[1] = 20;
@@ -223,11 +252,11 @@ public class AsyncTaskTest {
 	public void testtasksAndWaitWithCancelWithInterrupt() {
 		int[] retVal = new int[] { 0, 0, 0 };
 		AtomicBoolean cancel = new AtomicBoolean(false);
-		AsyncTask.submitTask(TestUtil.delayedRunnable(() -> {
+		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			cancel.set(true);
 		}, 5000));
 
-		AsyncTask.submitTasksAndWaitCancellable(() -> cancel.get(), true, TestUtil.delayedRunnable(() -> {
+		asyncTask.submitTasksAndWaitCancellable(() -> cancel.get(), true, TestUtil.delayedRunnable(() -> {
 			retVal[0] = 10;
 			TestUtil.printTime();
 		}, 2000), TestUtil.delayedRunnable(() -> {
@@ -248,7 +277,7 @@ public class AsyncTaskTest {
 	public void testtasksWithKeys() {
 		int[] retVal = new int[5];
 		Object[] keys = { "Submitted", "Multiple", "Tasks" };
-		AsyncTask.submitTasks(keys, () -> {
+		asyncTask.submitTasks(keys, () -> {
 			retVal[0] = 10;
 		}, () -> {
 			retVal[1] = 20;
@@ -260,9 +289,56 @@ public class AsyncTaskTest {
 			retVal[4] = 50;
 		});
 
-		AsyncTask.waitForMultipleTasks(keys);
+		asyncTask.waitForMultipleTasks(keys);
 
 		assertArrayEquals(retVal, new int[] { 10, 20, 30, 40, 50 });
+	}
+	
+	/**
+	 * Testsubmit task in new thread.
+	 *
+	 * @throws InterruptedException the interrupted exception
+	 */
+	@Test
+	public void testsubmitTaskInNewThread() throws InterruptedException {
+		int[] retVal = new int[1];
+		AsyncTask.submitTaskInNewThread(TestUtil.delayedRunnable(() -> {
+			retVal[0] = 10;
+		}, 100));
+
+		Thread.sleep(500);
+		assertEquals(retVal[0], 10);
+	}
+	
+	/**
+	 * Test close.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testClose() throws Exception {
+		AsyncTask asyncTask = AsyncTask.of(Executors.newFixedThreadPool(2));
+		asyncTask.submitTask(() -> System.out.println("Test1"));
+		asyncTask.submitTask(() -> System.out.println("Test2"));
+
+		asyncTask.close();
+		asyncTask.close();
+
+	}
+	
+	/**
+	 * Test close with exception.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test (expected=Exception.class)
+	public void testCloseWithException() throws Exception {
+		AsyncSupplier asyncSupplier = AsyncSupplier.of(Executors.newFixedThreadPool(2));
+		Supplier<String> resultSupplier = asyncSupplier.submitSupplier(() -> "Test1");
+		asyncSupplier.close();
+		assertEquals(resultSupplier.get(), "Test1");
+		
+		asyncSupplier.submitSupplier(() -> "Test2");
 	}
 
 }

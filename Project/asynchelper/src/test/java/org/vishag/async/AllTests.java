@@ -29,7 +29,7 @@ import org.junit.runners.Suite.SuiteClasses;
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
 @RunWith(Suite.class)
-@SuiteClasses({ ObjectsKeyTest.class, AsyncTest.class, AsyncTaskTest.class, AsyncSupplierTest.class,
+@SuiteClasses({ ObjectsKeyTest.class, AsyncContextTest.class, AsyncTaskTest.class, AsyncSupplierTest.class,
 		SchedulingTaskTest.class, SchedulingSupplierTest.class })
 public class AllTests {
 }
