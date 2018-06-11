@@ -77,7 +77,6 @@ public class AsyncContextTest {
 	@Test
 	public void testWaitAndNotifyAllForFlag() throws InterruptedException {
 		int[] retVal = new int[2];
-		System.out.println("FJP Parallelism" + ForkJoinPool.getCommonPoolParallelism());
 		System.out.println(asyncTask.getThreadPool());
 		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			retVal[0] = 10;

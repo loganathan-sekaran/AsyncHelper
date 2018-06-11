@@ -37,9 +37,8 @@ class Executor implements AutoCloseable {
 	 * {@code ForkJoinPool} with parallelism 1 will not make this multi-threading
 	 * utility class unusable, and many of the test cases will fail.
 	 */
-	private static final ForkJoinPool DEFAULT_POOL = ForkJoinPool.getCommonPoolParallelism() == 1
-			? ForkJoinPool.commonPool()
-			: new ForkJoinPool(5);
+	private static final ForkJoinPool DEFAULT_POOL = ForkJoinPool.getCommonPoolParallelism() == 1 ? new ForkJoinPool(5)
+			: ForkJoinPool.commonPool();
 
 	/** The default instance of Executor. */
 	private static Executor DEFAULT_INSTANCE = new Executor(DEFAULT_POOL);
