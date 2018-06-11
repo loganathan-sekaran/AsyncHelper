@@ -262,7 +262,7 @@ public class SchedulingTaskTest {
 	public void testScheduleTaskWaitSingleTime() throws InterruptedException {
 		int[] retVal = new int[] { 0, 20, 20 };
 		AtomicInteger count = new AtomicInteger(0);
-		schedulingTask.scheduleTaskAndWait(0, TimeUnit.SECONDS, () -> {
+		schedulingTask.scheduleTaskAndWait(10, TimeUnit.MILLISECONDS, () -> {
 			TestUtil.printTime();
 			retVal[count.getAndIncrement()] = 10;
 		});
