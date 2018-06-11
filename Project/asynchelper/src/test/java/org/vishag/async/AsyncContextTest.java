@@ -24,7 +24,6 @@ import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.ForkJoinPool;
 
 import org.junit.Rule;
 import org.junit.Test;
