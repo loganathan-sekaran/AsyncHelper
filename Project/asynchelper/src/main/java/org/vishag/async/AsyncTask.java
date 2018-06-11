@@ -129,7 +129,7 @@ public final class AsyncTask implements AutoCloseable{
 	 *
 	 * @return the thread pool
 	 */
-	private ExecutorService getThreadPool() {
+	protected ExecutorService getThreadPool() {
 		assertNotClosed();
 		return executor.getThreadPool();
 	}
