@@ -106,7 +106,7 @@ class Executor implements AutoCloseable {
 	@Override
 	public synchronized void close() {
 		if (!closed) {
-			threadPool.shutdown();
+			threadPool.shutdownNow();
 			closed = true;
 		}
 	}

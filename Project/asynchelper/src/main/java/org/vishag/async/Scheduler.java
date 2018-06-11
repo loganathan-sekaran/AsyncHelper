@@ -156,7 +156,7 @@ class Scheduler implements AutoCloseable {
 	@Override
 	public synchronized void close() {
 		if(!closed) {
-			scheduledExecutorService.shutdown();
+			scheduledExecutorService.shutdownNow();
 			closed = true;
 		}
 	}
