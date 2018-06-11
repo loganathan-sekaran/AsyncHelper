@@ -281,7 +281,9 @@ public class SchedulingTaskTest {
 		SchedulingTask schedulingTask = SchedulingTask.of(Executors.newScheduledThreadPool(5));
 		schedulingTask.scheduleTaskAndWait(1, TimeUnit.MILLISECONDS, () -> System.out.println("Test1"));
 		schedulingTask.scheduleTaskAndWait(1, TimeUnit.MILLISECONDS, () -> System.out.println("Test2"));
+		System.out.println("Close1");
 		schedulingTask.close();
+		System.out.println("Close2");
 		schedulingTask.close();
 		assert(true);
 	}
