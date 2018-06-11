@@ -510,7 +510,7 @@ public class AsyncContext implements AutoCloseable{
 	 */
 	private void assertNotClosed() {
 		if (closed) {
-			throw new RuntimeException(new IllegalStateException("Already closed"));
+			throw new IllegalStateException("Already closed");
 		}
 	}
 }

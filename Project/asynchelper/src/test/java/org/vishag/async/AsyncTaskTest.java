@@ -22,6 +22,8 @@ package org.vishag.async;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -98,13 +100,13 @@ public class AsyncTaskTest {
 		}), "task1");
 		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[1] = "Value2";
-		}, 1000), "task2");
+		}, 100), "task2");
 		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[2] = "Value3";
-		}, 700), "task3");
+		}, 70), "task3");
 		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[3] = "Value4";
-		}, 1000), "task4");
+		}, 100), "task4");
 
 		asyncTask.waitForTask("task1");
 		asyncTask.waitForTask("task2");
@@ -129,13 +131,13 @@ public class AsyncTaskTest {
 		}), "task1");
 		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[1] = "Value2";
-		}, 1000), "task2");
+		}, 100), "task2");
 		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[2] = "Value3";
-		}, 700), "task3");
+		}, 70), "task3");
 		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[3] = "Value4";
-		}, 1000), "task4");
+		}, 100), "task4");
 
 		asyncTask.waitForTask("task1");
 		asyncTask.waitForTask("task2");
@@ -162,13 +164,13 @@ public class AsyncTaskTest {
 		}), "task1");
 		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[1] = "Value22";
-		}, 1000), "task2");
+		}, 100), "task2");
 		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[2] = "Value33";
-		}, 700), "task3");
+		}, 70), "task3");
 		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			val[3] = "Value44";
-		}, 1000), "task4");
+		}, 100), "task4");
 
 		asyncTask.waitForTask("task1");
 		asyncTask.waitForTask("task2");
@@ -193,9 +195,9 @@ public class AsyncTaskTest {
 		int[] retVal = new int[1];
 		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			retVal[0] = 10;
-		}, 100));
+		}, 10));
 
-		Thread.sleep(500);
+		Thread.sleep(50);
 		assertEquals(retVal[0], 10);
 	}
 
@@ -254,18 +256,18 @@ public class AsyncTaskTest {
 		AtomicBoolean cancel = new AtomicBoolean(false);
 		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			cancel.set(true);
-		}, 5000));
+		}, 500));
 
 		asyncTask.submitTasksAndWaitCancellable(() -> cancel.get(), true, TestUtil.delayedRunnable(() -> {
 			retVal[0] = 10;
 			TestUtil.printTime();
-		}, 2000), TestUtil.delayedRunnable(() -> {
+		}, 200), TestUtil.delayedRunnable(() -> {
 			retVal[1] = 20;
 			TestUtil.printTime();
-		}, 4000), TestUtil.delayedRunnable(() -> {
+		}, 400), TestUtil.delayedRunnable(() -> {
 			retVal[2] = 30;
 			TestUtil.printTime();
-		}, 6000));
+		}, 600));
 
 		assertFalse(Arrays.toString(new int[] { 10, 20, 30 }).equals(Arrays.toString(retVal)));
 	}
@@ -304,9 +306,9 @@ public class AsyncTaskTest {
 		int[] retVal = new int[1];
 		AsyncTask.submitTaskInNewThread(TestUtil.delayedRunnable(() -> {
 			retVal[0] = 10;
-		}, 100));
+		}, 10));
 
-		Thread.sleep(500);
+		Thread.sleep(50);
 		assertEquals(retVal[0], 10);
 	}
 	
@@ -323,7 +325,7 @@ public class AsyncTaskTest {
 
 		asyncTask.close();
 		asyncTask.close();
-
+		assertTrue(true);
 	}
 	
 	/**
@@ -339,6 +341,8 @@ public class AsyncTaskTest {
 		assertEquals(resultSupplier.get(), "Test1");
 		
 		asyncSupplier.submitSupplier(() -> "Test2");
+		fail();
+
 	}
 
 }

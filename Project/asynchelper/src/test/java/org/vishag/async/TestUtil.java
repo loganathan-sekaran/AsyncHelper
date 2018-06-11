@@ -44,7 +44,7 @@ public class TestUtil {
 	 * @return the runnable
 	 */
 	protected static <T> Runnable delayedRunnable(Runnable runnable) {
-		return delayedRunnable(runnable, 500);
+		return delayedRunnable(runnable, 100);
 	}
 
 	/**

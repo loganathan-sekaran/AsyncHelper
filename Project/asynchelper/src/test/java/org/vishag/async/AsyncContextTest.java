@@ -20,37 +20,52 @@
 package org.vishag.async;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
-import org.junit.BeforeClass;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.concurrent.ForkJoinPool;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 /**
  * The class AsyncTest.
  * 
  * @author Loganathan.S &lt;https://github.com/loganathan001&gt;
  */
+@RunWith(Parameterized.class)
 public class AsyncContextTest {
 
 	/** The async task. */
-	private static AsyncTask asyncTask;
+	private AsyncTask asyncTask;
 	/** The watcher. */
 	@Rule
 	public TestRule watcher = new TestWatcherAndLogger();
 	
-	/** The async. */
-	private static AsyncContext async;
+	/** The async context. */
+	private AsyncContext asyncContext;
 	
-	 /**
- 	 * Sets the up before class.
- 	 *
- 	 * @throws Exception the exception
- 	 */
- 	@BeforeClass
-	 public static void setUpBeforeClass() throws Exception {
+	/**
+	 * Inputs.
+	 *
+	 * @return the collection
+	 */
+	@Parameters
+	public static Collection<Object[]> inputs() {
+		return Arrays.asList(new Object[][] {
+				{AsyncContext.getDefault()},
+				{AsyncContext.newInstance()	}
+			});
+	}
+	
+	 public AsyncContextTest(AsyncContext asyncContext) {
 		 asyncTask = AsyncTask.getDefault();
-		 async = AsyncContext.getDefault();
+		 this.asyncContext = asyncContext;
 	 }
 
 	/**
@@ -62,14 +77,15 @@ public class AsyncContextTest {
 	@Test
 	public void testWaitAndNotifyAllForFlag() throws InterruptedException {
 		int[] retVal = new int[2];
+		System.out.println("FJP Parallelism" + ForkJoinPool.getCommonPoolParallelism());
 		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			retVal[0] = 10;
-			async.notifyAllFlag("FLAG2");
-		}, 2000));
+			asyncContext.notifyAllFlag("FLAG2");
+		}, 200));
 
 		asyncTask.submitTask(() -> {
 			try {
-				async.waitForFlag("FLAG2");
+				asyncContext.waitForFlag("FLAG2");
 				retVal[1] = retVal[0] + 10;
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
@@ -77,7 +93,7 @@ public class AsyncContextTest {
 			}
 		}, "Task2");
 
-		async.waitForFlag("FLAG2");
+		asyncContext.waitForFlag("FLAG2");
 		assertEquals(retVal[0], 10);
 
 		asyncTask.waitForTask("Task2");
@@ -95,9 +111,9 @@ public class AsyncContextTest {
 		int[] retVal = new int[1];
 		asyncTask.submitTask(TestUtil.delayedRunnable(() -> {
 			retVal[0] = 10;
-			async.notifyFlag("FLAG1");
-		}, 2000));
-		async.waitForFlag("FLAG1");
+			asyncContext.notifyFlag("FLAG1");
+		}, 200));
+		asyncContext.waitForFlag("FLAG1");
 		assertEquals(retVal[0], 10);
 	}
 	
@@ -126,5 +142,6 @@ public class AsyncContextTest {
 		context.getOriginalKeys();
 		context.close();
 		context.getOriginalKeys();
+		fail();
 	}
 }

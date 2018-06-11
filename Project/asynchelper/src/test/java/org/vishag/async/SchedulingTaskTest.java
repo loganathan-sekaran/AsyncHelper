@@ -21,6 +21,7 @@ package org.vishag.async;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -241,7 +242,7 @@ public class SchedulingTaskTest {
 	public void testScheduleTaskWait() throws InterruptedException {
 		int[] retVal = new int[3];
 		AtomicInteger count = new AtomicInteger(0);
-		schedulingTask.scheduleTaskAndWait(0, 3, TimeUnit.SECONDS, true, () -> {
+		schedulingTask.scheduleTaskAndWait(0, 300, TimeUnit.MILLISECONDS, true, () -> {
 			TestUtil.printTime();
 			int index = count.getAndIncrement();
 			retVal[index] = (index + 1) * 10;
@@ -296,6 +297,7 @@ public class SchedulingTaskTest {
 		schedulingTask.scheduleTaskAndWait(1, TimeUnit.MILLISECONDS, () -> System.out.println("Test1"));
 		schedulingTask.close();
 		schedulingTask.scheduleTaskAndWait(1, TimeUnit.MILLISECONDS, () -> System.out.println("Test2"));
+		fail();
 	}
 
 }

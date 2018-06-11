@@ -21,6 +21,7 @@ package org.vishag.async;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -246,7 +247,7 @@ public final class SchedulingSupplierTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testScheduleSuppliersAndWait() throws InterruptedException {
-		List<Integer> retVals = schedulingSupplier.scheduleSuppliersAndWait(0, 3, TimeUnit.SECONDS, true, () -> {
+		List<Integer> retVals = schedulingSupplier.scheduleSuppliersAndWait(0, 300, TimeUnit.MILLISECONDS, true, () -> {
 			return 10;
 		}, () -> {
 			return 20;
@@ -363,6 +364,7 @@ public final class SchedulingSupplierTest {
 		schedulingSupplier.close();
 		assertEquals(resultSupplier.get(), "Test");
 		schedulingSupplier.close();
+		assertTrue(true);
 	}
 	
 	/**
@@ -378,5 +380,6 @@ public final class SchedulingSupplierTest {
 		assertEquals(resultSupplier.get(), "Test1");
 		
 		schedulingSupplier.scheduleSupplierAndWait(1, TimeUnit.MILLISECONDS, () -> "Test1");
+		fail();
 	}
 }

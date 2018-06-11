@@ -22,6 +22,7 @@ package org.vishag.async;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -98,9 +99,9 @@ public final class AsyncSupplierTest {
 	@Test
 	public void testMultipleAsyncSupplierSubmittedForMultipleAccess() {
 		asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value1"), "query1");
-		asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value2", 1000), "query2");
-		asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value3", 700), "query3");
-		asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value4", 1000), "query4");
+		asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value2", 100), "query2");
+		asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value3", 70), "query3");
+		asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value4", 100), "query4");
 
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query1").get(), "Value1");
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query2").get(), "Value2");
@@ -119,9 +120,9 @@ public final class AsyncSupplierTest {
 	@Test
 	public void testMultipleAsyncSupplierSubmittedForSingleAccess() {
 		asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value1"), "query11");
-		asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value2", 1000), "query22");
-		asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value3", 700), "query33");
-		asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value4", 1000), "query44");
+		asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value2", 100), "query22");
+		asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value3", 70), "query33");
+		asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value4", 100), "query44");
 
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query11").get(), "Value1");
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query22").get(), "Value2");
@@ -141,20 +142,20 @@ public final class AsyncSupplierTest {
 	public void testMultipleTimeAsyncSupplierSubmittedForMultipleAccess() {
 		assertTrue(
 				asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value1"), "query1111"));
-		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value2", 1000),
+		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value2", 100),
 				"query2222"));
-		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value3", 700),
+		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value3", 70),
 				"query3333"));
-		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value4", 1000),
+		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value4", 100),
 				"query4444"));
 
 		assertFalse(
 				asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value1a"), "query1111"));
-		assertFalse(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value2a", 1000),
+		assertFalse(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value2a", 100),
 				"query2222"));
-		assertFalse(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value3a", 700),
+		assertFalse(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value3a", 70),
 				"query3333"));
-		assertFalse(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value4a", 1000),
+		assertFalse(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value4a", 100),
 				"query4444"));
 
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query1111").get(), "Value1");
@@ -164,11 +165,11 @@ public final class AsyncSupplierTest {
 
 		assertTrue(
 				asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value11"), "query1111"));
-		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value22", 1000),
+		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value22", 100),
 				"query2222"));
-		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value33", 700),
+		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value33", 70),
 				"query3333"));
-		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value44", 1000),
+		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value44", 100),
 				"query4444"));
 
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query1111").get(), "Value11");
@@ -185,11 +186,11 @@ public final class AsyncSupplierTest {
 	public void testMultipleTimeAsyncSupplierSubmittedForMultipleAccessThenSingleAccess() {
 		assertTrue(
 				asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value1"), "query11111"));
-		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value2", 1000),
+		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value2", 100),
 				"query22222"));
-		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value3", 700),
+		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value3", 70),
 				"query33333"));
-		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value4", 1000),
+		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value4", 100),
 				"query44444"));
 
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query11111").get(), "Value1");
@@ -204,11 +205,11 @@ public final class AsyncSupplierTest {
 
 		assertTrue(
 				asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value11"), "query11111"));
-		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value22", 1000),
+		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value22", 100),
 				"query22222"));
-		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value33", 700),
+		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value33", 70),
 				"query33333"));
-		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value44", 1000),
+		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value44", 100),
 				"query44444"));
 
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query11111").get(), "Value11");
@@ -228,19 +229,19 @@ public final class AsyncSupplierTest {
 	@Test
 	public void testMultipleTimeAsyncSupplierSubmittedForSingleAccess() {
 		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value1"), "query111"));
-		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value2", 1000),
+		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value2", 100),
 				"query222"));
 		assertTrue(
-				asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value3", 700), "query333"));
-		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value4", 1000),
+				asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value3", 70), "query333"));
+		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value4", 100),
 				"query444"));
 
 		assertFalse(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value1"), "query111"));
-		assertFalse(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value2", 1000),
+		assertFalse(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value2", 100),
 				"query222"));
 		assertFalse(
-				asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value3", 700), "query333"));
-		assertFalse(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value4", 1000),
+				asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value3", 70), "query333"));
+		assertFalse(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value4", 100),
 				"query444"));
 
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query111").get(), "Value1");
@@ -249,11 +250,11 @@ public final class AsyncSupplierTest {
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query444").get(), "Value4");
 
 		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value11"), "query111"));
-		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value22", 1000),
+		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value22", 100),
 				"query222"));
-		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value33", 700),
+		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value33", 70),
 				"query333"));
-		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value44", 1000),
+		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value44", 100),
 				"query444"));
 
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query111").get(), "Value11");
@@ -271,11 +272,11 @@ public final class AsyncSupplierTest {
 	public void testMultipleTimeAsyncSupplierSubmittedForSingleAccessThenMultipleAccess() {
 		assertTrue(
 				asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value1"), "query111111"));
-		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value2", 1000),
+		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value2", 100),
 				"query222222"));
-		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value3", 700),
+		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value3", 70),
 				"query333333"));
-		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value4", 1000),
+		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value4", 100),
 				"query444444"));
 
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query111111").get(), "Value1");
@@ -290,11 +291,11 @@ public final class AsyncSupplierTest {
 
 		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value11"),
 				"query111111"));
-		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value22", 1000),
+		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value22", 100),
 				"query222222"));
-		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value33", 700),
+		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value33", 70),
 				"query333333"));
-		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value44", 1000),
+		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value44", 100),
 				"query444444"));
 
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query111111").get(), "Value11");
@@ -457,7 +458,7 @@ public final class AsyncSupplierTest {
 		AsyncTask.getDefault().submitTask(() -> {
 			val[0] = "Value5";
 		});
-		Thread.sleep(1000);
+		Thread.sleep(100);
 		assertEquals(val[0], "Value5");
 	}
 
@@ -606,11 +607,11 @@ public final class AsyncSupplierTest {
 	public void testDropSupplierSubmittedForMultipleAccess() {
 		assertTrue(
 				asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value1"), "query1111"));
-		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value2", 1000),
+		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value2", 100),
 				"query2222"));
-		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value3", 700),
+		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value3", 70),
 				"query3333"));
-		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value4", 1000),
+		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value4", 100),
 				"query4444"));
 	
 		
@@ -632,11 +633,11 @@ public final class AsyncSupplierTest {
 	public void testDropSupplierSubmittedForMultipleAccessWithOneFetch() {
 		assertTrue(
 				asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value1"), "query1111"));
-		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value2", 1000),
+		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value2", 100),
 				"query2222"));
-		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value3", 700),
+		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value3", 70),
 				"query3333"));
-		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value4", 1000),
+		assertTrue(asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value4", 100),
 				"query4444"));
 		
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query1111").get(), "Value1");
@@ -664,11 +665,11 @@ public final class AsyncSupplierTest {
 	public void testDropSupplierSubmittedForSingleAccess() {
 		assertTrue(
 				asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value1"), "query1111"));
-		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value2", 1000),
+		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value2", 100),
 				"query2222"));
-		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value3", 700),
+		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value3", 70),
 				"query3333"));
-		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value4", 1000),
+		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value4", 100),
 				"query4444"));
 		
 		asyncSupplier.dropSubmittedSupplier("query1111");
@@ -689,11 +690,11 @@ public final class AsyncSupplierTest {
 	public void testDropSupplierSubmittedForSingleAccessWithOneFetch() {
 		assertTrue(
 				asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value1"), "query1111"));
-		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value2", 1000),
+		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value2", 100),
 				"query2222"));
-		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value3", 700),
+		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value3", 70),
 				"query3333"));
-		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value4", 1000),
+		assertTrue(asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value4", 100),
 				"query4444"));
 		
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query1111").get(), "Value1");
@@ -753,9 +754,9 @@ public final class AsyncSupplierTest {
 	@Test
 	public void testMultipleAsyncSupplierSubmittedWithDropExistingForMultipleAccess0() {
 		asyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value11"), "query1aa");
-		asyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value22", 1000), "query2aa");
-		asyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value33", 700), "query3aa");
-		asyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value44", 1000), "query4aa");
+		asyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value22", 100), "query2aa");
+		asyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value33", 70), "query3aa");
+		asyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value44", 100), "query4aa");
 	
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query1aa").get(), "Value11");
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query2aa").get(), "Value22");
@@ -770,14 +771,14 @@ public final class AsyncSupplierTest {
 	@Test
 	public void testMultipleAsyncSupplierSubmittedWithDropExistingForMultipleAccess() {
 		asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value1"), "query1");
-		asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value2", 1000), "query2");
-		asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value3", 700), "query3");
-		asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value4", 1000), "query4");
+		asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value2", 100), "query2");
+		asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value3", 70), "query3");
+		asyncSupplier.submitSupplierForMultipleAccess(TestUtil.delayedSupplier(() -> "Value4", 100), "query4");
 		
 		asyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value11"), "query1");
-		asyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value22", 1000), "query2");
-		asyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value33", 700), "query3");
-		asyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value44", 1000), "query4");
+		asyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value22", 100), "query2");
+		asyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value33", 70), "query3");
+		asyncSupplier.submitSupplierWithDropExistingForMultipleAccess(TestUtil.delayedSupplier(() -> "Value44", 100), "query4");
 	
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query1").get(), "Value11");
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query2").get(), "Value22");
@@ -792,9 +793,9 @@ public final class AsyncSupplierTest {
 	@Test
 	public void testMultipleAsyncSupplierSubmittedWithDropExistingForSingleAccess0() {
 		asyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value1a"), "query11b");
-		asyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value2a", 1000), "query22b");
-		asyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value3a", 700), "query33b");
-		asyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value4a", 1000), "query44b");
+		asyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value2a", 100), "query22b");
+		asyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value3a", 70), "query33b");
+		asyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value4a", 100), "query44b");
 	
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query11b").get(), "Value1a");
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query22b").get(), "Value2a");
@@ -813,14 +814,14 @@ public final class AsyncSupplierTest {
 	@Test
 	public void testMultipleAsyncSupplierSubmittedWithDropExistingForSingleAccess() {
 		asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value1"), "query11");
-		asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value2", 1000), "query22");
-		asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value3", 700), "query33");
-		asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value4", 1000), "query44");
+		asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value2", 100), "query22");
+		asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value3", 70), "query33");
+		asyncSupplier.submitSupplierForSingleAccess(TestUtil.delayedSupplier(() -> "Value4", 100), "query44");
 		
 		asyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value1a"), "query11");
-		asyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value2a", 1000), "query22");
-		asyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value3a", 700), "query33");
-		asyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value4a", 1000), "query44");
+		asyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value2a", 100), "query22");
+		asyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value3a", 70), "query33");
+		asyncSupplier.submitSupplierWithDropExistingForSingleAccess(TestUtil.delayedSupplier(() -> "Value4a", 100), "query44");
 	
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query11").get(), "Value1a");
 		assertEquals(asyncSupplier.waitAndGetFromSupplier(String.class, "query22").get(), "Value2a");
@@ -1048,6 +1049,7 @@ public final class AsyncSupplierTest {
 		asyncSupplier.close();
 		assertEquals(resultSupplier.get(), "Test");
 		asyncSupplier.close();
+		assertTrue(true);
 	}
 	
 	/**
@@ -1063,5 +1065,6 @@ public final class AsyncSupplierTest {
 		assertEquals(resultSupplier.get(), "Test1");
 		
 		asyncSupplier.submitSupplier(() -> "Test2");
+		fail();
 	}
 }
