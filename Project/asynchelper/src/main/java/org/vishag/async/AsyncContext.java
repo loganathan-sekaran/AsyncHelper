@@ -68,14 +68,15 @@ public class AsyncContext implements AutoCloseable{
 	/** The closed flag. */
 	private volatile boolean closed;
 
+	
+	/** The Constant DEFAULT_INSTANCE. */
+	private static final AsyncContext DEFAULT_INSTANCE = new AsyncContext();
+	
 	/**
 	 * Instantiates a new async context.
 	 */
 	private AsyncContext() {
 	}
-	
-	/** The Constant DEFAULT_INSTANCE. */
-	private static final AsyncContext DEFAULT_INSTANCE = new AsyncContext();
 	
 	/**
 	 * Gets the default AsyncContext instance.

@@ -981,12 +981,12 @@ public final class AsyncSupplierTest {
 	
 		assertEquals(asyncSupplier.waitAndGetValue(String.class, "String1").get(), "StringValue");
 		assertEquals(asyncSupplier.waitAndGetValue(Integer.class, "Integer1").get(), Integer.valueOf(100));
-		assertEquals(asyncSupplier.waitAndGetValue(Boolean.class, "Boolean1").get(), Boolean.valueOf(true));
+		assertEquals(asyncSupplier.waitAndGetValue(Boolean.class, "Boolean1").get(), Boolean.TRUE);
 		assertEquals(asyncSupplier.waitAndGetValue(Object.class, "Object1").get(), obj);
 	
 		assertEquals(asyncSupplier.waitAndGetValue(String.class, "String1").get(), "StringValue");
 		assertEquals(asyncSupplier.waitAndGetValue(Integer.class, "Integer1").get(), Integer.valueOf(100));
-		assertEquals(asyncSupplier.waitAndGetValue(Boolean.class, "Boolean1").get(), Boolean.valueOf(true));
+		assertEquals(asyncSupplier.waitAndGetValue(Boolean.class, "Boolean1").get(), Boolean.TRUE);
 		assertEquals(asyncSupplier.waitAndGetValue(Object.class, "Object1").get(), obj);
 	}
 
@@ -1033,7 +1033,7 @@ public final class AsyncSupplierTest {
 	
 		assertEquals(asyncSupplier.waitAndGetValue(String.class, "String2").get(), "StringValue2");
 		assertEquals(asyncSupplier.waitAndGetValue(Integer.class, "Integer2").get(), Integer.valueOf(200));
-		assertEquals(asyncSupplier.waitAndGetValue(Boolean.class, "Boolean2").get(), Boolean.valueOf(false));
+		assertEquals(asyncSupplier.waitAndGetValue(Boolean.class, "Boolean2").get(), Boolean.FALSE);
 		assertEquals(asyncSupplier.waitAndGetValue(Object.class, "Object2").get(), obj1);	
 	}
 	
@@ -1049,7 +1049,6 @@ public final class AsyncSupplierTest {
 		asyncSupplier.close();
 		assertEquals(resultSupplier.get(), "Test");
 		asyncSupplier.close();
-		assertTrue(true);
 	}
 	
 	/**

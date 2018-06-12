@@ -66,7 +66,7 @@ class Executor implements AutoCloseable {
 	 *            the executor service
 	 * @return the executor
 	 */
-	static Executor ofExecutorService(ExecutorService executorService) {
+	protected static Executor ofExecutorService(ExecutorService executorService) {
 		return new Executor(executorService);
 	}
 
@@ -75,7 +75,7 @@ class Executor implements AutoCloseable {
 	 *
 	 * @return the default
 	 */
-	static Executor getDefault() {
+	protected static Executor getDefault() {
 		return DEFAULT_INSTANCE;
 	}
 

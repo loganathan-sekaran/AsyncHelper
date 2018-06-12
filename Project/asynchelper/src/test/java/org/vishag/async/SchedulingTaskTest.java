@@ -278,14 +278,16 @@ public class SchedulingTaskTest {
 	 */
 	@Test
 	public void testClose() throws Exception {
+		int[] retVal = new int[2];
+
 		SchedulingTask schedulingTask = SchedulingTask.of(Executors.newScheduledThreadPool(5));
-		schedulingTask.scheduleTaskAndWait(1, TimeUnit.MILLISECONDS, () -> System.out.println("Test1"));
-		schedulingTask.scheduleTaskAndWait(1, TimeUnit.MILLISECONDS, () -> System.out.println("Test2"));
+		schedulingTask.scheduleTaskAndWait(1, TimeUnit.MILLISECONDS, () -> retVal[0] = 10);
+		schedulingTask.scheduleTaskAndWait(1, TimeUnit.MILLISECONDS, () -> retVal[1] = 20);
 		System.out.println("Close1");
 		schedulingTask.close();
 		System.out.println("Close2");
 		schedulingTask.close();
-		assert(true);
+		assertTrue(Arrays.toString(new int[] { 10, 20 }).equals(Arrays.toString(retVal)));
 	}
 	
 	/**

@@ -364,7 +364,6 @@ public final class SchedulingSupplierTest {
 		schedulingSupplier.close();
 		assertEquals(resultSupplier.get(), "Test");
 		schedulingSupplier.close();
-		assertTrue(true);
 	}
 	
 	/**

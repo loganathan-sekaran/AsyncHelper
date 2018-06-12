@@ -90,7 +90,6 @@ public class ObjectsKeyTest {
 		assert(key.equals(ObjectsKey.of("123")));
 		key.close();
 		key.close();
-		assert(true);
 	}
 	
 	/**

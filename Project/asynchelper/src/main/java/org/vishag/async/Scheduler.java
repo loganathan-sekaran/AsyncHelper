@@ -32,6 +32,19 @@ import java.util.concurrent.TimeUnit;
  */
 class Scheduler implements AutoCloseable {
 
+	/** The default scheduled executor service. */
+	static private ScheduledExecutorService defaultScheduledExecutorService = Executors
+			.newScheduledThreadPool(ForkJoinPool.getCommonPoolParallelism());
+	
+	/** The default instance of Scheduler. */
+	private static Scheduler DEFAULT_INSTANCE = new Scheduler(defaultScheduledExecutorService);
+
+	/** The scheduled executor service. */
+	private ScheduledExecutorService scheduledExecutorService;
+
+	/** The closed. */
+	private volatile boolean closed;
+	
 	/**
 	 * The Interface SchedulingFunction. This is used internally to schedule
 	 * task(s) and Supplier(s).
@@ -72,19 +85,6 @@ class Scheduler implements AutoCloseable {
 		 */
 		void consumeResult(R r);
 	}
-
-	/** The default scheduled executor service. */
-	static private ScheduledExecutorService defaultScheduledExecutorService = Executors
-			.newScheduledThreadPool(ForkJoinPool.getCommonPoolParallelism());
-	
-	/** The default instance of Scheduler. */
-	private static Scheduler DEFAULT_INSTANCE = new Scheduler(defaultScheduledExecutorService);
-
-	/** The scheduled executor service. */
-	private ScheduledExecutorService scheduledExecutorService;
-
-	/** The closed. */
-	private volatile boolean closed; 
 	
 	/**
 	 * Instantiates a new scheduler.
@@ -100,7 +100,7 @@ class Scheduler implements AutoCloseable {
 	 *
 	 * @return the default
 	 */
-	static Scheduler getDefault() {
+	protected static Scheduler getDefault() {
 		return DEFAULT_INSTANCE;
 	}
 

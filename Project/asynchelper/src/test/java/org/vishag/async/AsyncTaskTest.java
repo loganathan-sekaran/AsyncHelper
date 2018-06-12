@@ -319,13 +319,16 @@ public class AsyncTaskTest {
 	 */
 	@Test
 	public void testClose() throws Exception {
+		int[] retVal = new int[2];
+
 		AsyncTask asyncTask = AsyncTask.of(Executors.newFixedThreadPool(2));
-		asyncTask.submitTask(() -> System.out.println("Test1"));
-		asyncTask.submitTask(() -> System.out.println("Test2"));
+		asyncTask.submitTask(() -> retVal[0] = 10);
+		asyncTask.submitTask(() -> retVal[1] = 20);
 
 		asyncTask.close();
 		asyncTask.close();
-		assertTrue(true);
+		Thread.sleep(10);
+		assertTrue(Arrays.toString(new int[] { 10, 20 }).equals(Arrays.toString(retVal)));
 	}
 	
 	/**
