@@ -21,6 +21,7 @@ package org.vishag.async;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.junit.Rule;
@@ -87,7 +88,7 @@ public class ObjectsKeyTest {
 	@Test
 	public void testClose() throws Exception {
 		ObjectsKey key = ObjectsKey.of("123");
-		assert(key.equals(ObjectsKey.of("123")));
+		assertTrue(key.equals(ObjectsKey.of("123")));
 		key.close();
 		key.close();
 	}
@@ -100,7 +101,7 @@ public class ObjectsKeyTest {
 	@Test (expected=Exception.class)
 	public void testCloseWithException() throws Exception {
 		ObjectsKey key = ObjectsKey.of("1234");
-		assert(key.equals(ObjectsKey.of("1234")));
+		assertTrue(key.equals(ObjectsKey.of("1234")));
 		key.close();
 		key.equals(ObjectsKey.of("1234"));
 		fail();

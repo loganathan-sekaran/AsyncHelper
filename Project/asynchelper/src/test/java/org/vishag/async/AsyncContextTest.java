@@ -20,10 +20,12 @@
 package org.vishag.async;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -124,10 +126,11 @@ public class AsyncContextTest {
 	@Test
 	public void testClose() throws Exception {
 		AsyncContext context = AsyncContext.newInstance();
-		context.getOriginalKeys();
+		Map<ObjectsKey, ObjectsKey> originalKeys = context.getOriginalKeys();
+		originalKeys.put(ObjectsKey.of("111"), ObjectsKey.of("111"));
 		context.close();
 		context.close();
-		assert(true);
+		assertTrue(originalKeys.isEmpty());
 	}
 	
 	/**
