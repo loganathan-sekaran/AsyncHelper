@@ -287,6 +287,7 @@ public class SchedulingTaskTest {
 		schedulingTask.close();
 		System.out.println("Close2");
 		schedulingTask.close();
+		
 		assertTrue(Arrays.toString(new int[] { 10, 20 }).equals(Arrays.toString(retVal)));
 	}
 	
