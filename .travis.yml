@@ -8,11 +8,13 @@ cache:
   - "$HOME/.m2"
 install:
     - gpg --import $GPG_DIR/secret.gpg
-    - cd Project/asynchelper
+    - cd "$PROJ_DIR/Project/asynchelper"
+    - mvn install
+after_success:
+    - cd "$PROJ_DIR/Project/asynchelper"
     - chmod a+x "$GPG_DIR/publish.sh"
     - "$GPG_DIR/publish.sh"
-after_success:
-    - mvn test jacoco:report coveralls:report
 env:
   global:
-  - GPG_DIR="`pwd`/deploy"
+  - PROJ_DIR=`pwd`
+  - GPG_DIR="$PROJ_DIR/deploy"
