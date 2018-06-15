@@ -281,8 +281,9 @@ public class SchedulingTaskTest {
 		int[] retVal = new int[2];
 
 		SchedulingTask schedulingTask = SchedulingTask.of(Executors.newScheduledThreadPool(5));
-		schedulingTask.scheduleTaskAndWait(1, TimeUnit.MILLISECONDS, () -> retVal[0] = 10);
-		schedulingTask.scheduleTaskAndWait(1, TimeUnit.MILLISECONDS, () -> retVal[1] = 20);
+		schedulingTask.scheduleTask(1, TimeUnit.MILLISECONDS, () -> retVal[0] = 10);
+		schedulingTask.scheduleTask(1, TimeUnit.MILLISECONDS, () -> retVal[1] = 20);
+		Thread.sleep(1000);
 		System.out.println("Close1");
 		schedulingTask.close();
 		System.out.println("Close2");

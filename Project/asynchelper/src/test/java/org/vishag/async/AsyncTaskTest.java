@@ -327,7 +327,7 @@ public class AsyncTaskTest {
 
 		asyncTask.close();
 		asyncTask.close();
-		Thread.sleep(10);
+		Thread.sleep(1000);
 		assertTrue(Arrays.toString(new int[] { 10, 20 }).equals(Arrays.toString(retVal)));
 	}
 	
