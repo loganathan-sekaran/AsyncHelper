@@ -8,11 +8,11 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/loganathan001/AsyncHelper/issues)
 
-Async-Helper is a Java utility to invoke/schedule tasks or fetch data asynchronously using tags/flags in a functional way. This internally utilizes ForkJoin pool to submit the tasks.
+Async-Helper is a Java utility (also an OSGi bundle) to invoke/schedule tasks or fetch data asynchronously using tags/flags in a functional way. This internally utilizes ForkJoin pool to submit the tasks.
 
-This contains various helper classes such as  [Async](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/Async.java), [AsyncTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncTask.java), [AsyncSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncSupplier.java), [SchedulingTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingTask.java) and [SchedulingSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingSupplier.java) to perform various asynchronous operations.
+This contains various helper classes such as  [AsyncContext](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncContext.java), [AsyncTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncTask.java), [AsyncSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncSupplier.java), [SchedulingTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingTask.java) and [SchedulingSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingSupplier.java) to perform various asynchronous operations.
 
-Please refer to the [JavaDocs](http://www.javadoc.io/doc/org.vishag/async-helper/3.0.1)  also.  
+Please refer to the [JavaDocs](http://www.javadoc.io/doc/org.vishag/async-helper/4.0.0)  also.  
 
 ### Below are the some of the operations that can be perfomed using this utility:
 1. Submitting one or more Runnable(s) to run asynchronously.
@@ -31,7 +31,7 @@ Also refer to the <a href="https://github.com/loganathan001/AsyncHelper/wiki/Som
 <dependency>
   <groupId>org.vishag</groupId>
   <artifactId>async-helper</artifactId>
-  <version>3.0.1</version>
+  <version>4.0.0</version>
 </dependency>
 ```
 ## Some Example Usages of Async-Helper
@@ -39,7 +39,7 @@ Also refer to the <a href="https://github.com/loganathan001/AsyncHelper/wiki/Som
 If it is desired to run a set of method calls or code blocks asynchronously, the **[Async-Helper](https://github.com/loganathan001/AsyncHelper)** library includes an useful helper method **[AsyncTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncTask.java).submitTasks** as in below snippet.
 
 ```
-AsyncTask.submitTasks(
+AsyncTask.getDefault().submitTasks(
     () -> getMethodParam1(arg1, arg2),
     () -> getMethodParam2(arg2, arg3)
     () -> getMethodParam3(arg3, arg4),
@@ -54,7 +54,7 @@ Also if it is desired to obtain a return value from each of the asynchronous met
 
 ```
 Supplier<Object>[] resultSuppliers = 
-   AsyncSupplier.submitSuppliers(
+   AsyncSupplier.getDefault().submitSuppliers(
      () -> getMethodParam1(arg1, arg2),
      () -> getMethodParam2(arg3, arg4),
      () -> getMethodParam3(arg5, arg6)
@@ -74,9 +74,9 @@ myBigMethod(a,b,c);
 If the return type of each method differ, use the below kind of snippet.
 
 ```
-Supplier<String> aResultSupplier = AsyncSupplier.submitSupplier(() -> getMethodParam1(arg1, arg2));
-Supplier<Integer> bResultSupplier = AsyncSupplier.submitSupplier(() -> getMethodParam2(arg3, arg4));
-Supplier<Object> cResultSupplier = AsyncSupplier.submitSupplier(() -> getMethodParam3(arg5, arg6));
+Supplier<String> aResultSupplier = AsyncSupplier.getDefault().submitSupplier(() -> getMethodParam1(arg1, arg2));
+Supplier<Integer> bResultSupplier = AsyncSupplier.getDefault().submitSupplier(() -> getMethodParam2(arg3, arg4));
+Supplier<Object> cResultSupplier = AsyncSupplier.getDefault().submitSupplier(() -> getMethodParam3(arg5, arg6));
 
 myBigMethod(aResultSupplier.get(), bResultSupplier.get(), cResultSupplier.get());
 ```
@@ -84,15 +84,15 @@ myBigMethod(aResultSupplier.get(), bResultSupplier.get(), cResultSupplier.get())
 The result of the asynchronous method calls/code blocks can also be obtained at a different point of code in the same thread or a different thread as in the below snippet.
 
 ```
-AsyncSupplier.submitSupplierForSingleAccess(() -> getMethodParam1(arg1, arg2), "a");
-AsyncSupplier.submitSupplierForSingleAccess(() -> getMethodParam2(arg3, arg4), "b");
-AsyncSupplier.submitSupplierForSingleAccess(() -> getMethodParam3(arg5, arg6), "c");
+AsyncSupplier.getDefault().submitSupplierForSingleAccess(() -> getMethodParam1(arg1, arg2), "a");
+AsyncSupplier.getDefault().submitSupplierForSingleAccess(() -> getMethodParam2(arg3, arg4), "b");
+AsyncSupplier.getDefault().submitSupplierForSingleAccess(() -> getMethodParam3(arg5, arg6), "c");
 
 
 //Following can be in the same thread or a different thread
-Optional<String> aResult = AsyncSupplier.waitAndGetFromSupplier(String.class, "a");
-Optional<Integer> bResult = AsyncSupplier.waitAndGetFromSupplier(Integer.class, "b");
-Optional<Object> cResult = AsyncSupplier.waitAndGetFromSupplier(Object.class, "c");
+Optional<String> aResult = AsyncSupplier.getDefault().waitAndGetFromSupplier(String.class, "a");
+Optional<Integer> bResult = AsyncSupplier.getDefault().waitAndGetFromSupplier(Integer.class, "b");
+Optional<Object> cResult = AsyncSupplier.getDefault().waitAndGetFromSupplier(Object.class, "c");
 
  myBigMethod(aResult.get(),bResult.get(),cResult.get());
 ```
