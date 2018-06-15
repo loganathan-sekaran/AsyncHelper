@@ -7,9 +7,6 @@ cache:
   directories:
   - "$HOME/.m2"
 install:
-  - cd Project/asynchelper
-  - mvn install -DskipTests=true -Dgpg.skip=true -B -V
-after_success:
     - openssl aes-256-cbc -pass pass:$ENCRYPTION_PASSWORD -in $GPG_DIR/pubring.gpg.enc -out $GPG_DIR/pubring.gpg -d
     - openssl aes-256-cbc -pass pass:$ENCRYPTION_PASSWORD -in $GPG_DIR/secring.gpg.enc -out $GPG_DIR/secring.gpg -d
     - cd Project/asynchelper

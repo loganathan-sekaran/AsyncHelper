@@ -1,6 +1,6 @@
 #!/bin/bash
 
 if [[ $TRAVIS_PULL_REQUEST == "false" ]]; then
-    mvn deploy --settings $GPG_DIR/settings.xml -DperformRelease=true jacoco:report coveralls:report
+    mvn deploy jacoco:report coveralls:report --settings $GPG_DIR/settings.xml -DperformRelease=true
     exit $?
 fi
