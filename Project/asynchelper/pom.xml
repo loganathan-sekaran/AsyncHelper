@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.vishag</groupId>
   <artifactId>async-helper</artifactId>
-  <version>4.0.0-SNAPSHOT</version>
+  <version>4.0.0</version>
   <name>Async Helper</name>
   <description>Async-Helper is a Java utility (also an OSGi bundle) to invoke/schedule Tasks/data fetch operation asynchronously using tags/flags in a functional way. This 4.0.0 release is with breaking changes where all static methods are made as instance methods, and the helper classes are provided option to pass an executor service/async context or to use default executor/async context.</description>
   <url>https://github.com/loganathan001/AsyncHelper</url>
