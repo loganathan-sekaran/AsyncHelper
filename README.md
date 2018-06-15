@@ -26,6 +26,36 @@ Please look into the <a href="https://github.com/loganathan001/AsyncHelper/tree/
 
 Also refer to the <a href="https://github.com/loganathan001/AsyncHelper/wiki/Some-Example-Uses-of-AsyncHelper">Wiki page</a> for some example usages.
 
+### What is new in Async-Helper-4.0.0
+
+* Async-Helper is an **OSGi bundle** now :), to use it directly in OSGi applications.
+* Renamed *Async* helper class to [AsyncContext](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncContext.java) so that there is option to limit the context of Asynchronous operations. The global context can be obtained using `AscynContext.getDefault()`.
+
+* All the existing helper classes and their methods are now converted from static to instances, so that,
+
+   Either their default instances can be obtained using their *getDefault()* methods, 
+
+   [AsyncContext](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncContext.java) ==> `AsyncContext.getDefault()`
+   [AsyncTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncTask.java) ==> `AsyncTask.getDefault()`
+   [AsyncSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncSupplier.java) ==> `AsyncSupplier.getDefault()`
+   [SchedulingTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingTask.java) ==> `SchedulingTask.getDefault()`
+   [SchedulingSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingSupplier.java) ==> `SchedulingSupplier.getDefault()`
+
+   Or they can be instantiated with a specific arguments. 
+
+
+   [AsyncContext](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncContext.java) ==> `AsyncContext.newInstance()`
+   [AsyncTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncTask.java) ==> `AsyncTask.of(ExecutorService)` or `AsyncTask.of(ExecutorService, AsyncContext)`
+   [AsyncSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncSupplier.java) ==> `AsyncSupplier.of(ExecutorService)` or `AsyncSupplier.of(ExecutorService, AsyncContext)`
+   [SchedulingTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingTask.java) ==> `SchedulingTask.of(ScheduledExecutorService)` or `SchedulingTask.of(ScheduledExecutorService, AsyncContext)`
+   [SchedulingSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingSupplier.java) ==> `SchedulingSupplier.of(ScheduledExecutorService)` or `SchedulingSupplier.of(ScheduledExecutorService, AsyncContext)`
+
+* The default instances of `AsyncTask` and `AsyncSupplier` use a common `ForkJoinPool`. But it is possible to get customized instances of these can be obtained by passing a new `ExecutorService` instance.
+
+* The default instances of `SchedulingTask` and `SchedulingSupplier` use a common `ScheduledExecutorService`. But it is possible to get customized instances of these can be obtained by passing a new `ScheduledExecutorService` instance.
+
+* [AsyncTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncTask.java) includes a new static helper method `AsyncTask.submitTaskInNewThread(Runnable)` to submit a task by spawning a new thread.
+
 ### To install the latest version, add the below pom dependency entry:
 ```
 <dependency>
