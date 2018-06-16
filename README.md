@@ -35,20 +35,20 @@ Also refer to the <a href="https://github.com/loganathan001/AsyncHelper/wiki/Som
 
    Either their default instances can be obtained using their *getDefault()* methods, 
 
-   [AsyncContext](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncContext.java) ==> `AsyncContext.getDefault()`
-   [AsyncTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncTask.java) ==> `AsyncTask.getDefault()`
-   [AsyncSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncSupplier.java) ==> `AsyncSupplier.getDefault()`
-   [SchedulingTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingTask.java) ==> `SchedulingTask.getDefault()`
-   [SchedulingSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingSupplier.java) ==> `SchedulingSupplier.getDefault()`
+   - [AsyncContext](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncContext.java) ==> `AsyncContext.getDefault()`
+   - [AsyncTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncTask.java) ==> `AsyncTask.getDefault()`
+   - [AsyncSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncSupplier.java) ==> `AsyncSupplier.getDefault()`
+   - [SchedulingTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingTask.java) ==> `SchedulingTask.getDefault()`
+   - [SchedulingSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingSupplier.java) ==> `SchedulingSupplier.getDefault()`
 
    Or they can be instantiated with a specific arguments. 
 
 
-   [AsyncContext](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncContext.java) ==> `AsyncContext.newInstance()`
-   [AsyncTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncTask.java) ==> `AsyncTask.of(ExecutorService)` or `AsyncTask.of(ExecutorService, AsyncContext)`
-   [AsyncSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncSupplier.java) ==> `AsyncSupplier.of(ExecutorService)` or `AsyncSupplier.of(ExecutorService, AsyncContext)`
-   [SchedulingTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingTask.java) ==> `SchedulingTask.of(ScheduledExecutorService)` or `SchedulingTask.of(ScheduledExecutorService, AsyncContext)`
-   [SchedulingSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingSupplier.java) ==> `SchedulingSupplier.of(ScheduledExecutorService)` or `SchedulingSupplier.of(ScheduledExecutorService, AsyncContext)`
+  -  [AsyncContext](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncContext.java) ==> `AsyncContext.newInstance()`
+   - [AsyncTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncTask.java) ==> `AsyncTask.of(ExecutorService)` or `AsyncTask.of(ExecutorService, AsyncContext)`
+   - [AsyncSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncSupplier.java) ==> `AsyncSupplier.of(ExecutorService)` or `AsyncSupplier.of(ExecutorService, AsyncContext)`
+   - [SchedulingTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingTask.java) ==> `SchedulingTask.of(ScheduledExecutorService)` or `SchedulingTask.of(ScheduledExecutorService, AsyncContext)`
+   - [SchedulingSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingSupplier.java) ==> `SchedulingSupplier.of(ScheduledExecutorService)` or `SchedulingSupplier.of(ScheduledExecutorService, AsyncContext)`
 
 * The default instances of `AsyncTask` and `AsyncSupplier` use a common `ForkJoinPool`. But it is possible to get customized instances of these can be obtained by passing a new `ExecutorService` instance.
 
