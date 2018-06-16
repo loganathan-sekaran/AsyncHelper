@@ -24,7 +24,7 @@ Please refer to the [JavaDocs](http://www.javadoc.io/doc/org.vishag/async-helper
 
 Please look into the <a href="https://github.com/loganathan001/AsyncHelper/tree/master/Project/asynchelper/src/test/java/org/vishag/async">Unit tests</a> for all the use-cases and examples.
 
-Also refer to the <a href="https://github.com/loganathan001/AsyncHelper/wiki/Some-Example-Uses-of-AsyncHelper">Wiki page</a> for some example usages.
+Also refer to the <a href="https://github.com/loganathan001/AsyncHelper/wiki/Some-Example-Uses-of-Async-Helper">Wiki page</a> for some example usages.
 
 ### What is new in Async-Helper-4.0.0
 
