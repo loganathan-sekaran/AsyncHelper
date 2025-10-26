@@ -19,20 +19,23 @@
 
 package org.vishag.async;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -1065,5 +1068,290 @@ public final class AsyncSupplierTest {
 		
 		asyncSupplier.submitSupplier(() -> "Test2");
 		fail();
+	}
+	
+	/**
+	 * Test submit and get with timeout.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testSubmitAndGetWithTimeout() throws Exception {
+		Optional<String> result = asyncSupplier.submitAndGetWithTimeout(() -> {
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+			return "Success";
+		}, 500, TimeUnit.MILLISECONDS);
+		assertTrue(result.isPresent());
+		assertEquals("Success", result.get());
+	}
+	
+	/**
+	 * Test submit and get with timeout exception.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testSubmitAndGetWithTimeoutException() throws Exception {
+		Optional<String> result = asyncSupplier.submitAndGetWithTimeout(() -> {
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+			return "Should timeout";
+		}, 100, TimeUnit.MILLISECONDS);
+		assertFalse(result.isPresent());
+	}
+	
+	/**
+	 * Test submit and process all.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testSubmitAndProcessAll() throws Exception {
+		List<Integer> inputs = Arrays.asList(1, 2, 3, 4, 5);
+		List<Integer> results = asyncSupplier.submitAndProcessAll(inputs, i -> i * 2);
+		assertEquals(Arrays.asList(2, 4, 6, 8, 10), results);
+	}
+	
+	/**
+	 * Test submit and process all with limit.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testSubmitAndProcessAllWithLimit() throws Exception {
+		List<Integer> inputs = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8);
+		List<Integer> results = asyncSupplier.submitAndProcessAllWithLimit(inputs, i -> i * 2, 3);
+		assertEquals(Arrays.asList(2, 4, 6, 8, 10, 12, 14, 16), results);
+	}
+	
+	/**
+	 * Test submit supplier with retry.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testSubmitSupplierWithRetry() throws Exception {
+		AtomicInteger attempts = new AtomicInteger(0);
+		Supplier<String> result = asyncSupplier.submitSupplierWithRetry(() -> {
+			if (attempts.incrementAndGet() < 3) {
+				throw new RuntimeException("Simulated failure");
+			}
+			return "Success after retry";
+		}, 5, 50);
+		assertEquals("Success after retry", result.get());
+		assertTrue(attempts.get() >= 3);
+	}
+	
+	/**
+	 * Test submit supplier with retry all attempts fail.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testSubmitSupplierWithRetryAllAttemptsFail() throws Exception {
+		Supplier<String> result = asyncSupplier.submitSupplierWithRetry(() -> {
+			throw new RuntimeException("Always fails");
+		}, 3, 50);
+		// Wait for retries to complete
+		Thread.sleep(250);
+		// Safe supplier returns null when all retries fail
+		assertNull(result.get());
+	}
+	
+	/**
+	 * Test submit supplier with fallback.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testSubmitSupplierWithFallback() throws Exception {
+		Supplier<String> result = asyncSupplier.submitSupplierWithFallback(() -> {
+			throw new RuntimeException("Primary fails");
+		}, "Fallback value");
+		assertEquals("Fallback value", result.get());
+	}
+	
+	/**
+	 * Test submit supplier with fallback success.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testSubmitSupplierWithFallbackSuccess() throws Exception {
+		Supplier<String> result = asyncSupplier.submitSupplierWithFallback(() -> "Primary success", "Fallback value");
+		assertEquals("Primary success", result.get());
+	}
+	
+	/**
+	 * Test submit supplier with error handler.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testSubmitSupplierWithErrorHandler() throws Exception {
+		AtomicInteger errorCount = new AtomicInteger(0);
+		Supplier<String> result = asyncSupplier.submitSupplierWithErrorHandler(() -> {
+			throw new RuntimeException("Error occurred");
+		}, e -> {
+			errorCount.incrementAndGet();
+			return "Handled: " + e.getMessage();
+		});
+		assertEquals("Handled: Error occurred", result.get());
+		assertEquals(1, errorCount.get());
+	}
+	
+	/**
+	 * Test submit chained.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testSubmitChained() throws Exception {
+		Supplier<String> result = asyncSupplier.submitChained(() -> "Hello", s -> s + " World");
+		assertEquals("Hello World", result.get());
+	}
+	
+	/**
+	 * Test submit and combine.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testSubmitAndCombine() throws Exception {
+		Supplier<String> result = asyncSupplier.submitAndCombine(
+			results -> {
+				String first = (String) results.get(0);
+				String second = (String) results.get(1);
+				return first + " " + second;
+			},
+			() -> "Hello", 
+			() -> "World"
+		);
+		assertEquals("Hello World", result.get());
+	}
+	
+	/**
+	 * Test submit race.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	@SuppressWarnings("unchecked")
+	public void testSubmitRace() throws Exception {
+		Supplier<String>[] suppliers = new Supplier[] {
+			(Supplier<String>) () -> {
+				try { Thread.sleep(200); } catch (InterruptedException e) { 
+					Thread.currentThread().interrupt();
+				}
+				return "Slow";
+			},
+			(Supplier<String>) () -> {
+				try { Thread.sleep(50); } catch (InterruptedException e) { 
+					Thread.currentThread().interrupt();
+				}
+				return "Fast";
+			},
+			(Supplier<String>) () -> {
+				try { Thread.sleep(150); } catch (InterruptedException e) { 
+					Thread.currentThread().interrupt();
+				}
+				return "Medium";
+			}
+		};
+		Supplier<String> fastest = asyncSupplier.submitRace(suppliers);
+		assertEquals("Fast", fastest.get());
+	}
+	
+	/**
+	 * Test submit and get fastest.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	@SuppressWarnings("unchecked")
+	public void testSubmitAndGetFastest() throws Exception {
+		Optional<String> fastest = asyncSupplier.submitAndGetFastest(
+			(Supplier<String>) () -> {
+				try { Thread.sleep(200); } catch (InterruptedException e) { 
+					Thread.currentThread().interrupt();
+				}
+				return "Slow";
+			},
+			(Supplier<String>) () -> {
+				try { Thread.sleep(50); } catch (InterruptedException e) { 
+					Thread.currentThread().interrupt();
+				}
+				return "Fast";
+			}
+		);
+		assertTrue(fastest.isPresent());
+		assertEquals("Fast", fastest.get());
+	}
+	
+	/**
+	 * Test submit as completable future.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testSubmitAsCompletableFuture() throws Exception {
+		CompletableFuture<String> future = asyncSupplier.submitAsCompletableFuture(() -> "Test");
+		assertEquals("Test", future.get());
+	}
+	
+	/**
+	 * Test is pending.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testIsPending() throws Exception {
+		asyncSupplier.submitSupplierForSingleAccess(() -> {
+			try { Thread.sleep(500); } catch (InterruptedException e) { 
+				Thread.currentThread().interrupt();
+			}
+			return "Value";
+		}, "testKey");
+		
+		// Check immediately after submission - should be pending
+		Thread.sleep(10); // Tiny delay to ensure task is registered
+		boolean pending = asyncSupplier.isPending("testKey");
+		assertTrue("Task should be pending immediately after submission", pending);
+		
+		// Wait for task to complete and retrieve value to trigger cleanup
+		Thread.sleep(600);
+		Optional<String> value = asyncSupplier.waitAndGetFromSupplier(String.class, "testKey");
+		assertTrue("Value should be present", value.isPresent());
+		assertEquals("Value", value.get());
+		
+		// Now it should not be pending since it was retrieved
+		boolean notPending = asyncSupplier.isPending("testKey");
+		assertFalse("Task should not be pending after retrieval", notPending);
+	}
+	
+	/**
+	 * Test cancel supplier.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testCancelSupplier() throws Exception {
+		asyncSupplier.submitSupplierForSingleAccess(() -> {
+			try { Thread.sleep(1000); } catch (InterruptedException e) { 
+				Thread.currentThread().interrupt();
+				throw new RuntimeException("Cancelled");
+			}
+			return "Should not complete";
+		}, "cancelKey");
+		Thread.sleep(100);
+		assertTrue(asyncSupplier.cancelSupplier("cancelKey"));
+		assertFalse(asyncSupplier.isPending("cancelKey"));
 	}
 }

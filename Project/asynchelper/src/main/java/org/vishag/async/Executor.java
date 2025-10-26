@@ -41,10 +41,10 @@ class Executor implements AutoCloseable {
 			: ForkJoinPool.commonPool();
 
 	/** The default instance of Executor. */
-	private static Executor DEFAULT_INSTANCE = new Executor(DEFAULT_POOL);
+	private static final Executor DEFAULT_INSTANCE = new Executor(DEFAULT_POOL);
 
 	/** The thread pool. */
-	private ExecutorService threadPool;
+	private final ExecutorService threadPool;
 
 	/** The closed flag. */
 	private volatile boolean closed;

@@ -19,11 +19,21 @@
 
 package org.vishag.async;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -33,8 +43,8 @@ import java.util.stream.Stream;
  * <br>
  * <br>
  * Note: The default thread pool used in the default instance
- * ({@link AsyncSupplier#getDefault()}) is ForkJoinPool. A I/O intensive or
- * blocking task should prevent using the default instance, instead pass its own
+ * ({@link AsyncSupplier#getDefault()}) is ForkJoinPool. An I/O intensive or
+ * blocking task should avoid using the default instance, instead pass its own
  * thread pool executor (using {@link AsyncSupplier#of(ExecutorService)} or
  * {@link AsyncSupplier#of(ExecutorService, AsyncContext)}).
  * 
@@ -43,7 +53,7 @@ import java.util.stream.Stream;
 public final class AsyncSupplier implements AutoCloseable{
 	
 	/** The default instance. */
-	private static AsyncSupplier DEFAULT_INSTANCE = new AsyncSupplier(Executor.getDefault(), AsyncContext.getDefault());
+	private static final AsyncSupplier DEFAULT_INSTANCE = new AsyncSupplier(Executor.getDefault(), AsyncContext.getDefault());
 	
 	/** The executor. */
 	private final Executor executor;
@@ -52,7 +62,7 @@ public final class AsyncSupplier implements AutoCloseable{
 	private volatile boolean closed;
 
 	/** The async context. */
-	private AsyncContext asyncContext;
+	private final AsyncContext asyncContext;
 
 	/**
 	 * Prevent instantiation outside the class.
@@ -544,6 +554,420 @@ public final class AsyncSupplier implements AutoCloseable{
 	public synchronized <T> Optional<T> submitAndGetCallable(Callable<T> callable) {
 		Future<T> task = getThreadPool().submit(callable);
 		return getAsyncContext().safeGet(task);
+	}
+	
+	/**
+	 * Submits a supplier and waits for result with timeout.
+	 * Returns empty Optional if timeout occurs or an exception is thrown.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param supplier
+	 *            the supplier
+	 * @param timeout
+	 *            the timeout value
+	 * @param unit
+	 *            the time unit
+	 * @return Optional containing result, empty if timeout or error
+	 */
+	public <T> Optional<T> submitAndGetWithTimeout(Supplier<T> supplier, long timeout, TimeUnit unit) {
+		Future<T> task = getThreadPool().submit(() -> supplier.get());
+		try {
+			return Optional.ofNullable(task.get(timeout, unit));
+		} catch (InterruptedException | ExecutionException | TimeoutException e) {
+			if (e instanceof InterruptedException) {
+				Thread.currentThread().interrupt();
+			}
+			return Optional.empty();
+		}
+	}
+
+	/**
+	 * Waits and gets the result from a supplier submitted asynchronously with timeout.
+	 * Returns empty Optional if timeout occurs or supplier is not found.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param clazz
+	 *            the class type
+	 * @param timeout
+	 *            the timeout value
+	 * @param unit
+	 *            the time unit
+	 * @param keys
+	 *            the keys
+	 * @return Optional containing result, empty if timeout or not found
+	 */
+	public <T> Optional<T> waitAndGetFromSupplierWithTimeout(Class<T> clazz, long timeout, TimeUnit unit, Object... keys) {
+		return getAsyncContext().waitAndGetFromSupplierWithTimeout(clazz, timeout, unit, keys);
+	}
+
+	/**
+	 * Processes a collection in parallel and collects results in the same order.
+	 * Each item is processed asynchronously and results are collected when all complete.
+	 *
+	 * @param <T>
+	 *            input type
+	 * @param <R>
+	 *            result type
+	 * @param items
+	 *            the items to process
+	 * @param processor
+	 *            the function to apply to each item
+	 * @return List of results in same order as input
+	 */
+	public <T, R> List<R> submitAndProcessAll(Collection<T> items, Function<T, R> processor) {
+		List<Future<R>> futures = items.stream()
+				.map(item -> getThreadPool().submit(() -> processor.apply(item)))
+				.collect(Collectors.toList());
+		
+		return futures.stream()
+				.map(future -> {
+					try {
+						return future.get();
+					} catch (InterruptedException | ExecutionException e) {
+						if (e instanceof InterruptedException) {
+							Thread.currentThread().interrupt();
+						}
+						return null;
+					}
+				})
+				.collect(Collectors.toList());
+	}
+
+	/**
+	 * Processes items in parallel with a limit on concurrent executions.
+	 * Useful for rate-limiting or resource-constrained scenarios.
+	 *
+	 * @param <T>
+	 *            input type
+	 * @param <R>
+	 *            result type
+	 * @param items
+	 *            the items to process
+	 * @param processor
+	 *            the function to apply
+	 * @param maxConcurrent
+	 *            maximum concurrent tasks
+	 * @return List of results in same order as input
+	 */
+	public <T, R> List<R> submitAndProcessAllWithLimit(Collection<T> items, Function<T, R> processor, int maxConcurrent) {
+		List<T> itemList = new ArrayList<>(items);
+		List<R> results = new ArrayList<>(items.size());
+		for (int i = 0; i < items.size(); i++) {
+			results.add(null);
+		}
+		
+		AtomicInteger index = new AtomicInteger(0);
+		List<Future<?>> futures = new ArrayList<>();
+		
+		for (int i = 0; i < Math.min(maxConcurrent, items.size()); i++) {
+			futures.add(getThreadPool().submit(() -> {
+				int currentIndex;
+				while ((currentIndex = index.getAndIncrement()) < itemList.size()) {
+					R result = processor.apply(itemList.get(currentIndex));
+					synchronized (results) {
+						results.set(currentIndex, result);
+					}
+				}
+			}));
+		}
+		
+		// Wait for all to complete
+		futures.forEach(future -> {
+			try {
+				future.get();
+			} catch (InterruptedException | ExecutionException e) {
+				if (e instanceof InterruptedException) {
+					Thread.currentThread().interrupt();
+				}
+			}
+		});
+		
+		return results;
+	}
+
+	/**
+	 * Submits a supplier with automatic retry on failure.
+	 * Retries up to maxRetries times with specified delay between attempts.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param supplier
+	 *            the supplier
+	 * @param maxRetries
+	 *            maximum retry attempts
+	 * @param delayMillis
+	 *            delay between retries in milliseconds
+	 * @return Supplier of result
+	 */
+	public <T> Supplier<T> submitSupplierWithRetry(Supplier<T> supplier, int maxRetries, long delayMillis) {
+		return AsyncContext.safeSupplier(getThreadPool().submit(() -> {
+			int attempts = 0;
+			Exception lastException = null;
+			
+			while (attempts <= maxRetries) {
+				try {
+					return supplier.get();
+				} catch (Exception e) {
+					lastException = e;
+					attempts++;
+					if (attempts <= maxRetries) {
+						try {
+							Thread.sleep(delayMillis);
+						} catch (InterruptedException ie) {
+							Thread.currentThread().interrupt();
+							throw new RuntimeException("Retry interrupted", ie);
+						}
+					}
+				}
+			}
+			throw new RuntimeException("Max retries exceeded", lastException);
+		}));
+	}
+
+	/**
+	 * Submits a supplier with fallback value on failure.
+	 * If the supplier throws an exception, returns the fallback value instead.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param supplier
+	 *            the supplier
+	 * @param fallbackValue
+	 *            the fallback value if supplier fails
+	 * @return Supplier that never fails
+	 */
+	public <T> Supplier<T> submitSupplierWithFallback(Supplier<T> supplier, T fallbackValue) {
+		return AsyncContext.safeSupplier(getThreadPool().submit(() -> {
+			try {
+				return supplier.get();
+			} catch (Exception e) {
+				return fallbackValue;
+			}
+		}));
+	}
+
+	/**
+	 * Submits a supplier and applies error handler on failure.
+	 * The error handler receives the exception and can return a recovery value.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param supplier
+	 *            the supplier
+	 * @param errorHandler
+	 *            handler for exceptions
+	 * @return Supplier of result or error-handled value
+	 */
+	public <T> Supplier<T> submitSupplierWithErrorHandler(Supplier<T> supplier, Function<Exception, T> errorHandler) {
+		return AsyncContext.safeSupplier(getThreadPool().submit(() -> {
+			try {
+				return supplier.get();
+			} catch (Exception e) {
+				return errorHandler.apply(e);
+			}
+		}));
+	}
+
+	/**
+	 * Chains two suppliers - second runs after first completes.
+	 * The result of the first supplier is passed to the second function.
+	 *
+	 * @param <T>
+	 *            first result type
+	 * @param <R>
+	 *            second result type
+	 * @param first
+	 *            the first supplier
+	 * @param second
+	 *            function that takes first result and returns second
+	 * @return Supplier of final result
+	 */
+	public <T, R> Supplier<R> submitChained(Supplier<T> first, Function<T, R> second) {
+		return AsyncContext.safeSupplier(getThreadPool().submit(() -> {
+			T firstResult = first.get();
+			return second.apply(firstResult);
+		}));
+	}
+
+	/**
+	 * Submits multiple suppliers and combines results when all complete.
+	 * The combiner function receives a list of all results.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param combiner
+	 *            function to combine all results
+	 * @param suppliers
+	 *            the suppliers
+	 * @return Supplier of combined result
+	 */
+	@SafeVarargs
+	public final <T> Supplier<T> submitAndCombine(Function<List<?>, T> combiner, Supplier<?>... suppliers) {
+		return AsyncContext.safeSupplier(getThreadPool().submit(() -> {
+			List<Future<?>> futures = Stream.of(suppliers)
+					.map(supplier -> getThreadPool().submit(() -> supplier.get()))
+					.collect(Collectors.toList());
+			
+			List<Object> results = futures.stream()
+					.map(future -> {
+						try {
+							return future.get();
+						} catch (InterruptedException | ExecutionException e) {
+							if (e instanceof InterruptedException) {
+								Thread.currentThread().interrupt();
+							}
+							return null;
+						}
+					})
+					.collect(Collectors.toList());
+			
+			return combiner.apply(results);
+		}));
+	}
+
+	/**
+	 * Submits multiple suppliers, returns first successful non-null result.
+	 * Other tasks continue to completion.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param suppliers
+	 *            the suppliers
+	 * @return Supplier that returns first successful result
+	 */
+	@SafeVarargs
+	public final <T> Supplier<T> submitRace(Supplier<T>... suppliers) {
+		return () -> {
+			List<Future<T>> futures = Stream.of(suppliers)
+					.map(supplier -> getThreadPool().submit(() -> supplier.get()))
+					.collect(Collectors.toList());
+			
+			// Poll futures until one completes successfully
+			while (!futures.isEmpty()) {
+				for (int i = 0; i < futures.size(); i++) {
+					Future<T> future = futures.get(i);
+					if (future.isDone()) {
+						try {
+							T result = future.get();
+							if (result != null) {
+								return result;
+							}
+						} catch (InterruptedException | ExecutionException e) {
+							if (e instanceof InterruptedException) {
+								Thread.currentThread().interrupt();
+							}
+						}
+						futures.remove(i);
+						i--;
+					}
+				}
+				
+				if (!futures.isEmpty()) {
+					try {
+						Thread.sleep(1);
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+						return null;
+					}
+				}
+			}
+			return null;
+		};
+	}
+
+	/**
+	 * Submits multiple suppliers, returns fastest non-null result.
+	 * Cancels remaining tasks after first success.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param suppliers
+	 *            the suppliers
+	 * @return Optional of first successful result
+	 */
+	@SafeVarargs
+	public final <T> Optional<T> submitAndGetFastest(Supplier<T>... suppliers) {
+		List<Future<T>> futures = Stream.of(suppliers)
+				.map(supplier -> getThreadPool().submit(() -> supplier.get()))
+				.collect(Collectors.toList());
+		
+		// Poll futures until one completes successfully
+		while (!futures.isEmpty()) {
+			for (int i = 0; i < futures.size(); i++) {
+				Future<T> future = futures.get(i);
+				if (future.isDone()) {
+					try {
+						T result = future.get();
+						if (result != null) {
+							// Cancel remaining futures
+							futures.forEach(f -> f.cancel(true));
+							return Optional.of(result);
+						}
+					} catch (InterruptedException | ExecutionException e) {
+						if (e instanceof InterruptedException) {
+							Thread.currentThread().interrupt();
+						}
+					}
+					futures.remove(i);
+					i--;
+				}
+			}
+			
+			if (!futures.isEmpty()) {
+				try {
+					Thread.sleep(1);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					return Optional.empty();
+				}
+			}
+		}
+		return Optional.empty();
+	}
+
+	/**
+	 * Converts to CompletableFuture for better integration with modern Java APIs.
+	 * Allows chaining, composition, and exception handling using CompletableFuture methods.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param supplier
+	 *            the supplier
+	 * @return CompletableFuture of result
+	 */
+	public <T> CompletableFuture<T> submitAsCompletableFuture(Supplier<T> supplier) {
+		return CompletableFuture.supplyAsync(supplier, getThreadPool());
+	}
+
+	/**
+	 * Checks if a supplier with given keys is still pending (not yet completed).
+	 *
+	 * @param keys
+	 *            the keys
+	 * @return true if pending, false if completed or not found
+	 */
+	public boolean isPending(Object... keys) {
+		return getAsyncContext().isPending(keys);
+	}
+
+	/**
+	 * Cancels a submitted supplier by keys.
+	 * Note: This only prevents retrieval, the execution may still complete.
+	 *
+	 * @param keys
+	 *            the keys
+	 * @return true if cancelled, false if already completed or not found
+	 */
+	public boolean cancelSupplier(Object... keys) {
+		ObjectsKey objectsKey = ObjectsKey.of(keys);
+		AsyncContext async = getAsyncContext();
+		if (async.getOriginalKeys().containsKey(objectsKey)) {
+			dropSubmittedSupplier(keys);
+			return true;
+		}
+		return false;
 	}
 	
 	/* (non-Javadoc)

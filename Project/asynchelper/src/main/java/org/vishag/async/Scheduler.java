@@ -33,14 +33,14 @@ import java.util.concurrent.TimeUnit;
 class Scheduler implements AutoCloseable {
 
 	/** The default scheduled executor service. */
-	static private ScheduledExecutorService defaultScheduledExecutorService = Executors
+	private static final ScheduledExecutorService DEFAULT_SCHEDULED_EXECUTOR_SERVICE = Executors
 			.newScheduledThreadPool(ForkJoinPool.getCommonPoolParallelism());
 	
 	/** The default instance of Scheduler. */
-	private static Scheduler DEFAULT_INSTANCE = new Scheduler(defaultScheduledExecutorService);
+	private static final Scheduler DEFAULT_INSTANCE = new Scheduler(DEFAULT_SCHEDULED_EXECUTOR_SERVICE);
 
 	/** The scheduled executor service. */
-	private ScheduledExecutorService scheduledExecutorService;
+	private final ScheduledExecutorService scheduledExecutorService;
 
 	/** The closed. */
 	private volatile boolean closed;
@@ -126,16 +126,13 @@ class Scheduler implements AutoCloseable {
 	protected <T, R> ScheduledFuture<?> doScheduleFunction(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousFunction, Scheduler.SchedulingFunction<T, R> schedulingFunction) {
 		final ScheduledFuture<?>[] scheduleFuture = new ScheduledFuture<?>[1];
-		Runnable seq = new Runnable() {
-			@Override
-			public void run() {
-				synchronized (schedulingFunction) {
-					if (schedulingFunction.canRun()) {
-						R res = schedulingFunction.invokeNextFunction();
-						schedulingFunction.consumeResult(res);
-						if (schedulingFunction.canCancel() && scheduleFuture[0] != null) {
-							scheduleFuture[0].cancel(true);
-						}
+		Runnable seq = () -> {
+			synchronized (schedulingFunction) {
+				if (schedulingFunction.canRun()) {
+					R res = schedulingFunction.invokeNextFunction();
+					schedulingFunction.consumeResult(res);
+					if (schedulingFunction.canCancel() && scheduleFuture[0] != null) {
+						scheduleFuture[0].cancel(true);
 					}
 				}
 			}

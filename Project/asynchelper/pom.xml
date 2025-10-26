@@ -2,9 +2,9 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.vishag</groupId>
   <artifactId>async-helper</artifactId>
-  <version>4.0.1-SNAPSHOT</version>
+  <version>4.1.0</version>
   <name>Async Helper</name>
-  <description>Async-Helper is a Java utility (also an OSGi bundle) to invoke/schedule Tasks/data fetch operation asynchronously using tags/flags in a functional way. This 4.0.0 release is with breaking changes where all static methods are made as instance methods, and the helper classes are provided option to pass an executor service/async context or to use default executor/async context.</description>
+  <description>Async-Helper is a Java utility (also an OSGi bundle) to invoke/schedule Tasks/data fetch operation asynchronously using tags/flags in a functional way. This 4.1.0 release adds 22 new enhanced features including timeout support, batch processing, resilience patterns (retry/fallback/error handling), functional composition, competitive execution, CompletableFuture integration, monitoring &amp; control, and advanced scheduling capabilities.</description>
   <url>https://github.com/loganathan001/AsyncHelper</url>
 	<distributionManagement>
 	  <snapshotRepository>
@@ -17,7 +17,7 @@
 	  </repository>
 	</distributionManagement>
 	<properties>
-       		<jacoco-maven-plugin.version>0.7.6.201602180812</jacoco-maven-plugin.version>
+       		<jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
 	        <coveralls-maven-plugin.version>4.3.0</coveralls-maven-plugin.version>
 	        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -166,7 +166,7 @@
 					<plugin>
 					  <groupId>org.apache.maven.plugins</groupId>
 					  <artifactId>maven-javadoc-plugin</artifactId>
-					  <version>2.9.1</version>
+					  <version>3.6.3</version>
 					  <executions>
 						<execution>
 						  <id>attach-javadocs</id>
@@ -177,20 +177,19 @@
 					  </executions>
 					</plugin>
 						<plugin>
-						  <groupId>org.sonatype.plugins</groupId>
-						  <artifactId>nexus-staging-maven-plugin</artifactId>
-						  <version>1.6.7</version>
+						  <groupId>org.sonatype.central</groupId>
+						  <artifactId>central-publishing-maven-plugin</artifactId>
+						  <version>0.4.0</version>
 						  <extensions>true</extensions>
 						  <configuration>
-							<serverId>ossrh</serverId>
-							<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-							<autoReleaseAfterClose>true</autoReleaseAfterClose>
+							<publishingServerId>central</publishingServerId>
+							<tokenAuth>true</tokenAuth>
 						  </configuration>
 						</plugin>
 						<plugin>
 						  <groupId>org.apache.maven.plugins</groupId>
 						  <artifactId>maven-gpg-plugin</artifactId>
-						  <version>1.5</version>
+						  <version>3.1.0</version>
 						  <executions>
 							<execution>
 							  <id>sign-artifacts</id>
@@ -200,6 +199,12 @@
 							  </goals>
 							</execution>
 						  </executions>
+						  <configuration>
+							<gpgArguments>
+							  <arg>--pinentry-mode</arg>
+							  <arg>loopback</arg>
+							</gpgArguments>
+						  </configuration>
 						</plugin>
                 </plugins>
             </build>

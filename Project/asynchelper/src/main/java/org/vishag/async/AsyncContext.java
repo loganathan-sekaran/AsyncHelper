@@ -17,16 +17,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.vishag.async;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -406,6 +408,171 @@ public class AsyncContext implements AutoCloseable{
 		return waitAndGetFromSupplier(clazz, keys);
 	}
 
+	/**
+	 * Waits for flag with timeout.
+	 * Returns true if notified within timeout, false if timeout occurs.
+	 *
+	 * @param timeout
+	 *            the timeout value
+	 * @param unit
+	 *            the time unit
+	 * @param flag
+	 *            the flag
+	 * @return true if notified, false if timeout
+	 * @throws InterruptedException
+	 *             if interrupted
+	 */
+	public boolean waitForFlagWithTimeout(long timeout, TimeUnit unit, String... flag) throws InterruptedException {
+		ObjectsKey key = ObjectsKey.of((Object[]) flag);
+		ObjectsKey originalKey = getOriginalKeys().get(key);
+		if (originalKey == null) {
+			originalKey = key;
+			getOriginalKeys().put(key, originalKey);
+		}
+		synchronized (originalKey) {
+			originalKey.wait(unit.toMillis(timeout));
+			// Check if we were notified or timed out
+			return !getOriginalKeys().containsKey(key);
+		}
+	}
+
+	/**
+	 * Waits for all flags to be notified.
+	 * Blocks until all specified flags have been notified.
+	 *
+	 * @param flags
+	 *            the flags to wait for
+	 * @throws InterruptedException
+	 *             if interrupted
+	 */
+	public void waitForAllFlags(String[]... flags) throws InterruptedException {
+		for (String[] flag : flags) {
+			waitForFlag(flag);
+		}
+	}
+
+	/**
+	 * Waits for any one of the flags to be notified.
+	 * Returns as soon as any flag is notified.
+	 *
+	 * @param flags
+	 *            the flags to wait for
+	 * @return the flag that was notified
+	 * @throws InterruptedException
+	 *             if interrupted
+	 */
+	public String[] waitForAnyFlag(String[]... flags) throws InterruptedException {
+		AtomicReference<String[]> notifiedFlag = new AtomicReference<>();
+		List<Thread> waitThreads = new ArrayList<>();
+		Object lock = new Object();
+		
+		for (String[] flag : flags) {
+			Thread thread = new Thread(() -> {
+				try {
+					waitForFlag(flag);
+					synchronized (lock) {
+						if (notifiedFlag.get() == null) {
+							notifiedFlag.set(flag);
+							lock.notifyAll();
+						}
+					}
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+			});
+			thread.start();
+			waitThreads.add(thread);
+		}
+		
+		synchronized (lock) {
+			while (notifiedFlag.get() == null) {
+				lock.wait();
+			}
+		}
+		
+		// Interrupt remaining threads
+		waitThreads.forEach(Thread::interrupt);
+		
+		return notifiedFlag.get();
+	}
+
+	/**
+	 * Waits and gets the result from a supplier with timeout.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param clazz
+	 *            the class type
+	 * @param timeout
+	 *            the timeout value
+	 * @param unit
+	 *            the time unit
+	 * @param keys
+	 *            the keys
+	 * @return Optional containing result, empty if timeout or not found
+	 */
+	public <T> Optional<T> waitAndGetFromSupplierWithTimeout(Class<T> clazz, long timeout, TimeUnit unit, Object... keys) {
+		ObjectsKey objectsKey = ObjectsKey.of(keys);
+		if (getOriginalKeys().containsKey(objectsKey)) {
+			synchronized (getOriginalKeys().get(objectsKey)) {
+				if (getMultipleAccessedValues().containsKey(objectsKey)) {
+					return getCastedValue(clazz, () -> getMultipleAccessedValues().get(objectsKey));
+				}
+	
+				if (getFutureSuppliers().containsKey(objectsKey)) {
+					Supplier<? extends Object> supplier = getFutureSuppliers().get(objectsKey);
+					
+					// Try to get with timeout
+					try {
+						Object result = null;
+						long startTime = System.currentTimeMillis();
+						long timeoutMillis = unit.toMillis(timeout);
+						
+						// Poll until available or timeout
+						while (result == null && (System.currentTimeMillis() - startTime) < timeoutMillis) {
+							try {
+								result = supplier.get();
+								break;
+							} catch (Exception e) {
+								Thread.sleep(10);
+							}
+						}
+						
+						if (result != null && clazz.isInstance(result)) {
+							Optional<T> value = Optional.of(clazz.cast(result));
+							getFutureSuppliers().remove(objectsKey);
+							
+							if (getMultipleAccessedKeys().containsKey(objectsKey)) {
+								getMultipleAccessedValues().put(objectsKey, value.orElse(null));
+							} else {
+								ObjectsKey originalKey = getOriginalKeys().remove(objectsKey);
+								if(originalKey != null) {
+									originalKey.close();
+								}
+							}
+							return value;
+						}
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
+				}
+			}
+		}
+		return Optional.empty();
+	}
+
+	/**
+	 * Checks if a supplier with given keys is still pending (not yet retrieved).
+	 *
+	 * @param keys
+	 *            the keys
+	 * @return true if pending, false if completed or not found
+	 */
+	public boolean isPending(Object... keys) {
+		ObjectsKey objectsKey = ObjectsKey.of(keys);
+		return getFutureSuppliers().containsKey(objectsKey);
+	}
+
 	/* (non-Javadoc)
 	 * @see java.lang.AutoCloseable#close()
 	 */
@@ -425,7 +592,7 @@ public class AsyncContext implements AutoCloseable{
 	 *
 	 * @return the future suppliers
 	 */
-	public Map<ObjectsKey, Supplier<? extends Object>> getFutureSuppliers() {
+	protected Map<ObjectsKey, Supplier<? extends Object>> getFutureSuppliers() {
 		assertNotClosed();
 		return futureSuppliers;
 	}
@@ -435,7 +602,7 @@ public class AsyncContext implements AutoCloseable{
 	 *
 	 * @return the original keys
 	 */
-	public Map<ObjectsKey, ObjectsKey> getOriginalKeys() {
+	protected Map<ObjectsKey, ObjectsKey> getOriginalKeys() {
 		assertNotClosed();
 		return originalKeys;
 	}
@@ -445,7 +612,7 @@ public class AsyncContext implements AutoCloseable{
 	 *
 	 * @return the multiple accessed keys
 	 */
-	public Map<ObjectsKey, ObjectsKey> getMultipleAccessedKeys() {
+	protected Map<ObjectsKey, ObjectsKey> getMultipleAccessedKeys() {
 		assertNotClosed();
 		return multipleAccessedKeys;
 	}
@@ -455,7 +622,7 @@ public class AsyncContext implements AutoCloseable{
 	 *
 	 * @return the multiple accessed values
 	 */
-	public Map<ObjectsKey, Object> getMultipleAccessedValues() {
+	protected Map<ObjectsKey, Object> getMultipleAccessedValues() {
 		assertNotClosed();
 		return multipleAccessedValues;
 	}

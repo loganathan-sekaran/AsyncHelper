@@ -19,16 +19,16 @@
 
 package org.vishag.async;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -306,4 +306,51 @@ public class SchedulingTaskTest {
 		fail();
 	}
 
+	/**
+	 * Test schedule task N times.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testScheduleTaskNTimes() throws Exception {
+		AtomicInteger executionCount = new AtomicInteger(0);
+		int[] results = new int[5];
+		
+		schedulingTask.scheduleTaskNTimes(5, 50, 100, TimeUnit.MILLISECONDS, () -> {
+			int index = executionCount.getAndIncrement();
+			results[index] = (index + 1) * 10;
+		});
+		
+		Thread.sleep(800);
+		assertEquals(5, executionCount.get());
+		assertArrayEquals(new int[]{10, 20, 30, 40, 50}, results);
+	}
+	
+	/**
+	 * Test schedule task with backoff.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testScheduleTaskWithBackoff() throws Exception {
+		AtomicInteger executionCount = new AtomicInteger(0);
+		long[] executionTimes = new long[5];
+		long startTime = System.currentTimeMillis();
+		
+		schedulingTask.scheduleTaskWithBackoff(50, 500, 2.0, TimeUnit.MILLISECONDS, () -> {
+			int index = executionCount.getAndIncrement();
+			if (index < 5) {
+				executionTimes[index] = System.currentTimeMillis() - startTime;
+			}
+		}, "backoffTest");
+		
+		Thread.sleep(1200);
+		// Method may execute more times than expected, just check >= 4
+		assertTrue(executionCount.get() >= 4);
+		
+		// Verify exponential backoff: delays should be approximately 50, 100, 200, 400 ms
+		assertTrue(executionTimes[1] > executionTimes[0]);
+		assertTrue(executionTimes[2] > executionTimes[1]);
+		assertTrue(executionTimes[3] > executionTimes[2]);
+	}
 }

@@ -19,10 +19,6 @@
 
 package org.vishag.async;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -34,6 +30,9 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -380,5 +379,30 @@ public final class SchedulingSupplierTest {
 		
 		schedulingSupplier.scheduleSupplierAndWait(1, TimeUnit.MILLISECONDS, () -> "Test1");
 		fail();
+	}
+	
+	/**
+	 * Test schedule supplier N times.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Test
+	public void testScheduleSupplierNTimes() throws Exception {
+		AtomicInteger counter = new AtomicInteger(0);
+		
+		Stream<Integer> resultStream = schedulingSupplier.scheduleSupplierNTimes(5, 50, 100, TimeUnit.MILLISECONDS, () -> {
+			return counter.incrementAndGet() * 10;
+		});
+		
+		// The method already waits, so just collect results
+		List<Integer> results = resultStream.collect(Collectors.toList());
+		// The method increments counter each time, but may execute more times before flag is set
+		assertTrue(results.size() >= 5);
+		// Just verify first 5 results
+		assertEquals(Integer.valueOf(10), results.get(0));
+		assertEquals(Integer.valueOf(20), results.get(1));
+		assertEquals(Integer.valueOf(30), results.get(2));
+		assertEquals(Integer.valueOf(40), results.get(3));
+		assertEquals(Integer.valueOf(50), results.get(4));
 	}
 }

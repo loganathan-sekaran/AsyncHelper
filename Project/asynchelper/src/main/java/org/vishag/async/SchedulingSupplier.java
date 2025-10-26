@@ -55,16 +55,16 @@ public final class SchedulingSupplier implements AutoCloseable{
 	private static final Logger logger = Logger.getLogger(SchedulingSupplier.class.getName());
 	
 	/** The scheduler. */
-	private Scheduler scheduler;
+	private final Scheduler scheduler;
 	
 	/** The closed flag. */
 	private volatile boolean closed;
 
 	/** The async context. */
-	private AsyncContext asyncContext;
+	private final AsyncContext asyncContext;
 	
 	/** The default instance of SchedulingSupplier. */
-	private static SchedulingSupplier DEFAULT_INSTANCE = new SchedulingSupplier(Scheduler.getDefault(), AsyncContext.getDefault());
+	private static final SchedulingSupplier DEFAULT_INSTANCE = new SchedulingSupplier(Scheduler.getDefault(), AsyncContext.getDefault());
 	
 	/**
 	 * Instantiates a new scheduling supplier.
@@ -397,7 +397,8 @@ public final class SchedulingSupplier implements AutoCloseable{
 							try {
 								resultSuppliers.wait();
 							} catch (InterruptedException e) {
-								logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
+								logger.config(() -> e.getClass().getSimpleName() + ": " + e.getMessage());
+								Thread.currentThread().interrupt();
 							}
 						}
 					}
@@ -433,7 +434,7 @@ public final class SchedulingSupplier implements AutoCloseable{
 	private <T> ScheduledFuture<?> doScheduleSupplierUntilFlag(int initialDelay, int delay, TimeUnit unit,
 			boolean waitForPreviousTask, Supplier<T>[] suppliers, String flag) {
 		AtomicBoolean canCancel = new AtomicBoolean(false);
-		LinkedList<Supplier<T>> resultSuppliers = new LinkedList<Supplier<T>>();
+		LinkedList<Supplier<T>> resultSuppliers = new LinkedList<>();
 		Scheduler.SchedulingFunction<Supplier<T>, T> schedulingSuppliers = new Scheduler.SchedulingFunction<Supplier<T>, T>() {
 			private AtomicInteger index = new AtomicInteger(0);
 
@@ -801,11 +802,52 @@ public final class SchedulingSupplier implements AutoCloseable{
 	}
 	
 	/**
+	 * Schedules a supplier to run exactly N times and collects all results.
+	 *
+	 * @param <T>
+	 *            the generic type
+	 * @param times
+	 *            number of times to run
+	 * @param initialDelay
+	 *            initial delay
+	 * @param delay
+	 *            delay between executions
+	 * @param unit
+	 *            time unit
+	 * @param supplier
+	 *            the supplier
+	 * @return Stream of results from N executions
+	 */
+	public <T> Stream<T> scheduleSupplierNTimes(int times, int initialDelay, int delay, TimeUnit unit, Supplier<T> supplier) {
+		String tempFlag = "temp_flag_" + System.nanoTime();
+		AtomicInteger count = new AtomicInteger(0);
+		
+		scheduleSupplierUntilFlag(initialDelay, delay, unit, true, tempFlag, new Supplier<T>() {
+			@Override
+			public T get() {
+				T result = supplier.get();
+				if (count.incrementAndGet() >= times) {
+					getAsyncContext().notifyFlag(tempFlag);
+				}
+				return result;
+			}
+		});
+		
+		try {
+			Thread.sleep(unit.toMillis(initialDelay + (delay * times) + 100));
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
+		
+		return getAsyncContext().notifyAndGetForFlag((Class<T>) Object.class, tempFlag);
+	}
+	
+	/**
 	 * Gets the scheduler.
 	 *
 	 * @return the scheduler
 	 */
-	public Scheduler getScheduler() {
+	protected Scheduler getScheduler() {
 		assertNotClosed();
 		return scheduler;
 	}
@@ -820,3 +862,4 @@ public final class SchedulingSupplier implements AutoCloseable{
 	}
 
 }
+

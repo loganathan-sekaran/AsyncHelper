@@ -31,13 +31,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * The AsyncSupplier Helper class with methods for submitting {@link Runnable}s
- * to invoke them as asynchronous tasks and optionally wait for them in same of
+ * The AsyncTask Helper class with methods for submitting {@link Runnable}s
+ * to invoke them as asynchronous tasks and optionally wait for them in same or
  * another thread. <br>
  * <br>
  * Note: The default thread pool used in the default instance
- * ({@link AsyncTask#getDefault()}) is ForkJoinPool. A I/O intensive or blocking
- * task should prevent using the default instance, instead pass its own thread
+ * ({@link AsyncTask#getDefault()}) is ForkJoinPool. An I/O intensive or blocking
+ * task should avoid using the default instance, instead pass its own thread
  * pool executor (using {@link AsyncTask#of(ExecutorService)}) or
  * {@link AsyncTask#of(ExecutorService, AsyncContext)} or use
  * {@link AsyncTask#submitTaskInNewThread(Runnable)} if applicable.
@@ -52,16 +52,16 @@ public final class AsyncTask implements AutoCloseable{
 	private static final Logger logger = Logger.getLogger(AsyncTask.class.getName());
 	
 	/** The executor. */
-	private Executor executor;
+	private final Executor executor;
 	
 	/** The closed. */
 	private volatile boolean closed;
 
 	/** The async context. */
-	private AsyncContext asyncContext;
+	private final AsyncContext asyncContext;
 	
 	/** The default instance. */
-	private static AsyncTask DEFAULT_INSTANCE = new AsyncTask(Executor.getDefault(), AsyncContext.getDefault()); 
+	private static final AsyncTask DEFAULT_INSTANCE = new AsyncTask(Executor.getDefault(), AsyncContext.getDefault()); 
 
 	/**
 	 * Prevent instantiation outside the class.
@@ -166,7 +166,7 @@ public final class AsyncTask implements AutoCloseable{
 				try {
 					future.get();
 				} catch (Exception e) {
-					logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
+					logger.config(() -> e.getClass().getSimpleName() + ": " + e.getMessage());
 				}
 			}
 			allTasksCompleted.set(true);
@@ -178,7 +178,8 @@ public final class AsyncTask implements AutoCloseable{
 					try {
 						Thread.sleep(1);
 					} catch (InterruptedException e) {
-						logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
+						logger.config(() -> e.getClass().getSimpleName() + ": " + e.getMessage());
+						Thread.currentThread().interrupt();
 					}
 				} else {
 					futures.parallelStream().forEach(future -> {
@@ -211,11 +212,12 @@ public final class AsyncTask implements AutoCloseable{
 				try {
 					future.get();
 				} catch (InterruptedException | ExecutionException e) {
-					logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
+					logger.config(() -> e.getClass().getSimpleName() + ": " + e.getMessage());
 				}
 			});
 		} catch (InterruptedException e) {
-			logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
+			logger.config(() -> e.getClass().getSimpleName() + ": " + e.getMessage());
+			Thread.currentThread().interrupt();
 		}
 	}
 

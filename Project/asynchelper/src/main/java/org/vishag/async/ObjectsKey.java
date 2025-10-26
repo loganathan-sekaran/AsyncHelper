@@ -34,7 +34,7 @@ import java.util.List;
 class ObjectsKey implements AutoCloseable{
 
 	/** The keys. */
-	private List<Object> keys;
+	private final List<Object> keys;
 	
 	/** The closed. */
 	private volatile boolean closed;

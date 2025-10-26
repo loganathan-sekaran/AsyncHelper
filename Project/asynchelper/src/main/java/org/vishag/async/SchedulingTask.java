@@ -23,7 +23,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,8 +36,8 @@ import java.util.logging.Logger;
  * <br>
  * Note: In most of the cases default instance obtained with
  * ({@link SchedulingTask#getDefault()}) is sufficient, which internally creates
- * a {@link ScheduledThreadPoolExecutor} and uses it. But it is possible to use
- * {@link SchedulingTask#of(ScheduledExecutorService)}) or
+ * a {@code ScheduledThreadPoolExecutor} and uses it. But it is possible to use
+ * {@link SchedulingTask#of(ScheduledExecutorService)} or
  * {@link SchedulingTask#of(ScheduledExecutorService, AsyncContext)} where an
  * instance of {@code ScheduledThreadPoolExecutor} can be passed explicitly if
  * required.
@@ -53,16 +52,16 @@ public final class SchedulingTask implements AutoCloseable{
 	private static final Logger logger = Logger.getLogger(SchedulingTask.class.getName());
 	
 	/** The scheduler. */
-	private Scheduler scheduler;
+	private final Scheduler scheduler;
 	
 	/** The closed flag. */
 	private volatile boolean closed;
 
 	/** The async context. */
-	private AsyncContext asyncContext;
+	private final AsyncContext asyncContext;
 	
 	/** The default instance of SchedulingTask. */
-	private static SchedulingTask DEFAULT_INSTANCE = new SchedulingTask(Scheduler.getDefault(), AsyncContext.getDefault());
+	private static final SchedulingTask DEFAULT_INSTANCE = new SchedulingTask(Scheduler.getDefault(), AsyncContext.getDefault());
 
 	/**
 	 * Instantiates a new SchedulinTask.
@@ -258,7 +257,10 @@ public final class SchedulingTask implements AutoCloseable{
 		try {
 			doScheduleTasks(initialDelay, delay, unit, waitForPreviousTask, runnables).get();
 		} catch (InterruptedException | ExecutionException | CancellationException e) {
-			logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
+			logger.config(() -> e.getClass().getSimpleName() + ": " + e.getMessage());
+			if (e instanceof InterruptedException) {
+				Thread.currentThread().interrupt();
+			}
 		}
 	}
 
@@ -361,7 +363,8 @@ public final class SchedulingTask implements AutoCloseable{
 			try {
 				getAsyncContext().waitForFlag(flag);
 			} catch (InterruptedException e) {
-				logger.config(e.getClass().getSimpleName() + ": " + e.getMessage());
+				logger.config(() -> e.getClass().getSimpleName() + ": " + e.getMessage());
+				Thread.currentThread().interrupt();
 			}
 			canCancel.set(true);
 		});
@@ -492,6 +495,120 @@ public final class SchedulingTask implements AutoCloseable{
 		getAsyncContext().notifyFlag(flag);
 	}
 
+	/**
+	 * Schedules a task to run exactly N times with fixed delay between executions.
+	 * The ScheduledFuture completes after N executions.
+	 *
+	 * @param times
+	 *            number of times to run
+	 * @param initialDelay
+	 *            initial delay
+	 * @param delay
+	 *            delay between executions
+	 * @param unit
+	 *            time unit
+	 * @param runnable
+	 *            the task
+	 * @return ScheduledFuture that completes after N executions
+	 */
+	public ScheduledFuture<?> scheduleTaskNTimes(int times, int initialDelay, int delay, TimeUnit unit, Runnable runnable) {
+		AtomicInteger count = new AtomicInteger(0);
+		AtomicBoolean canCancel = new AtomicBoolean(false);
+		
+		Scheduler.SchedulingFunction<Runnable, Void> schedulingRunnable = new Scheduler.SchedulingFunction<Runnable, Void>() {
+			@Override
+			public boolean canRun() {
+				return count.get() < times;
+			}
+
+			@Override
+			public boolean canCancel() {
+				return canCancel.get();
+			}
+
+			@Override
+			public Void invokeNextFunction() {
+				runnable.run();
+				count.incrementAndGet();
+				if (count.get() >= times) {
+					canCancel.set(true);
+				}
+				return null;
+			}
+
+			@Override
+			public void consumeResult(Void v) {
+				// No result to consume
+			}
+		};
+
+		return getScheduler().doScheduleFunction(initialDelay, delay, unit, true, schedulingRunnable);
+	}
+
+	/**
+	 * Schedules a task with exponential backoff delay.
+	 * Each execution delay is multiplied by the backoff multiplier, up to maxDelay.
+	 *
+	 * @param initialDelay
+	 *            initial delay
+	 * @param maxDelay
+	 *            maximum delay
+	 * @param backoffMultiplier
+	 *            multiplier for each iteration (e.g., 2.0 for doubling)
+	 * @param unit
+	 *            time unit
+	 * @param runnable
+	 *            the task
+	 * @param flag
+	 *            flag to stop scheduling
+	 * @return ScheduledFuture
+	 */
+	public ScheduledFuture<?> scheduleTaskWithBackoff(int initialDelay, int maxDelay, double backoffMultiplier, 
+	                                                    TimeUnit unit, Runnable runnable, String flag) {
+		AtomicBoolean canCancel = new AtomicBoolean(false);
+		AtomicInteger currentDelay = new AtomicInteger(initialDelay);
+		
+		Scheduler.SchedulingFunction<Runnable, Void> schedulingRunnable = new Scheduler.SchedulingFunction<Runnable, Void>() {
+			@Override
+			public boolean canRun() {
+				return !canCancel.get();
+			}
+
+			@Override
+			public boolean canCancel() {
+				return canCancel.get();
+			}
+
+			@Override
+			public Void invokeNextFunction() {
+				runnable.run();
+				
+				// Calculate next delay with backoff
+				int nextDelay = (int) (currentDelay.get() * backoffMultiplier);
+				currentDelay.set(Math.min(nextDelay, maxDelay));
+				
+				return null;
+			}
+
+			@Override
+			public void consumeResult(Void v) {
+				// No result to consume
+			}
+		};
+
+		AsyncTask.submitTaskInNewThread(() -> {
+			try {
+				getAsyncContext().waitForFlag(flag);
+			} catch (InterruptedException e) {
+				logger.config(() -> e.getClass().getSimpleName() + ": " + e.getMessage());
+				Thread.currentThread().interrupt();
+			}
+			canCancel.set(true);
+		});
+
+		return getScheduler().doScheduleFunction(initialDelay, currentDelay.get(), unit, true, schedulingRunnable);
+	}
+
 	/* (non-Javadoc)
 	 * @see java.lang.AutoCloseable#close()
 	 */
@@ -508,7 +625,7 @@ public final class SchedulingTask implements AutoCloseable{
 	 *
 	 * @return the scheduler
 	 */
-	public Scheduler getScheduler() {
+	protected Scheduler getScheduler() {
 		assertNotClosed();
 		return scheduler;
 	}

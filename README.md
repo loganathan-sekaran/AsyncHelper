@@ -12,7 +12,7 @@ Async-Helper is a Java utility (also an OSGi bundle) to invoke/schedule tasks or
 
 This contains various helper classes such as  [AsyncContext](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncContext.java), [AsyncTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncTask.java), [AsyncSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncSupplier.java), [SchedulingTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingTask.java) and [SchedulingSupplier](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/SchedulingSupplier.java) to perform various asynchronous operations.
 
-Please refer to the [JavaDocs](http://www.javadoc.io/doc/org.vishag/async-helper/4.0.0)  also.  
+Please refer to the [JavaDocs](http://www.javadoc.io/doc/org.vishag/async-helper/4.1.0)  also.  
 
 ### Below are the some of the operations that can be perfomed using this utility:
 1. Submitting one or more Runnable(s) to run asynchronously.
@@ -26,10 +26,32 @@ Please look into the <a href="https://github.com/loganathan001/AsyncHelper/tree/
 
 Also refer to the <a href="https://github.com/loganathan001/AsyncHelper/wiki/Some-Example-Uses-of-Async-Helper">Wiki page</a> for some example usages.
 
+### What is new in Async-Helper-4.1.0
+
+This release introduces **22 new enhanced features** with comprehensive test coverage and documentation:
+
+#### 🎯 Major Enhancements
+- **Timeout Support** - Operations with configurable timeouts for better control
+- **Batch Processing** - Process collections concurrently with optional concurrency limits
+- **Resilience Patterns** - Retry logic, fallback values, and custom error handlers
+- **Functional Composition** - Chain operations and combine results elegantly
+- **Competitive Execution** - Race conditions and fastest result selection
+- **Modern Integration** - CompletableFuture support for seamless integration
+- **Monitoring & Control** - Check pending status and cancel operations
+- **Multi-Flag Coordination** - Wait for multiple flags with all/any semantics
+- **Advanced Scheduling** - Execute N times with exponential backoff support
+
+#### 📚 Documentation
+- Comprehensive README with 10+ real-world usage examples
+- Full unit test coverage for all 22 new methods
+- Migration guide documenting backward compatibility
+
+See the [New Enhanced Features](#new-enhanced-features-latest-update) section below for detailed API documentation and the [Advanced Usage Examples](#advanced-usage-examples) section for comprehensive code examples.
+
 ### What is new in Async-Helper-4.0.0
 
 * Async-Helper is an **OSGi bundle** now :), to use it directly in OSGi applications.
-* Renamed *Async* helper class to [AsyncContext](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncContext.java) so that there is option to limit the context of Asynchronous operations. The global context can be obtained using `AscynContext.getDefault()`.
+* Renamed *Async* helper class to [AsyncContext](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncContext.java) so that there is option to limit the context of Asynchronous operations. The global context can be obtained using `AsyncContext.getDefault()`.
 
 * All the existing helper classes and their methods are now converted from static to instances, so that,
 
@@ -56,12 +78,79 @@ Also refer to the <a href="https://github.com/loganathan001/AsyncHelper/wiki/Som
 
 * [AsyncTask](https://github.com/loganathan001/AsyncHelper/blob/master/Project/asynchelper/src/main/java/org/vishag/async/AsyncTask.java) includes a new static helper method `AsyncTask.submitTaskInNewThread(Runnable)` to submit a task by spawning a new thread.
 
+### New Enhanced Features (Latest Update)
+
+Async-Helper now includes **22 powerful new methods** across AsyncSupplier, AsyncContext, SchedulingTask, and SchedulingSupplier classes, providing production-ready features for enterprise applications:
+
+#### 🔹 Timeout Support
+- **`submitAndGetWithTimeout`** - Execute and retrieve results with a timeout, preventing indefinite waits
+- **`waitForFlagWithTimeout`** - Wait for flags with timeout control in AsyncContext
+- **`waitAndGetFromSupplierWithTimeout`** - Retrieve supplier results with timeout protection
+
+#### 🔹 Batch Processing
+- **`submitAndProcessAll`** - Process collections in parallel with automatic result aggregation
+- **`submitAndProcessAllWithLimit`** - Batch process with concurrency limits to prevent resource exhaustion
+
+#### 🔹 Resilience Patterns
+- **`submitSupplierWithRetry`** - Automatic retry with configurable attempts and delays
+- **`submitSupplierWithFallback`** - Graceful fallback values when operations fail
+- **`submitSupplierWithErrorHandler`** - Custom error handling with recovery logic
+
+#### 🔹 Functional Composition
+- **`submitChained`** - Chain async operations with dependent transformations
+- **`submitAndCombine`** - Combine multiple async operations into a single result
+
+#### 🔹 Competitive Execution
+- **`submitRace`** - Race multiple operations, return the fastest result
+- **`submitAndGetFastest`** - Execute multiple suppliers, get the first successful completion
+
+#### 🔹 Modern Java Integration
+- **`submitAsCompletableFuture`** - Bridge to Java 8+ CompletableFuture API for advanced composition
+
+#### 🔹 Monitoring & Control
+- **`isPending`** - Check if async operations are still running
+- **`cancelSupplier`** - Cancel running async suppliers
+
+#### 🔹 Multi-Flag Coordination
+- **`waitForAllFlags`** - Wait for multiple flags before proceeding
+- **`waitForAnyFlag`** - Proceed when any flag is set
+
+#### 🔹 Advanced Scheduling
+- **`scheduleTaskNTimes`** - Execute scheduled tasks exactly N times
+- **`scheduleTaskWithBackoff`** - Exponential backoff scheduling for resilient polling
+- **`scheduleSupplierNTimes`** - Schedule suppliers N times with result collection
+
+### Internal Code Quality Improvements
+
+The following internal improvements have been made to enhance code quality and reliability. **These changes are fully backward compatible** and require no migration:
+
+#### ✅ Logger Performance Optimization
+- Changed logger calls from eager string concatenation to lazy evaluation using lambda suppliers
+- Example: `logger.config(() -> e.getMessage())` instead of `logger.config(e.getMessage())`
+- **Impact**: Improved performance when logging is disabled, no API changes
+
+#### ✅ Proper Thread Interrupt Handling
+- Added `Thread.currentThread().interrupt()` after catching `InterruptedException` 
+- Ensures interrupted status is properly restored per Java best practices
+- **Impact**: Better thread interrupt propagation, no API changes
+
+#### ✅ Enhanced Immutability
+- Made internal fields `final` where appropriate (DEFAULT_INSTANCE, executor, scheduler, asyncContext, etc.)
+- **Impact**: Improved thread safety and code reliability, no API changes
+
+#### ✅ Javadoc Corrections
+- Fixed class-level Javadoc descriptions for accuracy
+- Improved grammar and clarity in documentation
+- **Impact**: Better documentation quality, no API changes
+
+**Migration Required**: ❌ **None** - All improvements are internal implementation enhancements that maintain full backward compatibility with existing code.
+
 ### To install the latest version, add the below pom dependency entry:
 ```
 <dependency>
-  <groupId>org.vishag</groupId>
+  <groupId>org.vishag</groupId>
   <artifactId>async-helper</artifactId>
-  <version>4.0.0</version>
+  <version>4.1.0</version>
 </dependency>
 ```
 ## Some Example Usages of Async-Helper
@@ -125,4 +214,241 @@ Optional<Integer> bResult = AsyncSupplier.getDefault().waitAndGetFromSupplier(In
 Optional<Object> cResult = AsyncSupplier.getDefault().waitAndGetFromSupplier(Object.class, "c");
 
  myBigMethod(aResult.get(),bResult.get(),cResult.get());
+```
+
+## Advanced Usage Examples - New Features
+
+### Timeout Support
+
+Prevent indefinite waits with timeout-enabled operations:
+
+```java
+// Execute with timeout (returns Optional)
+Optional<String> result = AsyncSupplier.getDefault()
+    .submitAndGetWithTimeout(() -> fetchDataFromAPI(), 5, TimeUnit.SECONDS);
+
+if (result.isPresent()) {
+    System.out.println("Got result: " + result.get());
+} else {
+    System.out.println("Operation timed out");
+}
+
+// Wait for flag with timeout in AsyncContext
+boolean flagSet = AsyncContext.getDefault()
+    .waitForFlagWithTimeout(3, TimeUnit.SECONDS, "operationComplete");
+```
+
+### Batch Processing
+
+Process collections in parallel efficiently:
+
+```java
+List<Integer> ids = Arrays.asList(1, 2, 3, 4, 5);
+
+// Process all items in parallel
+List<User> users = AsyncSupplier.getDefault()
+    .submitAndProcessAll(ids, id -> userService.fetchUser(id));
+
+// Process with concurrency limit (max 3 parallel operations)
+List<Result> results = AsyncSupplier.getDefault()
+    .submitAndProcessAllWithLimit(largeList, item -> processItem(item), 3);
+```
+
+### Resilience Patterns
+
+Build fault-tolerant applications:
+
+```java
+// Automatic retry with delays
+Supplier<String> resilientOp = AsyncSupplier.getDefault()
+    .submitSupplierWithRetry(() -> {
+        return callUnreliableService();
+    }, 3, 1000); // max 3 retries, 1 second delay
+
+// Fallback value on failure
+Supplier<Config> configSupplier = AsyncSupplier.getDefault()
+    .submitSupplierWithFallback(
+        () -> loadConfigFromRemote(),
+        getDefaultConfig() // fallback value
+    );
+
+// Custom error handling
+Supplier<Data> dataSupplier = AsyncSupplier.getDefault()
+    .submitSupplierWithErrorHandler(
+        () -> fetchData(),
+        ex -> {
+            logger.error("Failed to fetch data", ex);
+            return getCachedData();
+        }
+    );
+```
+
+### Functional Composition
+
+Chain and combine async operations:
+
+```java
+// Chain dependent operations
+Supplier<String> chained = AsyncSupplier.getDefault()
+    .submitChained(
+        () -> fetchUserId(),
+        userId -> fetchUserProfile(userId)
+    );
+
+// Combine multiple independent operations
+Supplier<Report> report = AsyncSupplier.getDefault()
+    .submitAndCombine(
+        results -> generateReport((Data1)results.get(0), (Data2)results.get(1)),
+        () -> fetchData1(),
+        () -> fetchData2()
+    );
+```
+
+### Competitive Execution
+
+Get fastest results from multiple sources:
+
+```java
+// Race multiple operations
+Supplier<String> fastest = AsyncSupplier.getDefault()
+    .submitRace(
+        () -> fetchFromCache(),
+        () -> fetchFromDatabase(),
+        () -> fetchFromAPI()
+    );
+
+String result = fastest.get(); // Returns result from fastest source
+
+// Or get fastest directly as Optional
+Optional<Data> fastestData = AsyncSupplier.getDefault()
+    .submitAndGetFastest(
+        () -> source1.getData(),
+        () -> source2.getData(),
+        () -> source3.getData()
+    );
+```
+
+### CompletableFuture Integration
+
+Bridge to modern Java async APIs:
+
+```java
+CompletableFuture<String> future = AsyncSupplier.getDefault()
+    .submitAsCompletableFuture(() -> performOperation());
+
+// Now use CompletableFuture's rich API
+future.thenApply(String::toUpperCase)
+      .thenAccept(System.out::println)
+      .exceptionally(ex -> {
+          System.err.println("Error: " + ex.getMessage());
+          return null;
+      });
+```
+
+### Monitoring & Control
+
+Check and control async operations:
+
+```java
+// Submit a long-running operation
+AsyncSupplier.getDefault()
+    .submitSupplierForSingleAccess(() -> longRunningTask(), "taskKey");
+
+// Check if still running
+if (AsyncSupplier.getDefault().isPending("taskKey")) {
+    System.out.println("Task is still running...");
+    
+    // Cancel if needed
+    boolean cancelled = AsyncSupplier.getDefault().cancelSupplier("taskKey");
+}
+```
+
+### Multi-Flag Coordination
+
+Coordinate multiple async operations:
+
+```java
+// Start multiple operations that set flags when complete
+AsyncTask.getDefault().submitTask(() -> {
+    processStep1();
+    AsyncContext.getDefault().notifyAllFlag("step1");
+}, "task1");
+
+AsyncTask.getDefault().submitTask(() -> {
+    processStep2();
+    AsyncContext.getDefault().notifyAllFlag("step2");
+}, "task2");
+
+// Wait for all steps to complete
+AsyncContext.getDefault().waitForAllFlags(
+    new String[]{"step1"}, 
+    new String[]{"step2"}
+);
+
+// Or wait for any step to complete
+String[] firstCompleted = AsyncContext.getDefault().waitForAnyFlag(
+    new String[]{"step1"}, 
+    new String[]{"step2"}
+);
+```
+
+### Advanced Scheduling
+
+Schedule tasks with fine-grained control:
+
+```java
+// Execute exactly N times
+SchedulingTask.getDefault().scheduleTaskNTimes(
+    5,              // execute 5 times
+    100,            // initial delay 100ms
+    500,            // interval 500ms
+    TimeUnit.MILLISECONDS,
+    () -> sendHeartbeat()
+);
+
+// Exponential backoff for polling
+SchedulingTask.getDefault().scheduleTaskWithBackoff(
+    100,            // initial delay 100ms
+    10000,          // max delay 10 seconds
+    2.0,            // double delay each time
+    TimeUnit.MILLISECONDS,
+    () -> checkForUpdates(),
+    "pollingTask"
+);
+
+// Schedule supplier N times and collect results
+Stream<Status> statuses = SchedulingSupplier.getDefault()
+    .scheduleSupplierNTimes(
+        10,             // collect 10 samples
+        0,              // start immediately
+        1000,           // every 1 second
+        TimeUnit.MILLISECONDS,
+        () -> getSystemStatus()
+    );
+
+List<Status> collectedStatuses = statuses.collect(Collectors.toList());
+```
+
+### Real-World Example: Resilient API Call with Timeout
+
+```java
+public Optional<UserData> fetchUserDataResilient(String userId) {
+    try {
+        // Combine retry, timeout, and fallback
+        Optional<UserData> userData = AsyncSupplier.getDefault()
+            .submitAndGetWithTimeout(() -> {
+                Supplier<UserData> resilient = AsyncSupplier.getDefault()
+                    .submitSupplierWithRetry(() -> {
+                        return apiClient.getUserData(userId);
+                    }, 3, 500); // 3 retries, 500ms delay
+                
+                return resilient.get();
+            }, 10, TimeUnit.SECONDS); // 10 second total timeout
+        
+        return userData;
+    } catch (Exception e) {
+        logger.error("Failed to fetch user data", e);
+        return Optional.empty();
+    }
+}
 ```
